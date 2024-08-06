@@ -5,9 +5,9 @@ import {
   withHooks,
   withMethods,
   withState,
-} from '@ngrx/signals';
-import { computed } from '@angular/core';
-import { AnswerStatus, initialState } from './quiz.state';
+} from "@ngrx/signals";
+import { computed } from "@angular/core";
+import { AnswerStatus, initialState } from "./quiz.state";
 
 export const QuizStore = signalStore(
   withState(initialState),
@@ -26,7 +26,7 @@ export const QuizStore = signalStore(
           questions: quiz.questions.map((question) => {
             if (question.id === questionId) {
               const status: AnswerStatus =
-                question.answer === choiceId ? 'correct' : 'incorrect';
+                question.answer === choiceId ? "correct" : "incorrect";
               return {
                 ...question,
                 status,
@@ -56,5 +56,5 @@ export const QuizStore = signalStore(
         return status;
       }),
     };
-  })
+  }),
 );

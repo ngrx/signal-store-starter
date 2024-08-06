@@ -1,4 +1,4 @@
-export type AnswerStatus = 'unanswered' | 'correct' | 'incorrect';
+export type AnswerStatus = "unanswered" | "correct" | "incorrect";
 
 export type Question = {
   id: number;
@@ -16,69 +16,69 @@ export type Quiz = {
 };
 
 export const initialState: Quiz = {
-  title: 'NgRx Quiz',
+  title: "NgRx Quiz",
   timeInSeconds: 180,
   questions: [
     {
       id: 1,
-      question: 'NgRx is a library for which Framework?',
+      question: "NgRx is a library for which Framework?",
       answer: 1,
-      status: 'unanswered',
-      explanation: 'Ng stands for Angular',
+      status: "unanswered",
+      explanation: "Ng stands for Angular",
       choices: [
         {
           id: 1,
-          text: 'Angular',
+          text: "Angular",
         },
         {
           id: 2,
-          text: 'Vue',
+          text: "Vue",
         },
         {
           id: 3,
-          text: 'React',
+          text: "React",
         },
       ],
     },
     {
       id: 2,
-      question: 'Which library uses the Redux pattern?',
+      question: "Which library uses the Redux pattern?",
       answer: 1,
-      status: 'unanswered',
-      explanation: 'Only NgRx Global Store (was also the first one)',
+      status: "unanswered",
+      explanation: "Only NgRx Global Store (was also the first one)",
       choices: [
         {
           id: 1,
-          text: 'Global Store',
+          text: "Global Store",
         },
         {
           id: 2,
-          text: 'Signal Store',
+          text: "Signal Store",
         },
         {
           id: 3,
-          text: 'Component Store',
+          text: "Component Store",
         },
       ],
     },
     {
       id: 3,
-      question: 'Which library is not based on RxJs?',
+      question: "Which library is not based on RxJs?",
       answer: 2,
-      status: 'unanswered',
-      explanation: 'Signal Store is, as the name says, built on top of Signals',
+      status: "unanswered",
+      explanation: "Signal Store is, as the name says, built on top of Signals",
       choices: [
         {
           id: 1,
-          text: 'Global Store',
+          text: "Global Store",
         },
         {
           id: 2,
-          text: 'Signal Store',
+          text: "Signal Store",
         },
         {
           id: 3,
-          text: 'Component Store',
+          text: "Component Store",
         },
       ],
     },
