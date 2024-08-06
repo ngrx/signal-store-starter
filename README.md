@@ -1,3 +1,3 @@
-# ngrx-signal-store-starter
+This is a starter app for the Siganl Store.
 
-[Edit in StackBlitz next generation editor ⚡️](https://stackblitz.com/~/github.com/rainerhahnekamp/ngrx-signal-store-starter)
+[Edit in StackBlitz next generation editor ⚡️](https://stackblitz.com/~/github.com/ngrx/ngrx-signal-store-starter)
