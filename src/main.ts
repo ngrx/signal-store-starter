@@ -5,9 +5,8 @@ import { QuizStore } from "./quiz.store";
 import { NgClass } from "@angular/common";
 
 @Component({
-  selector: "app-root",
-  standalone: true,
-  template: `
+    selector: "app-root",
+    template: `
     <h1>NgRx Signal Store Seed</h1>
     <p>Use this as a template to file any issues with the NgRx Signal Store.</p>
     <h2>{{ quizStore.title() }}</h2>
@@ -54,8 +53,8 @@ import { NgClass } from "@angular/common";
       </div>
     }
   `,
-  imports: [NgClass],
-  providers: [QuizStore],
+    imports: [NgClass],
+    providers: [QuizStore]
 })
 export class App {
   protected quizStore = inject(QuizStore);
