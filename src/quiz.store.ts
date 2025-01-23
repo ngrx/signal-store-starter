@@ -1,60 +1,52 @@
 import {
+  deepComputed,
   patchState,
   signalStore,
   withComputed,
   withHooks,
   withMethods,
   withState,
-} from "@ngrx/signals";
-import { computed } from "@angular/core";
-import { AnswerStatus, initialState } from "./quiz.state";
+} from '@ngrx/signals';
+import { AnswerStatus, initialState } from './quiz.state';
 
 export const QuizStore = signalStore(
   withState(initialState),
+  withComputed(({ questions }) => {
+    return {
+      score: deepComputed(() =>
+        questions().reduce(
+          (score, question) => ({
+            ...score,
+            [question.status]: score[question.status] + 1,
+          }),
+          { unanswered: 0, correct: 0, incorrect: 0 },
+        ),
+      ),
+    };
+  }),
   withMethods((store) => {
     return {
-      answer(questionId: number, choiceId: number) {
-        const question = store
-          .questions()
-          .find((question) => question.id === questionId);
-
-        if (!question) {
-          return;
-        }
-
-        patchState(store, (quiz) => ({
-          questions: quiz.questions.map((question) => {
+      answer(questionId: number, choiceId: number): void {
+        patchState(store, ({ questions }) => ({
+          questions: questions.map((question) => {
             if (question.id === questionId) {
               const status: AnswerStatus =
-                question.answer === choiceId ? "correct" : "incorrect";
-              return {
-                ...question,
-                status,
-              };
-            } else {
-              return question;
+                question.answer === choiceId ? 'correct' : 'incorrect';
+              return { ...question, status };
             }
+
+            return question;
           }),
         }));
       },
+      restart(): void {
+        patchState(store, initialState);
+      },
     };
   }),
-
-  withComputed((state) => {
-    return {
-      status: computed(() => {
-        const status: Record<AnswerStatus, number> = {
-          unanswered: 0,
-          correct: 0,
-          incorrect: 0,
-        };
-
-        for (const question of state.questions()) {
-          status[question.status]++;
-        }
-
-        return status;
-      }),
-    };
+  withHooks({
+    onInit(store) {
+      console.log(`${store.title()} has been initialized.`);
+    },
   }),
 );
