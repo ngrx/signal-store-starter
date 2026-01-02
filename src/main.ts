@@ -2,8 +2,6 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { Component, inject } from '@angular/core';
 import { QuizStore } from './quiz.store';
 
-import 'zone.js';
-
 @Component({
   selector: 'app-root',
   template: `
