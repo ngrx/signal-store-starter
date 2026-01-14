@@ -1,4 +1,4 @@
-import { ApplicationConfig, APP_INITIALIZER } from '@angular/core';
+import { ApplicationConfig, APP_INITIALIZER, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAuth, provideAuth } from '@angular/fire/auth';
@@ -26,17 +26,64 @@ import { routes } from './app.routes';
 import { environment } from '../environments/environment';
 import { AppInitializerService } from './core/services/app-initializer.service';
 
+/**
+ * Application Configuration with Zone-less Change Detection
+ * 
+ * This configuration enables Angular's zone-less mode (stable in Angular 20+), which provides:
+ * 
+ * Benefits:
+ * - Improved performance: No Zone.js overhead for change detection
+ * - Smaller bundle size: Zone.js (~40KB) is not included
+ * - Better debugging: Explicit change detection through signals
+ * - Modern architecture: Fully reactive with @ngrx/signals
+ * 
+ * Architecture Compliance:
+ * - Zone-less mode requires all state updates to go through signals
+ * - @ngrx/signals provides the reactive foundation
+ * - @angular/fire observables are consumed and converted to signals
+ * - APP_INITIALIZER works seamlessly with Promise-based initialization
+ * 
+ * How it works:
+ * 1. provideZonelessChangeDetection() removes Zone.js dependency (stable API in Angular 20+)
+ * 2. Change detection is triggered by:
+ *    - Signal updates (via patchState in stores)
+ *    - User interactions (click, input, etc.)
+ *    - Manual markForCheck() when needed
+ * 3. All Firebase operations update signals via rxMethod patterns
+ * 4. The reactive chain: Firebase → Observable → Signal → UI
+ * 
+ * Domain Architecture:
+ * - Account (Identity via Firebase Auth)
+ *   → Workspace (Logical boundary via AuthStore/ContextStore)
+ *   → Module (Features via signal stores)
+ *   → Entity (State via @ngrx/signals)
+ */
 export const appConfig: ApplicationConfig = {
   providers: [
+    // Zone-less change detection MUST be the first provider
+    // This tells Angular to use signal-based change detection instead of Zone.js
+    // Note: This is now a stable API in Angular 20+ (no longer experimental)
+    provideZonelessChangeDetection(),
+    
+    // Router configuration
     provideRouter(routes),
+    
+    // Router configuration
+    provideRouter(routes),
+    
     // Firebase App Initialization
     provideFirebaseApp(() => initializeApp(environment.firebase)),
+    
     // Firebase Services
+    // All Firebase services work in zone-less mode because:
+    // - Their observables are consumed by @ngrx/signals stores
+    // - State updates trigger change detection via signal modifications
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
     provideAnalytics(() => getAnalytics()),
     ScreenTrackingService,
     UserTrackingService,
+    
     // Firebase App Check with reCAPTCHA Enterprise
     provideAppCheck(() => {
       const provider = new ReCaptchaEnterpriseProvider(environment.appCheckSiteKey);
@@ -56,9 +103,21 @@ export const appConfig: ApplicationConfig = {
     provideStorage(() => getStorage()),
     provideRemoteConfig(() => getRemoteConfig()),
     provideVertexAI(() => getVertexAI()),
+    
     // Application Initializer
-    // Ensures Firebase Auth state is ready before app renders
-    // This initializes AuthStore and triggers ContextStore reactively
+    // APP_INITIALIZER works perfectly in zone-less mode because:
+    // 1. It returns a Promise (async operation)
+    // 2. The promise completion triggers the bootstrap continuation
+    // 3. AppInitializerService.initialize() updates signals via AuthStore.setUser()
+    // 4. Signal updates automatically trigger change detection in zone-less mode (Angular 20+)
+    // 
+    // Initialization sequence:
+    // 1. APP_INITIALIZER runs before app renders
+    // 2. Waits for Firebase Auth state (firstValueFrom)
+    // 3. Updates AuthStore signal via setUser()
+    // 4. AuthStore.withHooks.onInit starts reactive sync
+    // 5. ContextStore reacts to auth state changes
+    // 6. App renders with initialized state
     {
       provide: APP_INITIALIZER,
       useFactory: (initService: AppInitializerService) => () => initService.initialize(),

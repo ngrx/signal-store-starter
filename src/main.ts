@@ -3,14 +3,47 @@ import { AppComponent } from './app/app.component';
 import { appConfig } from './app/app.config';
 
 /**
- * Bootstrap the Angular application
+ * Zone-less Bootstrap Configuration
  * 
- * The APP_INITIALIZER in appConfig will run before the app renders,
- * ensuring Firebase Auth and NgRx Signals stores are properly initialized.
+ * This application uses Angular's zone-less change detection mode (stable in Angular 20+).
+ * 
+ * What this means:
+ * - Zone.js is NOT included in the bundle (saves ~40KB)
+ * - Change detection is signal-based, not zone-based
+ * - Better performance through explicit reactivity
+ * - No automatic change detection after async operations
+ * 
+ * How it works:
+ * 1. provideZonelessChangeDetection() in appConfig enables zone-less mode (stable API)
+ * 2. All state is managed through @ngrx/signals (AuthStore, ContextStore, etc.)
+ * 3. Signal updates automatically trigger change detection
+ * 4. No Zone.js means no NG0908 error
+ * 
+ * Bootstrap sequence:
+ * 1. bootstrapApplication() starts with zone-less providers
+ * 2. APP_INITIALIZER runs (AppInitializerService.initialize())
+ * 3. Firebase Auth state is loaded (via firstValueFrom)
+ * 4. AuthStore.setUser() updates signals
+ * 5. Signal updates trigger change detection
+ * 6. ContextStore reacts to auth changes via withHooks.onInit
+ * 7. App renders with fully initialized reactive state
+ * 
+ * Architecture compliance:
+ * - Account (Firebase Auth) → Identity verification
+ * - Workspace (ContextStore) → Logical boundary
+ * - Module (Feature stores) → Functional units
+ * - Entity (Signal state) → Data models
+ * 
+ * All reactive patterns are zone-less compatible:
+ * - rxMethod() in stores handles async operations
+ * - patchState() updates signals
+ * - computed() derives state
+ * - withHooks.onInit() initializes reactive subscriptions
  */
 bootstrapApplication(AppComponent, appConfig)
   .then(() => {
-    console.log('[Bootstrap] Application started successfully');
+    console.log('[Bootstrap] Zone-less application started successfully (Angular 20+)');
+    console.log('[Bootstrap] Change detection: Signal-based (Zone.js not loaded)');
   })
   .catch((err) => {
     console.error('[Bootstrap] Application failed to start:', err);
