@@ -50,6 +50,12 @@ importers:
       '@ngrx/signals':
         specifier: ~20.0.0
         version: 20.0.1(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@tanstack-query-firebase/angular':
+        specifier: ^1.0.0
+        version: 1.0.2(3f0f2ad49b5e9740eea33943031e2da1)
+      '@tanstack/angular-query-experimental':
+        specifier: 5.66.4
+        version: 5.66.4(@angular/common@20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))
       rxjs:
         specifier: ~7.8.2
         version: 7.8.2
@@ -1664,6 +1670,27 @@ packages:
   '@sigstore/verify@2.1.1':
     resolution: {integrity: sha512-hVJD77oT67aowHxwT4+M6PGOp+E2LtLdTK3+FC0lBO9T7sYwItDMXZ7Z07IDCvR1M717a4axbIWckrW67KMP/w==}
     engines: {node: ^18.17.0 || >=20.5.0}
+
+  '@tanstack-query-firebase/angular@1.0.2':
+    resolution: {integrity: sha512-kJd4UoL8t3zA3W0Q7z2HWX2TGBvaoG6TFOfcDbKPX3f55Hap9GbhFr9NhJZGszT3hLIWcPVXHCHJnjfMAK3C8Q==}
+    peerDependencies:
+      '@angular/common': ^19.0.0
+      '@angular/core': ^19.0.0
+      '@angular/fire': ^19.0.0
+      '@angular/platform-browser-dynamic': ^19.0.0
+      '@tanstack/angular-query-experimental': 5.66.4
+
+  '@tanstack/angular-query-experimental@5.66.4':
+    resolution: {integrity: sha512-MELhfZLKCNMyHvAna8qFZFW5CLRpJ87qjj+e8PB1H/tbtqi9d2oWKUw6KC+XkRRVh2kauvtsyn3HBTKr063B3w==}
+    peerDependencies:
+      '@angular/common': '>=16.0.0'
+      '@angular/core': '>=16.0.0'
+
+  '@tanstack/query-core@5.66.4':
+    resolution: {integrity: sha512-skM/gzNX4shPkqmdTCSoHtJAPMTtmIJNS0hE+xwTTUVYwezArCT34NMermABmBVUg5Ls5aiUXEDXfqwR1oVkcA==}
+
+  '@tanstack/query-devtools@5.65.0':
+    resolution: {integrity: sha512-g5y7zc07U9D3esMdqUfTEVu9kMHoIaVBsD0+M3LPdAdD710RpTcLiNvJY1JkYXqkq9+NV+CQoemVNpQPBXVsJg==}
 
   '@tufjs/canonical-json@2.0.0':
     resolution: {integrity: sha512-yVtV8zsdo8qFHe+/3kw81dSLyF7D576A5cCFCi4X7B39tWT7SekaEFUnvnWJHz+9qO7qJTah1JbrDjWKqFtdWA==}
@@ -4237,6 +4264,25 @@ snapshots:
       '@sigstore/bundle': 3.1.0
       '@sigstore/core': 2.0.0
       '@sigstore/protobuf-specs': 0.4.3
+
+  '@tanstack-query-firebase/angular@1.0.2(3f0f2ad49b5e9740eea33943031e2da1)':
+    dependencies:
+      '@angular/common': 20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/core': 20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2)
+      '@angular/fire': 20.0.1(d28799c3a6eb7260444bf3c3d69088fb)
+      '@angular/platform-browser-dynamic': 20.0.7(@angular/common@20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/compiler@20.0.7)(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(@angular/platform-browser@20.0.7(@angular/animations@20.0.7(@angular/common@20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2)))(@angular/common@20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2)))
+      '@tanstack/angular-query-experimental': 5.66.4(@angular/common@20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))
+
+  '@tanstack/angular-query-experimental@5.66.4(@angular/common@20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))':
+    dependencies:
+      '@angular/common': 20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/core': 20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2)
+      '@tanstack/query-core': 5.66.4
+      '@tanstack/query-devtools': 5.65.0
+
+  '@tanstack/query-core@5.66.4': {}
+
+  '@tanstack/query-devtools@5.65.0': {}
 
   '@tufjs/canonical-json@2.0.0': {}
 
