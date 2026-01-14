@@ -29,28 +29,63 @@
 1. 使用 server-sequential-thinking 策略處理複雜任務。
 1. 使用 Software-planning-mcp 策略規劃軟體開發任務。
 
-### NgRx Overview
-1. 使用 NgRx Signals 管理應用程式狀態。
-1. 使用 NgRx Operators 處理狀態變更與副作用。
-1. 使用 NgRx Effects 處理非同步操作與外部 API 呼叫。
-1. 使用 NgRx Entity 管理集合資料。
-1. 使用 NgRx Store DevTools 進行狀態調試。 
-1. 使用 NgRx Schematics 快速生成樣板程式碼。
-1. 使用 NgRx Data 簡化 CRUD 操作。
-1. 使用 NgRx Router Store 同步路由狀態與應用程式狀態。
-1. 使用 NgRx Component Store 管理元件級狀態。
-1. 使用 NgRx Store Freeze 防止狀態被意外修改。
-1. 使用 NgRx Store Logger 記錄狀態變更日誌。
-1. 使用 NgRx Effects Testing 測試副作用邏輯。
-1. 使用 NgRx Store Testing 測試狀態管理邏輯。
-1. 使用 NgRx Data Testing 測試資料服務邏輯。
-1. 使用 NgRx Best Practices 優化狀態管理效能與可維護性。
-1. 使用 NgRx Patterns 採用常見設計模式提升程式碼品質。
-1. 使用 NgRx Anti-Patterns 避免常見錯誤與陷阱。
-1. 使用 NgRx Migration 指南升級至最新版本。
-1. 使用 NgRx Community 資源與社群支援。
-1. 使用 NgRx 官方文件深入了解各項功能與用法。
-1. 使用 NgRx 示例程式碼學習實際應用場景。
+### Angular 20 + NgRx Signals Overview
+1. 使用 **NgRx Signals (`@ngrx/signals`)** 管理應用程式狀態
+   * 應用程式狀態必須以 `signalStore` 為唯一事實來源（Single Source of Truth）。
+   * 嚴禁使用傳統 NgRx（actions / reducers / effects）。
+   * 每個 Domain（User / Org / Team / Partner / Menu）必須有各自獨立的 store。
+1. 使用 **Signals 原生機制** 處理狀態變更與副作用
+   * 狀態變更必須透過 `patchState`。
+   * 衍生狀態必須使用 `computed()`。
+   * 副作用必須使用 `effect()`，且：
+     * 不得直接修改 state
+     * 不得包含業務邏輯
+   * 非同步流程以 `async / await + service` 為主。
+1. **禁止使用 NgRx Operators 與 Action Streams**
+   * 不得使用 `ofType`、`switchMap`、`concatMap` 等 NgRx/RxJS operator 來管理狀態流程。
+   * Signals 不得被當作 Observable 使用。
+1. **禁止使用 NgRx Schematics**
+   * 專案不得使用 NgRx Schematics 產生程式碼。
+   * 所有 `signalStore` 必須手動撰寫，以確保結構清晰與責任明確。
+1. **不使用 NgRx Data，CRUD 由 Signals Store + Service 負責**
+   * 所有 CRUD 行為必須：
+     * 由 service 封裝 API 存取
+     * 由 `signalStore` 協調狀態更新
+   * 不得引入 NgRx Entity / Data 抽象層。
+1. **元件級狀態優先使用 Angular Signals**
+   * 元件內 UI state（open / loading / selectedId）必須使用 `signal()`。
+   * 禁止為單一元件建立 Component Store。
+   * 僅當狀態需跨元件共享時，才提升至 `signalStore`。
+1. 採用 **Signals Best Practices**
+   * 明確區分：
+     * **Domain State**（業務資料）
+     * **UI State**（顯示 / 互動狀態）
+   * 一個 store 只負責一個 domain。
+   * 禁止在 component 中直接修改 domain state。
+1. 採用 **Signals 設計模式（Patterns）**
+   * Facade Pattern → `signalStore`
+   * Derived State → `computed`
+   * Side Effects → `effect + service`
+   * Context Switching → 獨立 Context Store
+1. 避免 **Signals Anti-Patterns**
+   * ❌ 單一 store 管理多個 domain
+   * ❌ 在 `effect()` 中直接 `patchState`
+   * ❌ 在 component 中混合 UI 與 domain 邏輯
+   * ❌ 將 signals 當成 RxJS streams 使用
+1. 使用 **NgRx Migration 指南（僅限遷移用途）**
+    * 僅用於：
+      * 將既有 NgRx Store / Effects 遷移至 Signals
+    * 遷移完成後不得保留任何舊 NgRx 架構。
+1. 參考 **NgRx 官方文件與社群資源**
+    * 僅作為學習與設計參考
+    * 不得直接複製過時（pre-signals）的範例架構。
+1. 優先參考 **Signals 導向的官方與實戰示例**
+    * 僅採用：
+      * Angular 17+ / 20
+      * Standalone API
+      * Signals 為核心的示例
+1. 🔒 強制規範總結（一句話版）
+    > **本專案僅允許 Angular Signals + NgRx Signals，全面禁止傳統 NgRx 架構與抽象層。**
 
 ### Domain-Driven Design Overview
 1. 聚合應封裝完整業務邏輯與不變式。
