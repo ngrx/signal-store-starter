@@ -3,20 +3,22 @@ import {
   Firestore,
   collection,
   doc,
-  getDoc,
-  getDocs,
+  docData,
+  collectionData,
   setDoc,
   updateDoc,
   deleteDoc,
   query,
   where,
+  QueryConstraint,
 } from '@angular/fire/firestore';
-import { Observable, from } from 'rxjs';
+import { Observable, from, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { Partner } from '../models/partner.model';
 
 /**
  * PartnerService
- * Handles CRUD operations for partners (SubUnit - External)
+ * Handles CRUD operations for partners (SubUnit - External) with reactive streams
  */
 @Injectable({
   providedIn: 'root',
@@ -26,48 +28,48 @@ export class PartnerService {
   private collectionName = 'partners';
 
   /**
-   * Get partner by ID
+   * Get partner by ID - reactive stream
    */
   getPartner(id: string): Observable<Partner | null> {
     const docRef = doc(this.firestore, this.collectionName, id);
-    return from(
-      getDoc(docRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          return { id: snapshot.id, ...snapshot.data() } as Partner;
-        }
-        return null;
-      })
+    return docData(docRef, { idField: 'id' }).pipe(
+      map((data) => (data ? ({ ...data, id } as Partner) : null)),
+      catchError(() => of(null))
     );
   }
 
   /**
-   * Get all partners for an organization
+   * Get all partners for an organization - reactive stream
    */
   getOrganizationPartners(organizationId: string): Observable<Partner[]> {
     const collectionRef = collection(this.firestore, this.collectionName);
     const q = query(collectionRef, where('organizationId', '==', organizationId));
     
-    return from(
-      getDocs(q).then((snapshot) => {
-        return snapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() } as Partner)
-        );
-      })
+    return collectionData(q, { idField: 'id' }).pipe(
+      map((data) => data as Partner[]),
+      catchError(() => of([]))
     );
   }
 
   /**
-   * List all partners (with optional filters)
+   * List all partners (with optional filters) - reactive stream
    */
   list(filters: Record<string, any> = {}): Observable<Partner[]> {
     const collectionRef = collection(this.firestore, this.collectionName);
     
-    return from(
-      getDocs(collectionRef).then((snapshot) => {
-        return snapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() } as Partner)
-        );
-      })
+    // Build query constraints from filters
+    const constraints: QueryConstraint[] = [];
+    Object.entries(filters).forEach(([field, value]) => {
+      if (value !== undefined && value !== null) {
+        constraints.push(where(field, '==', value));
+      }
+    });
+    
+    const q = constraints.length > 0 ? query(collectionRef, ...constraints) : collectionRef;
+    
+    return collectionData(q, { idField: 'id' }).pipe(
+      map((data) => data as Partner[]),
+      catchError(() => of([]))
     );
   }
 

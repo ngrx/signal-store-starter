@@ -6,7 +6,9 @@ import {
   withState,
   withHooks,
 } from '@ngrx/signals';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { computed, inject } from '@angular/core';
+import { pipe, switchMap, tap, catchError, of, combineLatest } from 'rxjs';
 import { initialContextState } from './context.state';
 import {
   AppContext,
@@ -138,49 +140,73 @@ export const ContextStore = signalStore(
       teamService = inject(TeamService),
       partnerService = inject(PartnerService)
     ) {
-      // Initialize user context when authenticated
-      const user = authStore.user();
-      if (user) {
-        store.switchContext({
-          type: 'user',
-          userId: user.uid,
-          email: user.email || '',
-          displayName: user.displayName || undefined,
-        });
+      // Reactive method to load available contexts when user is authenticated
+      const loadAvailableContexts = rxMethod<void>(
+        pipe(
+          switchMap(() => {
+            const user = authStore.user();
+            if (!user) {
+              return of(null);
+            }
 
-        // Load available contexts from Firestore
-        // Note: In a real app, these would be filtered by user permissions
-        orgService.list({}).subscribe((orgs) => {
-          const orgContexts: OrganizationContext[] = orgs.map((org) => ({
-            type: 'organization' as const,
-            organizationId: org.id,
-            name: org.name,
-            role: 'member' as const, // Should come from membership data
-          }));
-          store.setAvailableOrganizations(orgContexts);
-        });
+            // Initialize user context
+            store.switchContext({
+              type: 'user',
+              userId: user.uid,
+              email: user.email || '',
+              displayName: user.displayName || undefined,
+            });
 
-        teamService.list({}).subscribe((teams) => {
-          const teamContexts: TeamContext[] = teams.map((team) => ({
-            type: 'team' as const,
-            teamId: team.id,
-            organizationId: team.organizationId,
-            name: team.name,
-            role: 'member' as const, // Should come from membership data
-          }));
-          store.setAvailableTeams(teamContexts);
-        });
+            // Load all available contexts reactively
+            return combineLatest([
+              orgService.list({}),
+              teamService.list({}),
+              partnerService.list({}),
+            ]);
+          }),
+          tap((result) => {
+            if (result) {
+              const [orgs, teams, partners] = result;
+              
+              // Transform to context objects
+              const orgContexts: OrganizationContext[] = orgs.map((org: any) => ({
+                type: 'organization' as const,
+                organizationId: org.id,
+                name: org.name,
+                role: 'member' as const, // Should come from membership data
+              }));
 
-        partnerService.list({}).subscribe((partners) => {
-          const partnerContexts: PartnerContext[] = partners.map((partner) => ({
-            type: 'partner' as const,
-            partnerId: partner.id,
-            organizationId: partner.organizationId,
-            name: partner.name,
-            accessLevel: 'readonly' as const, // Should come from access data
-          }));
-          store.setAvailablePartners(partnerContexts);
-        });
+              const teamContexts: TeamContext[] = teams.map((team: any) => ({
+                type: 'team' as const,
+                teamId: team.id,
+                organizationId: team.organizationId,
+                name: team.name,
+                role: 'member' as const, // Should come from membership data
+              }));
+
+              const partnerContexts: PartnerContext[] = partners.map((partner: any) => ({
+                type: 'partner' as const,
+                partnerId: partner.id,
+                organizationId: partner.organizationId,
+                name: partner.name,
+                accessLevel: 'readonly' as const, // Should come from access data
+              }));
+
+              store.setAvailableOrganizations(orgContexts);
+              store.setAvailableTeams(teamContexts);
+              store.setAvailablePartners(partnerContexts);
+            }
+          }),
+          catchError((error) => {
+            console.error('Error loading available contexts:', error);
+            return of(null);
+          })
+        )
+      );
+
+      // Trigger loading when user is authenticated
+      if (authStore.isAuthenticated()) {
+        loadAvailableContexts();
       }
     },
   })
