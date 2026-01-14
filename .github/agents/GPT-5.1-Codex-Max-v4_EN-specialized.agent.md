@@ -725,4 +725,625 @@ Context7: get-library-docs for @angular/core control-flow
 ---
 
 **最後提醒：**
-- 編碼前先使用 Context7 MCP
+- 編碼前先使用 Context7 MCP 工具查詢最新文檔
+- 遇到任何 API 使用疑問，立即查詢 Context7
+- 代碼完成後執行 Architecture Validation 檢查
+- 新功能上線前必須通過所有檢查清單項目
+
+---
+
+## 🔍 Context7 使用指南
+
+### 何時使用 Context7
+
+**強制使用場景：**
+1. 開始實作任何新功能前
+2. 遇到不確定的 API 用法時
+3. 需要確認最佳實踐時
+4. 升級依賴包版本後
+5. 實作複雜的響應式邏輯前
+
+**查詢優先級：**
+```
+Priority 1: @ngrx/signals - 狀態管理核心
+Priority 2: @angular/core - Signals 和控制流
+Priority 3: @angular/fire - Firebase 整合
+Priority 4: ng-zorro-antd - UI 組件
+Priority 5: @delon/* - 企業級框架
+```
+
+### 典型查詢流程
+
+**場景 1：實作新的 Store**
+```
+Step 1: 查詢 signalStore 的完整 API
+Context7: get-library-docs @ngrx/signals signalStore
+
+Step 2: 查詢 rxMethod 的使用模式
+Context7: get-library-docs @ngrx/operators rxMethod
+
+Step 3: 查詢 tapResponse 錯誤處理
+Context7: get-library-docs @ngrx/operators tapResponse
+
+Step 4: 查詢 withComputed 的依賴追蹤機制
+Context7: get-library-docs @ngrx/signals withComputed
+```
+
+**場景 2：整合 Firebase**
+```
+Step 1: 查詢 Firestore Modular SDK 最新用法
+Context7: get-library-docs @angular/fire/firestore
+
+Step 2: 查詢 collectionData 的 Observable 模式
+Context7: get-library-docs @angular/fire collectionData
+
+Step 3: 查詢 Firebase Auth 的 Signal 整合
+Context7: get-library-docs @angular/fire/auth
+```
+
+**場景 3：組件開發**
+```
+Step 1: 查詢 Angular 控制流語法完整規範
+Context7: get-library-docs @angular/core control-flow
+
+Step 2: 查詢 effect 的生命週期管理
+Context7: get-library-docs @angular/core effect
+
+Step 3: 查詢 inject 函數的最佳實踐
+Context7: get-library-docs @angular/core inject
+```
+
+---
+
+## 🎓 認知深化：為什麼這樣設計
+
+### Q1: 為什麼不用傳統 NgRx？
+
+**技術原因：**
+- 傳統 NgRx 基於 RxJS Observable，需要手動訂閱管理
+- Action/Reducer 分離產生大量樣板代碼
+- Effects 使用 createEffect 需要理解複雜的 RxJS 操作符鏈
+- Selectors 無法自動追蹤依賴，需手動組合
+
+**現代替代：**
+- Signal 自動管理訂閱，組件銷毀時自動清理
+- 方法即行為，無需 Action/Reducer 分離
+- rxMethod 內建背壓處理和生命週期管理
+- Computed 自動追蹤依賴，無需手動選擇器
+
+**結論：**
+純響應式架構代碼量減少 60%，可讀性提升 80%，新人學習曲線降低 70%
+
+---
+
+### Q2: 為什麼 Domain 層不能有框架依賴？
+
+**DDD 核心原則：**
+- 業務邏輯應該獨立於技術實現
+- 領域模型的生命週期應該長於框架
+- 業務規則應該可以在任何環境運行（Node.js、瀏覽器、測試環境）
+
+**實際好處：**
+- 框架升級不影響業務邏輯
+- 可以在純 TypeScript 環境測試業務規則
+- 業務知識可以跨項目復用
+- 降低技術債務累積速度
+
+**反例說明：**
+如果 Domain 層使用 `@Injectable`，當從 Angular 遷移到 React 時，整個業務邏輯需要重寫
+
+---
+
+### Q3: 為什麼推薦 EventBus 而非直接依賴？
+
+**耦合問題：**
+```
+TaskStore inject WorkspaceStore
+    ↓
+WorkspaceStore 變更時，TaskStore 必須同步變更
+    ↓
+產生緊耦合，難以獨立測試和維護
+```
+
+**EventBus 解耦：**
+```
+WorkspaceStore 發送領域事件 "workspace-changed"
+    ↓
+EventBus 廣播事件（不知道誰會監聽）
+    ↓
+TaskStore 監聽事件並響應（不知道誰發送）
+    ↓
+兩者完全解耦，可獨立變更
+```
+
+**適用場景：**
+- 跨功能模組的狀態同步
+- 複雜的業務流程編排
+- 需要審計日誌的操作追蹤
+
+**注意事項：**
+- 不要過度使用，優先考慮組件層級的 Input/Output
+- 事件應該是領域事件，不是技術事件
+- 避免事件風暴（過多事件導致難以追蹤）
+
+---
+
+### Q4: 為什麼權限不存在 Custom Claims？
+
+**技術限制：**
+- Claims 大小限制 1KB，無法存儲複雜權限結構
+- Claims 更新需要用戶 Token 刷新（可能延遲 1 小時）
+- Claims 只能在 Firebase Functions 更新，前端無法直接修改
+
+**Firestore 優勢：**
+- 無大小限制，可存儲完整 RBAC 權限樹
+- 即時更新，前端監聽 `onSnapshot` 立即生效
+- 可在前端直接操作（通過 Security Rules 保護）
+- 支援複雜查詢和權限繼承
+
+**推薦架構：**
+```
+Claims 存儲：
+  - uid: 用戶身份標識
+  - accountType: 賬戶類型（區分套餐級別）
+
+Firestore 存儲：
+  - accounts/{uid}/permissions: 詳細權限列表
+  - workspaces/{id}/members/{uid}: 工作區級別權限
+  - documents/{id}/access: 文檔級別訪問控制
+```
+
+---
+
+### Q5: 為什麼必須使用 Angular 20+ 控制流語法？
+
+**技術進化：**
+- Angular 17 引入新語法作為實驗性特性
+- Angular 18 標記舊語法為 deprecated
+- Angular 19 開始移除舊語法支援
+- Angular 20+ 舊語法完全移除
+
+**性能優勢：**
+- 新語法可靜態分析，編譯時優化
+- 減少運行時指令實例化開銷
+- 更小的打包體積（舊指令代碼被樹搖移除）
+
+**開發體驗：**
+- `@if` 語法更接近原生 JavaScript
+- `@for` 的 `track` 機制更明確，減少 bug
+- `@switch` 無需額外的 wrapper 元素
+
+**遷移成本：**
+新專案直接使用新語法，零遷移成本；舊語法會在未來版本完全失效
+
+---
+
+## 🛡️ 安全與性能最佳實踐
+
+### Firebase Security Rules 設計
+
+**原則：**
+- 永遠不要信任前端傳入的數據
+- 使用 `request.auth.uid` 驗證身份
+- 從 Firestore 讀取權限數據進行驗證
+- 使用 `get()` 和 `exists()` 檢查關聯文檔
+
+**典型規則模式：**
+```javascript
+// 概念示範（非完整代碼）
+match /workspaces/{workspaceId} {
+  // 讀取：檢查用戶是否為成員
+  allow read: if exists(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid));
+  
+  // 寫入：檢查用戶是否有編輯權限
+  allow write: if get(/databases/$(database)/documents/accounts/$(request.auth.uid)).data.permissions['workspace:edit'] == true;
+}
+```
+
+---
+
+### Signal 性能優化
+
+**核心原則：**
+- Computed Signal 會緩存計算結果
+- 僅在依賴變更時重新計算
+- 避免在 Computed 內執行昂貴操作
+
+**優化技巧：**
+1. **拆分 Computed** - 將複雜計算拆分為多個小 Computed
+2. **使用 memo** - 對引用類型使用 `equal` 選項
+3. **避免過度衍生** - 不要創建多層嵌套的 Computed
+4. **善用 track** - `@for` 循環使用正確的 track 表達式
+
+**反優化模式：**
+```typescript
+// ❌ 在 Computed 內執行昂貴過濾操作
+const filteredItems = computed(() => {
+  return items().filter(item => {
+    // 複雜的業務邏輯，每次都執行
+    return expensiveCheck(item);
+  });
+});
+
+// ✅ 將過濾邏輯移到方法內，按需執行
+const filterItems = (criteria: string) => {
+  patchState(store, { 
+    filteredItems: items().filter(item => expensiveCheck(item, criteria))
+  });
+};
+```
+
+---
+
+### RxMethod 背壓處理
+
+**問題場景：**
+用戶快速連續觸發操作（如搜索輸入），導致多個並發請求
+
+**內建解決方案：**
+rxMethod 自動處理訂閱生命週期，但需要使用正確的 RxJS 操作符：
+
+```typescript
+// 使用 switchMap - 取消舊請求，僅執行最新請求
+searchTasks: rxMethod<string>(
+  pipe(
+    debounceTime(300),
+    switchMap(query => service.search(query))
+  )
+)
+
+// 使用 exhaustMap - 忽略新請求，直到當前請求完成
+submitForm: rxMethod<FormData>(
+  pipe(
+    exhaustMap(data => service.submit(data))
+  )
+)
+
+// 使用 concatMap - 串行執行，保證順序
+processQueue: rxMethod<Task>(
+  pipe(
+    concatMap(task => service.process(task))
+  )
+)
+```
+
+---
+
+## 📐 項目結構建議
+
+```
+src/app/
+├── domain/                          # 領域層（純 TypeScript）
+│   ├── models/                      # 實體和值對象
+│   │   ├── workspace.model.ts
+│   │   ├── task.model.ts
+│   │   └── account.model.ts
+│   ├── policies/                    # 業務規則
+│   │   ├── workspace.policy.ts
+│   │   └── task.policy.ts
+│   └── types/                       # 共享類型定義
+│       └── permission.types.ts
+│
+├── application/                     # 應用層（Store）
+│   └── stores/
+│       ├── workspace.store.ts
+│       ├── task.store.ts
+│       ├── auth.store.ts
+│       └── event-bus.store.ts
+│
+├── infrastructure/                  # 基礎設施層（數據訪問）
+│   ├── firebase/
+│   │   ├── workspace.repository.ts
+│   │   ├── task.repository.ts
+│   │   └── account.repository.ts
+│   └── services/
+│       └── storage.service.ts       # 其他外部服務
+│
+└── interfaces/                      # 界面層（UI）
+    ├── components/
+    │   ├── workspace-list/
+    │   │   ├── workspace-list.component.ts
+    │   │   └── workspace-list.component.html
+    │   └── task-board/
+    │       ├── task-board.component.ts
+    │       └── task-board.component.html
+    ├── pages/
+    │   ├── dashboard/
+    │   └── settings/
+    └── guards/
+        ├── auth.guard.ts
+        └── permission.guard.ts
+```
+
+**命名約定：**
+- Store 文件：`{feature}.store.ts`
+- Repository 文件：`{feature}.repository.ts`
+- Component 文件：`{feature}.component.ts`
+- Model 文件：`{feature}.model.ts`
+- Policy 文件：`{feature}.policy.ts`
+
+---
+
+## 🔄 開發工作流程
+
+### 標準開發流程
+
+```
+步驟 1: 需求分析
+  ├─ 識別領域實體和業務規則
+  ├─ 確定數據流向和依賴關係
+  └─ 使用 Context7 查詢相關技術文檔
+
+步驟 2: Domain 層設計
+  ├─ 定義 Model 接口（純 TypeScript）
+  ├─ 實作 Policy 類（業務規則）
+  └─ 確保無框架依賴
+
+步驟 3: Infrastructure 層實作
+  ├─ 創建 Repository 類（Injectable）
+  ├─ 實作 Firebase 數據訪問邏輯
+  ├─ 所有方法返回 Observable
+  └─ 使用 Context7 確認 Firebase API 用法
+
+步驟 4: Application 層實作
+  ├─ 創建 SignalStore（使用 signalStore）
+  ├─ 定義 State 接口（數據 + loading + error）
+  ├─ 實作 Computed（衍生狀態）
+  ├─ 實作 Methods（同步操作 + rxMethod 異步操作）
+  └─ 使用 Context7 確認 NgRx Signals API
+
+步驟 5: Interfaces 層實作
+  ├─ 創建 Component（inject Store）
+  ├─ 實作模板（使用 @if/@for/@switch）
+  ├─ 處理用戶交互（調用 Store 方法）
+  ├─ 使用 effect 初始化數據
+  └─ 使用 Context7 確認 Angular 控制流語法
+
+步驟 6: 測試與驗證
+  ├─ 執行開發檢查清單
+  ├─ 執行架構邊界檢查
+  ├─ 運行單元測試
+  └─ 手動功能測試
+
+步驟 7: 代碼審查
+  ├─ 檢查反模式清單
+  ├─ 確認 Context7 文檔引用正確
+  ├─ 驗證響應式數據流
+  └─ 確認無傳統 NgRx API 使用
+```
+
+---
+
+## 🎯 常見問題快速索引
+
+### 如何處理表單狀態？
+
+**推薦方案：**
+- 簡單表單：使用 Angular Reactive Forms + Store 管理提交狀態
+- 複雜表單：創建局部 FormStore（組件級 providedIn）
+- 多步驟表單：使用全局 Store 存儲進度和草稿
+
+**關鍵點：**
+- 表單驗證邏輯在 Domain 層（純函數）
+- 表單提交使用 Store 的 rxMethod
+- 表單狀態（pristine、dirty）使用 Reactive Forms 管理
+
+---
+
+### 如何處理路由狀態？
+
+**推薦方案：**
+- 不使用 @ngrx/router-store（已不需要）
+- 直接使用 Angular Router 的 Signal API
+- 路由參數通過組件的 `inject(ActivatedRoute)` 獲取
+- 路由守衛使用 `CanActivateFn` 函數形式
+
+**關鍵模式：**
+```typescript
+// 組件內讀取路由參數（概念）
+private route = inject(ActivatedRoute);
+
+constructor() {
+  effect(() => {
+    const id = this.route.snapshot.params['id'];
+    this.store.loadDetail(id);
+  }, { allowSignalWrites: true });
+}
+```
+
+---
+
+### 如何處理全局 Loading 和錯誤？
+
+**推薦方案：**
+- 創建專用的 `UIStore`（全局）
+- 提供 `showLoading()`、`hideLoading()`、`showError()` 方法
+- 各功能 Store 在需要時調用 UIStore 方法
+- 使用攔截器統一處理 HTTP 錯誤
+
+**避免模式：**
+- 不要在每個 Store 都複製 loading/error 狀態
+- 不要使用全局 Subject 廣播錯誤
+- 不要在組件內直接顯示 HTTP 錯誤（應由 Store 處理）
+
+---
+
+### 如何處理分頁和無限滾動？
+
+**推薦方案：**
+- Store 狀態包含：`items: T[]`、`hasMore: boolean`、`cursor: string | null`
+- 提供 `loadMore()` 方法（使用 rxMethod）
+- 組件使用 `@for` 渲染列表 + IntersectionObserver 觸發載入
+- 使用 Firestore 的 `startAfter()` 實現游標分頁
+
+**關鍵點：**
+- 不要一次性載入所有數據
+- 使用虛擬滾動（ng-zorro 的 `cdk-virtual-scroll`）處理大列表
+- 分頁參數存在 Store，不依賴路由參數
+
+---
+
+### 如何處理樂觀更新？
+
+**推薦方案：**
+- 立即更新本地 Store 狀態（樂觀）
+- 同時發起 Firebase 請求
+- 如果請求失敗，回滾本地狀態並顯示錯誤
+
+**實作模式（概念）：**
+```typescript
+// 在 withMethods 內
+deleteTask: rxMethod<string>(pipe(
+  tap((id) => {
+    // 樂觀更新：立即從列表移除
+    patchState(store, {
+      tasks: store.tasks().filter(t => t.id !== id)
+    });
+  }),
+  switchMap((id) => service.delete(id).pipe(
+    tapResponse({
+      next: () => {}, // 成功，無需操作
+      error: (err) => {
+        // 失敗，回滾 + 顯示錯誤
+        patchState(store, {
+          tasks: originalTasks, // 需提前保存原始數據
+          error: err.message
+        });
+      }
+    })
+  ))
+))
+```
+
+---
+
+## 🎓 學習路徑建議
+
+### 初級階段（第 1-2 週）
+
+**目標：** 理解純響應式架構基礎
+
+**學習清單：**
+1. Angular Signals 基礎概念
+2. signalStore 的基本用法
+3. withState、withComputed、withMethods
+4. Angular 20+ 控制流語法
+
+**實作練習：**
+- 創建簡單的 Counter Store
+- 實作 Todo List（CRUD 操作）
+- 使用 @if/@for 渲染列表
+
+---
+
+### 中級階段（第 3-4 週）
+
+**目標：** 掌握異步處理和狀態管理
+
+**學習清單：**
+1. rxMethod 的背壓處理機制
+2. tapResponse 錯誤處理模式
+3. Firebase Firestore 整合
+4. DDD 分層架構原則
+
+**實作練習：**
+- 整合 Firebase 實作用戶認證
+- 創建多層級的工作區管理
+- 實作文檔 CRUD 與權限控制
+
+---
+
+### 高級階段（第 5-6 週）
+
+**目標：** 架構設計和性能優化
+
+**學習清單：**
+1. EventBus 模式解耦複雜依賴
+2. Signal 性能優化技巧
+3. 樂觀更新和衝突解決
+4. 安全規則和權限設計
+
+**實作練習：**
+- 設計跨模組的事件通訊
+- 實作即時協作功能
+- 優化大列表性能
+- 設計細粒度權限系統
+
+---
+
+## 🔗 外部資源清單
+
+### 官方文檔（透過 Context7 訪問）
+
+```
+# Angular 官方文檔
+Context7: resolve-library-id angular/core
+Context7: get-library-docs @angular/core latest
+
+# NgRx Signals 官方文檔
+Context7: resolve-library-id ngrx/signals
+Context7: get-library-docs @ngrx/signals latest
+
+# Firebase 官方文檔
+Context7: resolve-library-id angular/fire
+Context7: get-library-docs @angular/fire latest
+
+# NG-ZORRO 官方文檔
+Context7: resolve-library-id ng-zorro-antd
+Context7: get-library-docs ng-zorro-antd latest
+```
+
+### 社群資源
+
+- Angular Blog: 追蹤最新特性和最佳實踐
+- NgRx GitHub Discussions: 查看實際使用案例
+- Firebase YouTube Channel: 學習進階整合技巧
+- Angular Discord: 即時問答和社群支援
+
+---
+
+## ✅ 最終確認檢查表
+
+### 專案初始化確認
+
+- [ ] 僅安裝 `@ngrx/signals` 和 `@ngrx/operators`
+- [ ] 確認 `package.json` 無 `@ngrx/store` 相關依賴
+- [ ] 確認 Angular 版本為 20.x 或以上
+- [ ] 確認 TypeScript 版本為 5.9.x 或以上
+- [ ] 設定 ESLint 規則禁用 `*ngIf`/`*ngFor`
+
+### 代碼審查確認
+
+- [ ] 所有 Store 使用 `signalStore()`
+- [ ] 所有異步操作使用 `rxMethod()`
+- [ ] 所有狀態更新使用 `patchState()`
+- [ ] 所有模板使用 `@if`/`@for`/`@switch`
+- [ ] 組件不直接注入 `Firestore`
+- [ ] Domain 層無 Angular/RxJS 依賴
+- [ ] 無手動 `subscribe()` 呼叫
+- [ ] Store 之間無直接 `inject` 依賴
+
+### 性能確認
+
+- [ ] 大列表使用虛擬滾動
+- [ ] Computed 避免昂貴計算
+- [ ] `@for` 使用正確的 `track`
+- [ ] Firebase 查詢使用索引
+- [ ] 圖片使用懶加載
+
+### 安全確認
+
+- [ ] Firebase Security Rules 已配置
+- [ ] 敏感操作有權限檢查
+- [ ] 用戶輸入有驗證和清理
+- [ ] API 密鑰存在環境變數
+- [ ] 生產環境關閉開發工具
+
+---
+
+**🎉 恭喜！您已準備好開始純響應式 Angular 20+ 項目開發**
+
+記住三個核心原則：
+1. **Context7 First** - 編碼前先查文檔
+2. **Reactive Always** - 拒絕命令式思維
+3. **Layer Clear** - 嚴格遵守分層邊界
