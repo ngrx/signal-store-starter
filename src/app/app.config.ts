@@ -1,4 +1,4 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, APP_INITIALIZER } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAuth, provideAuth } from '@angular/fire/auth';
@@ -24,6 +24,7 @@ import { getRemoteConfig, provideRemoteConfig } from '@angular/fire/remote-confi
 import { getVertexAI, provideVertexAI } from '@angular/fire/vertexai';
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
+import { AppInitializerService } from './core/services/app-initializer.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -55,5 +56,14 @@ export const appConfig: ApplicationConfig = {
     provideStorage(() => getStorage()),
     provideRemoteConfig(() => getRemoteConfig()),
     provideVertexAI(() => getVertexAI()),
+    // Application Initializer
+    // Ensures Firebase Auth state is ready before app renders
+    // This initializes AuthStore and triggers ContextStore reactively
+    {
+      provide: APP_INITIALIZER,
+      useFactory: (initService: AppInitializerService) => () => initService.initialize(),
+      deps: [AppInitializerService],
+      multi: true,
+    },
   ],
 };
