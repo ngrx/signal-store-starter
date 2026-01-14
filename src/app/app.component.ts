@@ -1,7 +1,5 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { AuthStore } from './core/auth/stores/auth.store';
-import { AuthService } from './core/auth/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -16,14 +14,7 @@ import { AuthService } from './core/auth/services/auth.service';
     }
   `],
 })
-export class AppComponent implements OnInit {
-  private authStore = inject(AuthStore);
-  private authService = inject(AuthService);
-
-  ngOnInit(): void {
-    // Listen to auth state changes
-    this.authService.authState$.subscribe((user) => {
-      this.authStore.setUser(user);
-    });
-  }
+export class AppComponent {
+  // Auth state sync is handled by AuthStore's withHooks onInit
+  // No manual subscriptions needed here
 }
