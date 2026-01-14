@@ -38,3 +38,9 @@ export * from './auth/stores/auth.state';
 export * from './auth/stores/auth.store';
 export * from './auth/services/auth.service';
 export * from './auth/guards/auth.guard';
+
+// Tasks
+export * from './tasks/models/task.model';
+export * from './tasks/stores/task.state';
+export * from './tasks/stores/task.store';
+export * from './tasks/services/task.service';
