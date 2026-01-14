@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthStore } from '../../../core/auth/stores/auth.store';
 import { AvatarService } from '../../services/avatar.service';
+import { MenuService } from '../../services/menu.service';
+import { ContextStore } from '../../../core/context/stores/context.store';
+import { MenuItem } from '../../models/menu.model';
 
 @Component({
   selector: 'app-header',
@@ -13,13 +16,14 @@ import { AvatarService } from '../../services/avatar.service';
       <div class="header-content">
         <div class="logo">
           <span class="logo-icon">🔥</span>
-          <span class="logo-text">Signal Store App</span>
+          <span class="logo-text">{{ contextStore.currentContextName() || 'Signal Store App' }}</span>
+          @if (contextStore.currentContextType()) {
+            <span class="context-badge">{{ getContextTypeBadge() }}</span>
+          }
         </div>
 
         <nav class="nav">
-          <button class="nav-link" (click)="navigateTo('/dashboard')">Dashboard</button>
-          <button class="nav-link" (click)="navigateTo('/projects')">Projects</button>
-          <button class="nav-link" (click)="navigateTo('/team')">Team</button>
+          <!-- Dynamic navigation will be added here -->
         </nav>
 
         <div class="user-section">
@@ -43,23 +47,44 @@ import { AvatarService } from '../../services/avatar.service';
                 />
                 <div class="menu-user-info">
                   <div class="menu-email">{{ authStore.user()?.email }}</div>
-                  <div class="menu-status">Authenticated</div>
+                  <div class="menu-status">{{ contextStore.currentContextName() || 'Authenticated' }}</div>
                 </div>
               </div>
-              <div class="menu-divider"></div>
-              <button class="menu-item" (click)="navigateTo('/profile')">
-                <span class="menu-icon">👤</span>
-                Profile
-              </button>
-              <button class="menu-item" (click)="navigateTo('/settings')">
-                <span class="menu-icon">⚙️</span>
-                Settings
-              </button>
-              <div class="menu-divider"></div>
-              <button class="menu-item logout" (click)="logout()">
-                <span class="menu-icon">🚪</span>
-                Logout
-              </button>
+
+              <!-- Dynamic Menu Sections -->
+              @for (section of dynamicMenu().sections; track section.id) {
+                @if (section.visible !== false) {
+                  <div class="menu-section">
+                    @if (section.title) {
+                      <div class="menu-section-title">{{ section.title }}</div>
+                    }
+                    @for (item of section.items; track item.id) {
+                      @if (item.visible !== false) {
+                        @if (item.type === 'divider') {
+                          <div class="menu-divider"></div>
+                        } @else if (item.type === 'header') {
+                          <div class="menu-header-item">{{ item.label }}</div>
+                        } @else {
+                          <button 
+                            class="menu-item"
+                            [class.disabled]="item.disabled"
+                            [disabled]="item.disabled"
+                            (click)="handleMenuItem(item)"
+                          >
+                            @if (item.icon) {
+                              <span class="menu-icon">{{ item.icon }}</span>
+                            }
+                            <span class="menu-label">{{ item.label }}</span>
+                            @if (item.badge) {
+                              <span class="menu-badge">{{ item.badge }}</span>
+                            }
+                          </button>
+                        }
+                      }
+                    }
+                  </div>
+                }
+              }
             </div>
           }
         </div>
@@ -239,6 +264,59 @@ import { AvatarService } from '../../services/avatar.service';
 
     .menu-icon {
       font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .menu-label {
+      flex: 1;
+    }
+
+    .menu-badge {
+      background: #667eea;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .menu-section {
+      padding: 4px 0;
+    }
+
+    .menu-section-title {
+      padding: 8px 16px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #999;
+      letter-spacing: 0.5px;
+    }
+
+    .menu-header-item {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #666;
+    }
+
+    .menu-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .menu-item.disabled:hover {
+      background-color: transparent;
+    }
+
+    .context-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #667eea;
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
     }
 
     @media (max-width: 768px) {
@@ -254,9 +332,12 @@ import { AvatarService } from '../../services/avatar.service';
 })
 export class HeaderComponent {
   protected authStore = inject(AuthStore);
+  protected contextStore = inject(ContextStore);
   private router = inject(Router);
   private avatarService = inject(AvatarService);
+  private menuService = inject(MenuService);
   protected menuOpen = signal(false);
+  protected dynamicMenu = this.menuService.menu;
 
   constructor() {
     // Close menu when clicking outside
@@ -282,6 +363,34 @@ export class HeaderComponent {
     const email = this.authStore.user()?.email || '';
     const maxLength = 20;
     return email.length > maxLength ? email.substring(0, maxLength) + '...' : email;
+  }
+
+  getContextTypeBadge(): string {
+    const type = this.contextStore.currentContextType();
+    switch (type) {
+      case 'organization':
+        return 'ORG';
+      case 'team':
+        return 'TEAM';
+      case 'partner':
+        return 'PARTNER';
+      case 'user':
+        return 'USER';
+      default:
+        return '';
+    }
+  }
+
+  handleMenuItem(item: MenuItem): void {
+    if (item.disabled) return;
+
+    this.menuOpen.set(false);
+
+    if (item.route) {
+      this.router.navigate([item.route]);
+    } else if (item.action) {
+      item.action();
+    }
   }
 
   navigateTo(path: string): void {

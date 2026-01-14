@@ -57,6 +57,21 @@ export class OrganizationService {
   }
 
   /**
+   * List all organizations (with optional filters)
+   */
+  list(filters: Record<string, any> = {}): Observable<Organization[]> {
+    const collectionRef = collection(this.firestore, this.collectionName);
+    
+    return from(
+      getDocs(collectionRef).then((snapshot) => {
+        return snapshot.docs.map(
+          (doc) => ({ id: doc.id, ...doc.data() } as Organization)
+        );
+      })
+    );
+  }
+
+  /**
    * Create a new organization
    */
   createOrganization(organization: Omit<Organization, 'id'>): Observable<string> {

@@ -57,6 +57,21 @@ export class TeamService {
   }
 
   /**
+   * List all teams (with optional filters)
+   */
+  list(filters: Record<string, any> = {}): Observable<Team[]> {
+    const collectionRef = collection(this.firestore, this.collectionName);
+    
+    return from(
+      getDocs(collectionRef).then((snapshot) => {
+        return snapshot.docs.map(
+          (doc) => ({ id: doc.id, ...doc.data() } as Team)
+        );
+      })
+    );
+  }
+
+  /**
    * Create a new team
    */
   createTeam(team: Omit<Team, 'id'>): Observable<string> {

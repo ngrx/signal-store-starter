@@ -57,6 +57,21 @@ export class PartnerService {
   }
 
   /**
+   * List all partners (with optional filters)
+   */
+  list(filters: Record<string, any> = {}): Observable<Partner[]> {
+    const collectionRef = collection(this.firestore, this.collectionName);
+    
+    return from(
+      getDocs(collectionRef).then((snapshot) => {
+        return snapshot.docs.map(
+          (doc) => ({ id: doc.id, ...doc.data() } as Partner)
+        );
+      })
+    );
+  }
+
+  /**
    * Create a new partner
    */
   createPartner(partner: Omit<Partner, 'id'>): Observable<string> {
