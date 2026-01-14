@@ -146,6 +146,8 @@ export const ContextStore = signalStore(
           switchMap(() => {
             const user = authStore.user();
             if (!user) {
+              // Clear context when user logs out
+              store.clearContext();
               return of(null);
             }
 
@@ -198,16 +200,15 @@ export const ContextStore = signalStore(
             }
           }),
           catchError((error) => {
-            console.error('Error loading available contexts:', error);
+            console.error('[ContextStore] Error loading available contexts:', error);
             return of(null);
           })
         )
       );
 
-      // Trigger loading when user is authenticated
-      if (authStore.isAuthenticated()) {
-        loadAvailableContexts();
-      }
+      // Trigger loading immediately (user may already be authenticated from APP_INITIALIZER)
+      // This will also react to auth state changes
+      loadAvailableContexts();
     },
   })
 );
