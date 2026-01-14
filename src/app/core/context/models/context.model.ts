@@ -15,7 +15,7 @@ export interface UserContext {
   type: 'user';
   userId: string;
   email: string;
-  displayName?: string;
+  displayName: string | null;
 }
 
 export interface OrganizationContext {
