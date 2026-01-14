@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthStore } from '../../../core/auth/stores/auth.store';
+import { AvatarService } from '../../services/avatar.service';
 
 @Component({
   selector: 'app-header',
@@ -23,9 +24,11 @@ import { AuthStore } from '../../../core/auth/stores/auth.store';
 
         <div class="user-section">
           <div class="avatar-container" (click)="toggleMenu()">
-            <div class="avatar">
-              {{ getInitials() }}
-            </div>
+            <img 
+              [src]="getAvatarUrl()" 
+              [alt]="authStore.user()?.email || 'User avatar'"
+              class="avatar-img"
+            />
             <span class="user-email-short">{{ getShortEmail() }}</span>
             <span class="dropdown-icon">▼</span>
           </div>
@@ -33,7 +36,11 @@ import { AuthStore } from '../../../core/auth/stores/auth.store';
           @if (menuOpen()) {
             <div class="dropdown-menu" (click)="$event.stopPropagation()">
               <div class="menu-header">
-                <div class="menu-avatar">{{ getInitials() }}</div>
+                <img 
+                  [src]="getAvatarUrl()" 
+                  [alt]="authStore.user()?.email || 'User avatar'"
+                  class="menu-avatar-img"
+                />
                 <div class="menu-user-info">
                   <div class="menu-email">{{ authStore.user()?.email }}</div>
                   <div class="menu-status">Authenticated</div>
@@ -131,17 +138,12 @@ import { AuthStore } from '../../../core/auth/stores/auth.store';
       background-color: #f5f5f5;
     }
 
-    .avatar {
+    .avatar-img {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      font-size: 14px;
+      object-fit: cover;
+      background: #f5f5f5;
     }
 
     .user-email-short {
@@ -178,16 +180,13 @@ import { AuthStore } from '../../../core/auth/stores/auth.store';
       color: white;
     }
 
-    .menu-avatar {
+    .menu-avatar-img {
       width: 48px;
       height: 48px;
       border-radius: 50%;
+      object-fit: cover;
       background: rgba(255, 255, 255, 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      font-size: 18px;
+      flex-shrink: 0;
     }
 
     .menu-user-info {
@@ -256,6 +255,7 @@ import { AuthStore } from '../../../core/auth/stores/auth.store';
 export class HeaderComponent {
   protected authStore = inject(AuthStore);
   private router = inject(Router);
+  private avatarService = inject(AvatarService);
   protected menuOpen = signal(false);
 
   constructor() {
@@ -273,9 +273,9 @@ export class HeaderComponent {
     this.menuOpen.set(!this.menuOpen());
   }
 
-  getInitials(): string {
+  getAvatarUrl(): string {
     const email = this.authStore.user()?.email || '';
-    return email.charAt(0).toUpperCase();
+    return this.avatarService.getAvatarUrl(email, 80);
   }
 
   getShortEmail(): string {
