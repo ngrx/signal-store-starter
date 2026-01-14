@@ -30,6 +30,6 @@
     "@angular/cli": "~20.0.0",
     "@angular/compiler-cli": "~20.0.0",
     "prettier": "^3.7.4",
-    "typescript": "~5.9.3"
+    "typescript": "~5.8.0"
   }
 }
