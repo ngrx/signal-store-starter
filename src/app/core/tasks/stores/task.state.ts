@@ -26,7 +26,7 @@ export interface TaskState {
 export const initialTaskState: TaskState = {
   tasks: [],
   workflows: [],
-  selectedTask: null;
+  selectedTask: null,
   filter: {},
   viewMode: 'tree-list',
   loading: false,
