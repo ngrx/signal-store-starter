@@ -121,7 +121,7 @@ export const ContextStore = signalStore(
             type: 'user',
             userId: user.uid,
             email: user.email || '',
-            displayName: user.displayName || undefined,
+            displayName: user.displayName ?? null,
           },
         });
       } else {
@@ -154,7 +154,7 @@ export const ContextStore = signalStore(
               type: 'user',
               userId: user.uid,
               email: user.email || '',
-              displayName: user.displayName || undefined,
+              displayName: user.displayName ?? null,
             });
 
             // Load all available contexts reactively

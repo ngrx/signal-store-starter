@@ -753,15 +753,15 @@ export class TasksComponent implements OnInit {
   onSearchChange() {
     this.taskStore.setFilter({
       ...this.taskStore.filter(),
-      searchText: this.searchText || undefined,
+      searchText: this.searchText || null,
     });
   }
 
   onFilterChange() {
     this.taskStore.setFilter({
       ...this.taskStore.filter(),
-      status: this.filterStatus ? [this.filterStatus] : undefined,
-      priority: this.filterPriority ? [this.filterPriority] : undefined,
+      status: this.filterStatus ? [this.filterStatus] : null,
+      priority: this.filterPriority ? [this.filterPriority] : null,
     });
   }
 

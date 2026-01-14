@@ -105,7 +105,7 @@ export class MenuService {
             type: 'user',
             userId: user.uid,
             email: user.email || '',
-            displayName: user.displayName || undefined,
+            displayName: user.displayName ?? null,
           });
         },
         visible: true,

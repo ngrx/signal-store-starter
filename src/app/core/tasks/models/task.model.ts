@@ -79,14 +79,14 @@ export interface WorkflowStage {
 }
 
 export interface TaskFilter {
-  status?: TaskStatus[];
-  priority?: TaskPriority[];
-  assigneeId?: string;
-  workflowId?: string;
-  tags?: string[];
-  dueDateFrom?: Date;
-  dueDateTo?: Date;
-  searchText?: string;
+  status?: TaskStatus[] | null;
+  priority?: TaskPriority[] | null;
+  assigneeId?: string | null;
+  workflowId?: string | null;
+  tags?: string[] | null;
+  dueDateFrom?: Date | null;
+  dueDateTo?: Date | null;
+  searchText?: string | null;
 }
 
 export interface TaskTreeNode extends Task {
