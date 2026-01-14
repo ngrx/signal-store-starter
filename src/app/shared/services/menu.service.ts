@@ -380,16 +380,8 @@ export class MenuService {
    * Get base route for context
    */
   private getBaseRouteForContext(context: AppContext): string {
-    switch (context.type) {
-      case 'organization':
-        return `/organization/${(context as any).organizationId}`;
-      case 'team':
-        return `/team/${(context as any).teamId}`;
-      case 'partner':
-        return `/partner/${(context as any).partnerId}`;
-      default:
-        return '/workspace';
-    }
+    // All contexts use /workspace as the base route for modules
+    return '/workspace';
   }
 
   /**
