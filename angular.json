@@ -6,7 +6,7 @@
   "newProjectRoot": "projects",
   "packageManager": "npm",
   "projects": {
-    "ngrx-dragon": {
+    "demo": {
       "architect": {
         "build": {
           "builder": "@angular/build:application",
