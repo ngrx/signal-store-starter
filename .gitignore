@@ -8,6 +8,10 @@ node_modules
 *-debug.log
 .runtimeconfig.json
 
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
 
 #Ignore vscode AI rules
 .github\instructions\codacy.instructions.md

@@ -7,7 +7,11 @@
     "start": "ng serve",
     "build": "ng build",
     "format": "prettier --write .",
-    "lint": "eslint \"src/**/*.ts\""
+    "lint": "eslint \"src/**/*.ts\"",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "playwright:install": "playwright install chromium"
   },
   "dependencies": {
     "@angular/animations": "~20.0.0",
@@ -33,6 +37,7 @@
     "@angular/build": "~20.0.0",
     "@angular/cli": "~20.0.0",
     "@angular/compiler-cli": "~20.0.0",
+    "@playwright/test": "^1.57.0",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
     "@typescript-eslint/parser": "^8.53.0",
     "eslint": "^9.39.2",
