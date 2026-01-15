@@ -25,9 +25,9 @@
 1. purge_memory: 定期清理過期或不必要的記憶體內容。
 
 ### Copilot Behavior Guidelines
-1. 使用 context7 策略來管理對話上下文，同時透過 "resolve-library-id" 指令解析函式庫的唯一識別碼，並使用 "get-library-docs" 指令抓取該函式庫的文件資料，以便在多輪交互中保持精確的上下文和完整的參考信息。
-1. 使用 server-sequential-thinking 策略處理複雜任務。
-1. 使用 Software-planning-mcp 策略規劃軟體開發任務。
+1. 必須使用 context7 策略來管理對話上下文，同時透過 "resolve-library-id" 指令解析函式庫的唯一識別碼，並使用 "get-library-docs" 指令抓取該函式庫的文件資料，以便在多輪交互中保持精確的上下文和完整的參考信息。
+1. 必須使用 server-sequential-thinking 策略處理複雜任務。
+1. 必須使用 Software-planning-mcp 策略規劃軟體開發任務。
 
 ### Angular 20 + NgRx Signals Overview
 1. 使用 **NgRx Signals (`@ngrx/signals`)** 管理應用程式狀態
@@ -333,7 +333,10 @@
 ---
 
 ## 1. 專案指引 (Project-Specific Guidelines)
-1. 代碼必須無 TypeScript 錯誤，能通過 yarn build，且無未使用的 import 或變數。
+1. 奧卡姆剃刀原則：在多種解決方案中，選擇最簡單且能滿足需求的方案。
+1. 極簡主義：避免不必要的複雜性與過度設計，專注於核心功能。
+1. PNPM 作為主要套件管理工具。
+1. 代碼必須無 TypeScript 錯誤，能通過 pnpm build，且無未使用的 import 或變數。
 1. 禁止保留 TODO、FIXME、或暫存佔位碼；必要時產出小而增量的變更。
 1. UI 只負責呈現與互動，僅透過 facade/adapters 呼叫 domain，絕不可包含業務邏輯。
 1. Organization / Account / User 等身分 Aggregate 僅屬於 account-domain，不得在其他 domain 建立或修改。
@@ -343,3 +346,50 @@
 1. 每次跨層移動或重構時，先在對話中列出「搬移清單」與回滾計畫。
 1. PR 需註明 pnpm build 結果或重現步驟。
 1. 新增依賴時需列出安全與維護風險評估。
+
+---
+
+## 1. workspace / module / entity boundaries
+1. Workspace 為主要協作單位，Module 為功能單元，Entity 為業務狀態。
+1. 不得將身份（Account / Organization）建模為 Workspace 或 Module 的一部分。
+1. 禁止跨聚合直接修改狀態，須透過事件或命令溝通。
+1. 聚合間通訊應使用事件或命令，避免直接依賴。
+1. 禁止跨層直接存取，須透過明確定義的介面或適配器。
+1. 使用防腐層隔離外部系統與核心業務邏輯。
+1. UI 僅透過明確定義的介面與 Domain 互動，絕不可直接存取事件存儲。
+1. 禁止在 UI 層執行業務邏輯或狀態變更。
+1. 禁止 Domain 層直接存取基礎設施或 UI 元件.
+1. Facade / Port 介面需明確命名並文件化。
+1. Domain 層不得執行 I/O 或持久化操作.
+1. Adapter 只做模型映射、轉換與外部呼叫.
+
+## 1. 因果事件(Causality in Event-Driven Systems)/ NgRx Signals 指引
+
+### 1. NgRx / Event Flow Guidelines
+1. 命令處理器負責驗證與執行命令。
+### 1. NgRx / Event Store Guidelines
+1. 優先事件驅動設計以提升系統解耦性。
+### 1. NgRx / EventBus Guidelines
+1. 嚴禁使用傳統 NgRx（actions / reducers / effects）。
+### 1. NgRx / Event Types Guidelines
+1. 事件名稱應反映業務語意並具描述性，事件結構應包含必要的 metadata 與版本資訊。
+### 1. NgRx / Event Payload Guidelines
+1. 事件需具備完整語意並支援版本控制。
+### 1. NgRx / Event Metadata Guidelines
+1. 所有事件需附帶時間戳與版本資訊。
+### 1. NgRx / Event Lifecycle Guidelines
+1. 使用事件批次處理提升吞吐量。
+### 1. NgRx / Event Semantics Guidelines
+1. 清晰區分業務事件與技術事件，避免混淆。
+### 1. NgRx / Event Sourcing Guidelines
+1. 事件為系統狀態變更的唯一來源。
+### 1. NgRx / Causation Tracking Guidelines
+1. 避免事件與命令間的循環依賴，保持清晰界限。
+### 1. NgRx / Event Versioning Guidelines
+1. 事件版本變更需明確標示與相容策略。
+### 1. NgRx / Event Handling Guidelines
+1. 禁止事件處理器中執行長時間運行的操作。
+### 1. NgRx / Event Replay Guidelines
+1. 使用事件重播驗證投影與讀模型的一致性。
+### 1. NgRx / Event Testing Guidelines
+1. 聚合不變式必須在單元測試中嚴格驗證。

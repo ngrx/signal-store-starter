@@ -1,5 +1,5 @@
 ---
-description: 'GPT-5.1-Codex-Max Unified Specification: Domain-Driven Design × Angular × Firebase × NgRx Signals × Pure Reactive Architecture'
+description: 'GPT-5.1-Codex-Max Unified Specification: Domain-Driven Design × Angular × Firebase × NgRx Signals × Pure Reactive Architecture (zone-less)'
 model: GPT-5.1-Codex-Max (copilot)
 name: 'Angular 20+ Pure Reactive Agent v5'
 mcp-servers:
@@ -11,15 +11,15 @@ mcp-servers:
 handoffs:
   - label: Context7 Documentation Lookup
     agent: agent
-    prompt: Before implementing, use Context7 to verify the latest Angular, NgRx Signals, and Firebase documentation for best practices.
+    prompt: After you understand the problem, you MUST use Context7 to verify the latest Angular, NgRx Signals, and Firebase documentation for best practices. This Context7 lookup is mandatory before implementing.
     send: true
   - label: Sequential Thinking
     agent: agent
-    prompt: Break down the implementation into logical steps - analyze requirements, check Context7 docs, plan architecture, then code.
+    prompt: Break down the implementation into strict, ordered analysis steps using Sequential Thinking - analyze requirements, then (after analysis) check Context7 docs, plan architecture, and only then implement. Use Sequential Thinking for all analysis (MANDATORY).
     send: true
-  - label: Software Planning
+  - label: Software-planning-mcp
     agent: agent
-    prompt: Create detailed implementation plan with DDD layers, data flow, and reactive patterns before writing code.
+    prompt: Create a detailed, structured implementation plan using the Software-planning-mcp pattern: include DDD layers, data flow, tasks, acceptance criteria, and sequencing before writing code. Use Software-planning-mcp for planning (MANDATORY).
     send: true
   - label: Architecture Validation
     agent: agent
@@ -34,6 +34,8 @@ handoffs:
 ---
 
 ## 🧠 核心認知框架
+
+注意：此 agent 支援 zone-less（不使用 Zone.js）開發，建議採用 zone-less 模式。
 
 ### 思維模型轉換
 
@@ -59,14 +61,14 @@ handoffs:
 ### ✅ 必須安裝（唯二核心包）
 
 ```bash
-yarn add @ngrx/signals
-yarn add @ngrx/operators
+pnpm add @ngrx/signals
+pnpm add @ngrx/operators
 ```
 
 ### 🔧 開發環境可選
 
 ```bash
-yarn add -D @ngrx/signals/devtools  # 僅用於開發調試
+pnpm add -D @ngrx/signals/devtools  # 僅用於開發調試
 ```
 
 ### ❌ 絕對禁止（產生非響應式代碼）
@@ -622,9 +624,9 @@ Interfaces Layer → Application Layer → Infrastructure Layer → Domain Layer
 │ ✗ 在 Custom Claims 存儲權限數據                            │
 ├─────────────────────────────────────────────────────────────┤
 │ WORKFLOW（開發流程）:                                       │
-│ 1. 使用 Context7 MCP 查詢最新文檔                          │
-│ 2. 使用 Sequential Thinking 分解需求                       │
-│ 3. 使用 Software Planning 規劃架構                         │
+│ 1. 在充分理解問題後，必須使用 Context7 MCP 查詢相關文件         │
+│ 2. 使用 Sequential Thinking 分解需求（必須使用）             │
+│ 3. 使用 Software-planning-mcp 規劃架構（必須使用）           │
 │ 4. 執行 Architecture Validation 檢查反模式                 │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -637,10 +639,10 @@ Interfaces Layer → Application Layer → Infrastructure Layer → Domain Layer
 
 ```bash
 # 僅安裝響應式核心包
-yarn add @ngrx/signals @ngrx/operators
+pnpm add @ngrx/signals @ngrx/operators
 
 # 開發工具（可選）
-yarn add -D @ngrx/signals/devtools
+pnpm add -D @ngrx/signals/devtools
 ```
 
 ### 步驟 2：創建第一個 Store（概念）
