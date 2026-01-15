@@ -14,7 +14,7 @@ Module = FunctionalUnit (WhatToDo | BoundedContext) → @angular/fire/firestore 
 
 Entity = StateObject (Data | Behavior) → @angular/fire/firestore (Document | RealtimeSync | Converter)
 
-Modules = overview | documents | tasks | members | permissions | audit | settings | journal
+Modules = overview | documents | tasks | issues | members | permissions | audit | settings | journal
 
 Module.overview = WorkspaceSummary (Dashboard | Health | Usage) → @angular/fire/firestore (Aggregation | Count | Query)
 
@@ -32,6 +32,10 @@ Module.settings = Configuration (Preference | FeatureFlag | Quota) → @angular/
 
 Module.journal = EventJournal (Activity | Timeline | ChangeLog) → @angular/fire/firestore (ChangeFeed | OrderBy | Cursor)
 
+Module.issues = IssueTracking (Issue | Comment | Label | Milestone | State) 
+               → @angular/fire/firestore (Collection | SubCollection | Query | Index | SecurityRule)
+               + ProjectionLayer (ListView | KanbanView | TimelineView | MetricsView | BoardView)
+
 
 Command = Intent (ChangeRequest | Validation) → @angular/fire/functions (CallableFunction | AuthContext)
 Query = ReadModel (View | Projection) → ProjectionLayer (TreeListView | TreeGraphView | GanttView | TimelineView) → @angular/fire/firestore (Query | Snapshot | Converter)
@@ -41,7 +45,9 @@ Guard = RuntimeEnforcement (Access | Quota | RateLimit) → @angular/fire/authGu
 
 SharedContext = CrossModuleContext (EventBus | Schema | Contract | Semantic) → @angular/fire/firestore (SharedCollection | SchemaVersion)
 
-EventBus = SharedContext (CoreBackbone | CrossModuleCommunication | Decoupling) → TaskEventStream → ProjectionSignals → @angular/fire/functions (PubSubTrigger | EventBridge)
+EventBus = SharedContext (CoreBackbone | CrossModuleCommunication | Decoupling) 
+           → TaskEventStream → ProjectionSignals → @angular/fire/functions (PubSubTrigger | EventBridge)
+           → IssueEventStream → ProjectionSignals → @angular/fire/functions (PubSubTrigger | EventBridge)
 EventFlow = Stream (Direction | Order | Backpressure) → @angular/fire/functions (BackgroundTrigger | RetryPolicy)
 EventStore = Persistence (AppendOnly | Replay | Snapshot) → @angular/fire/firestore (ImmutableLog | SnapshotDoc)
 EventBusType = InMemory | MessageQueue | Stream → @angular/fire/functions (PubSub | Scheduler)
@@ -76,7 +82,7 @@ NoCircularFeatureDependency = true
 
 NgRxMapping = Workspace → FeatureShell 
             | Module → FeatureSlice 
-            | Entity → EntityAdapter (核心 Task) 
+            | Entity → EntityAdapter (核心 Task / Issue) 
             | Command → Action 
             | Query → Selector (投影視圖) 
             | Event → EffectStream 
@@ -87,7 +93,7 @@ GlobalShell = Auth | Config | Layout | Router → @angular/fire/auth + @angular/
 
 WorkspaceScope = Context | Permission | Preference → @angular/fire/firestore
 
-FeatureSlice = ModuleState → ProjectionSignals (TreeList | Gantt | Timeline) → @angular/fire/firestore (QuerySync)
+FeatureSlice = ModuleState → ProjectionSignals (TreeList | Gantt | Timeline | List | Kanban | Board | Metrics) → @angular/fire/firestore (QuerySync)
 
 EntityCache = SignalEntityAdapter → ProjectionLayerSignals → @angular/fire/firestore (LocalCache)
 
