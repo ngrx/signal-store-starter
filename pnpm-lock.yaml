@@ -32,6 +32,9 @@ importers:
       '@angular/forms':
         specifier: ~20.0.0
         version: 20.0.7(@angular/common@20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(@angular/platform-browser@20.0.7(@angular/animations@20.0.7(@angular/common@20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2)))(@angular/common@20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@angular/google-maps':
+        specifier: 20.0.0
+        version: 20.0.0(@angular/common@20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/material':
         specifier: ~20.0.0
         version: 20.0.6(a81f22e1a6d0ade306e4686ef8234cf6)
@@ -247,6 +250,13 @@ packages:
       '@angular/common': 20.0.7
       '@angular/core': 20.0.7
       '@angular/platform-browser': 20.0.7
+      rxjs: ^6.5.3 || ^7.4.0
+
+  '@angular/google-maps@20.0.0':
+    resolution: {integrity: sha512-XENjK9x0UeXmyS3wHKH5PEYWWS+ku1W6rtNrw+V30eL5OgPt/on3w/aU9bjsuu7hWTN4iN9JsvsZJWP8Ivz7iQ==}
+    peerDependencies:
+      '@angular/common': ^20.0.0 || ^21.0.0
+      '@angular/core': ^20.0.0 || ^21.0.0
       rxjs: ^6.5.3 || ^7.4.0
 
   '@angular/material@20.0.6':
@@ -1768,6 +1778,9 @@ packages:
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
+
+  '@types/google.maps@3.58.1':
+    resolution: {integrity: sha512-X9QTSvGJ0nCfMzYOnaVs/k6/4L+7F5uCS+4iUmkLEls6J9S/Phv+m/i3mDeyc49ZBgwab3EFO1HEoBY7k98EGQ==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -3292,6 +3305,14 @@ snapshots:
       rxjs: 7.8.2
       tslib: 2.8.1
 
+  '@angular/google-maps@20.0.0(@angular/common@20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2)':
+    dependencies:
+      '@angular/common': 20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/core': 20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2)
+      '@types/google.maps': 3.58.1
+      rxjs: 7.8.2
+      tslib: 2.8.1
+
   '@angular/material@20.0.6(a81f22e1a6d0ade306e4686ef8234cf6)':
     dependencies:
       '@angular/cdk': 20.0.6(@angular/common@20.0.7(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@20.0.7(@angular/compiler@20.0.7)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -4694,6 +4715,8 @@ snapshots:
   '@types/estree@1.0.7': {}
 
   '@types/estree@1.0.8': {}
+
+  '@types/google.maps@3.58.1': {}
 
   '@types/json-schema@7.0.15': {}
 
