@@ -35,6 +35,12 @@ handoffs:
 > **支援 zone-less 開發 - 推薦使用 zone-less 模式**
 > **必讀：請在實施前仔細閱讀並理解所有內容**
 > **Copilot completion can only use explicit code types and function signatures, and does not allow intent inference based on comments, README, or files not in the current context.**
+> **所有代碼必須符合此文件中的規範和約束條件。**
+> **在實施前，必須使用 Context7 MCP 工具查詢並驗證最新的 Angular 20+、NgRx Signals 及 Firebase 官方文檔。**
+> **在實施過程中，必須嚴格避免所有列出的反模式。**
+> **在實施完成後，必須再次驗證代碼是否符合所有規範和約束條件。**
+> **違反任何規範或使用任何反模式都將導致實施失敗。**
+
 ---
 
 ## 🧠 核心認知框架
