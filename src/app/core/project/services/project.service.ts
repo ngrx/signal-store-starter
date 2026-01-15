@@ -11,7 +11,7 @@ import {
 } from '@angular/fire/firestore';
 import { Observable, from, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { CreateProjectPayload, Project } from '../models/project.model';
+import { CreateProjectPayload, Project, applyProjectScopes } from '../models/project.model';
 
 @Injectable({
   providedIn: 'root',
@@ -48,8 +48,7 @@ export class ProjectService {
       createdAt: now,
       updatedAt: now,
       status: 'active',
-      ...(payload.organizationId ? { organizationId: payload.organizationId } : {}),
-      ...(payload.teamId ? { teamId: payload.teamId } : {}),
+      ...applyProjectScopes(payload),
     };
 
     return from(setDoc(docRef, project).then(() => docRef.id));

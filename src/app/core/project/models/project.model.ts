@@ -16,3 +16,8 @@ export interface CreateProjectPayload {
   organizationId?: string;
   teamId?: string;
 }
+
+export const applyProjectScopes = (payload: { organizationId?: string; teamId?: string }) => ({
+  ...(payload.organizationId ? { organizationId: payload.organizationId } : {}),
+  ...(payload.teamId ? { teamId: payload.teamId } : {}),
+});

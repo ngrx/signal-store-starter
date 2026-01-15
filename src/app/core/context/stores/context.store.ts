@@ -264,9 +264,10 @@ export const ContextStore = signalStore(
               console.warn('[ContextStore] Cannot create team without user');
               return of(null);
             }
+            const currentContext = store.current();
             const organizationId =
               payload.organizationId ||
-              (store.current()?.type === 'organization' ? (store.current() as any).organizationId : null);
+              (currentContext?.type === 'organization' ? currentContext.organizationId : null);
 
             if (!organizationId) {
               console.warn('[ContextStore] Team creation requires organization context');
@@ -325,9 +326,10 @@ export const ContextStore = signalStore(
               console.warn('[ContextStore] Cannot create partner without user');
               return of(null);
             }
+            const currentContext = store.current();
             const organizationId =
               payload.organizationId ||
-              (store.current()?.type === 'organization' ? (store.current() as any).organizationId : null);
+              (currentContext?.type === 'organization' ? currentContext.organizationId : null);
 
             if (!organizationId) {
               console.warn('[ContextStore] Partner creation requires organization context');
@@ -342,7 +344,6 @@ export const ContextStore = signalStore(
               organizationId,
               type: 'external',
               accessLevel: 'read',
-              contactEmail: authStore.user()?.email ?? '',
               createdAt: now,
               updatedAt: now,
               createdBy: user.uid,

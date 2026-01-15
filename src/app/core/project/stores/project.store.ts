@@ -9,7 +9,7 @@ import {
 import { computed, inject } from '@angular/core';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap, catchError, of } from 'rxjs';
-import { CreateProjectPayload, Project } from '../models/project.model';
+import { CreateProjectPayload, Project, applyProjectScopes } from '../models/project.model';
 import { ProjectService } from '../services/project.service';
 import { AuthStore } from '../../auth/stores/auth.store';
 
@@ -70,8 +70,7 @@ export const ProjectStore = signalStore(
                   createdAt: now,
                   updatedAt: now,
                   status: 'active',
-                  ...(payload.organizationId ? { organizationId: payload.organizationId } : {}),
-                  ...(payload.teamId ? { teamId: payload.teamId } : {}),
+                  ...applyProjectScopes(payload),
                 };
                 patchState(store, { projects: [...store.projects(), project] });
               }

@@ -229,59 +229,75 @@ export class DashboardComponent {
   protected contextStore = inject(ContextStore);
   protected projectStore = inject(ProjectStore);
   protected toast = signal('');
+  private toastTimeout: any;
+  private readonly toastMessages = {
+    orgCreated: 'Organization created and set as current context.',
+    teamCreated: 'Team created and set as current context.',
+    partnerCreated: 'Partner created.',
+    projectCreated: 'Project created.',
+  };
 
-  orgForm = this.fb.group({
+  orgForm = this.fb.nonNullable.group({
     name: ['', Validators.required],
     description: [''],
   });
 
-  teamForm = this.fb.group({
+  teamForm = this.fb.nonNullable.group({
     name: ['', Validators.required],
     description: [''],
   });
 
-  partnerForm = this.fb.group({
+  partnerForm = this.fb.nonNullable.group({
     name: ['', Validators.required],
     description: [''],
   });
 
-  projectForm = this.fb.group({
+  projectForm = this.fb.nonNullable.group({
     name: ['', Validators.required],
     description: [''],
   });
 
   createOrganization(): void {
     if (this.orgForm.invalid) return;
-    this.contextStore.createOrganization(this.orgForm.value as any);
+    this.contextStore.createOrganization(this.orgForm.getRawValue());
     this.orgForm.reset();
-    this.toast.set('Organization created and set as current context.');
+    this.showToast(this.toastMessages.orgCreated);
   }
 
   createTeam(): void {
     if (this.teamForm.invalid) return;
-    this.contextStore.createTeam(this.teamForm.value as any);
+    this.contextStore.createTeam(this.teamForm.getRawValue());
     this.teamForm.reset();
-    this.toast.set('Team created and set as current context.');
+    this.showToast(this.toastMessages.teamCreated);
   }
 
   createPartner(): void {
     if (this.partnerForm.invalid) return;
-    this.contextStore.createPartner(this.partnerForm.value as any);
+    this.contextStore.createPartner(this.partnerForm.getRawValue());
     this.partnerForm.reset();
-    this.toast.set('Partner created.');
+    this.showToast(this.toastMessages.partnerCreated);
   }
 
   createProject(): void {
     if (this.projectForm.invalid) return;
     const context = this.contextStore.current();
+    const base = this.projectForm.getRawValue();
     const payload = {
-      ...this.projectForm.value,
-      organizationId:
-        context?.type === 'organization' ? (context as any).organizationId : undefined,
-      teamId: context?.type === 'team' ? (context as any).teamId : undefined,
+      name: base.name,
+      ...(base.description ? { description: base.description } : {}),
+      ...(context?.type === 'organization' ? { organizationId: context.organizationId } : {}),
+      ...(context?.type === 'team' ? { teamId: context.teamId } : {}),
     };
-    this.projectStore.createProject(payload as any);
+    this.projectStore.createProject(payload);
     this.projectForm.reset();
-    this.toast.set('Project created.');
+    this.showToast(this.toastMessages.projectCreated);
+  }
+
+  private showToast(message: string): void {
+    this.toast.set(message);
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
+    }
+    this.toastTimeout = setTimeout(() => this.toast.set(''), 2500);
   }
 }

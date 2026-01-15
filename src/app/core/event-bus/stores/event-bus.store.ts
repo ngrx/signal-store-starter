@@ -27,10 +27,14 @@ export const EventBusStore = signalStore(
         timestamp: event.timestamp ?? Date.now(),
       };
 
+      const limit = store.retentionLimit();
       patchState(store, (state) => ({
-        events: [...state.events, normalized].slice(-200), // keep recent window
+        events: [...state.events, normalized].slice(limit > 0 ? -limit : undefined),
         lastEvent: normalized,
       }));
+    },
+    setRetentionLimit(limit: number): void {
+      patchState(store, { retentionLimit: Math.max(0, Math.trunc(limit)) });
     },
     clear(): void {
       patchState(store, { events: [], lastEvent: null });
