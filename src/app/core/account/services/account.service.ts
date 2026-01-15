@@ -33,6 +33,22 @@ export class AccountService {
     return from(setDoc(docRef, account));
   }
 
+  /**
+   * Idempotent write that guarantees an account document exists.
+   * Uses merge to avoid overwriting existing data.
+   */
+  ensureUserAccount(user: { uid: string; email?: string | null; displayName?: string | null }): Observable<void> {
+    const docRef = doc(collection(this.firestore, this.collectionName), user.uid);
+    const account: Partial<Account> = {
+      id: user.uid,
+      type: 'user',
+      email: user.email ?? '',
+      displayName: user.displayName ?? '',
+      updatedAt: new Date(),
+    };
+    return from(setDoc(docRef, account, { merge: true }));
+  }
+
   getAccount(id: string): Observable<Account | null> {
     const docRef = doc(this.firestore, this.collectionName, id);
     return docData(docRef, { idField: 'id' }).pipe(

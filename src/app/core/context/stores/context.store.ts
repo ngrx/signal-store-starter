@@ -25,6 +25,7 @@ import { EventBusStore } from '../../event-bus/stores/event-bus.store';
 import { Organization, OrganizationSettings } from '../../organization/models/organization.model';
 import { Team } from '../../team/models/team.model';
 import { Partner } from '../../partner/models/partner.model';
+import { WorkspaceStore } from '../../workspace/stores/workspace.store';
 
 const defaultOrganizationSettings: OrganizationSettings = {
   allowPartnerInvitation: true,
@@ -93,9 +94,13 @@ export const ContextStore = signalStore(
       orgService = inject(OrganizationService),
       teamService = inject(TeamService),
       partnerService = inject(PartnerService),
-      eventBus = inject(EventBusStore)
+      eventBus = inject(EventBusStore),
+      workspaceStore = inject(WorkspaceStore)
     ) => {
-      const clearContextState = () => patchState(store, initialContextState);
+      const clearContextState = () => {
+        patchState(store, initialContextState);
+        workspaceStore.clearAll();
+      };
 
       const applySwitchContext = (context: AppContext): void => {
         const event: ContextSwitchEvent = {
@@ -115,6 +120,37 @@ export const ContextStore = signalStore(
           current: context,
           history: [...store.history(), event],
         });
+        // Keep workspace store in sync so modules resolve current workspace
+        const workspaceShape =
+          context.type === 'user'
+            ? {
+                id: context.userId,
+                name: context.displayName || context.email,
+                description: 'Personal workspace',
+                type: 'personal' as const,
+              }
+            : context.type === 'organization'
+            ? {
+                id: context.organizationId,
+                name: context.name,
+                description: 'Organization workspace',
+                type: 'organization' as const,
+              }
+            : context.type === 'team'
+            ? {
+                id: context.teamId,
+                name: context.name,
+                description: 'Team workspace',
+                type: 'team' as const,
+              }
+            : {
+                id: context.partnerId,
+                name: context.name,
+                description: 'Partner workspace',
+                type: 'partner' as const,
+              };
+        workspaceStore.upsertWorkspace(workspaceShape as any);
+        workspaceStore.setCurrentWorkspace(workspaceShape as any);
         eventBus.emit({
           type: 'context.switched',
           payload: event,
@@ -165,9 +201,9 @@ export const ContextStore = signalStore(
             });
 
             return combineLatest([
-              orgService.list({}),
-              teamService.list({}),
-              partnerService.list({}),
+              orgService.list({ createdBy: user.uid }),
+              teamService.list({ createdBy: user.uid }),
+              partnerService.list({ createdBy: user.uid }),
             ]);
           }),
           tap((result) => {
@@ -226,6 +262,7 @@ export const ContextStore = signalStore(
               createdAt: now,
               updatedAt: now,
               createdBy: user.uid,
+              ownerId: user.uid,
               status: 'active',
               settings: defaultOrganizationSettings,
             };

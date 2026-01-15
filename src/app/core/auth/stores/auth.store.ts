@@ -11,6 +11,9 @@ import { computed, inject } from '@angular/core';
 import { pipe, switchMap, tap, catchError, of } from 'rxjs';
 import { initialAuthState } from './auth.state';
 import { AuthService } from '../services/auth.service';
+import { ContextStore } from '../../context/stores/context.store';
+import { WorkspaceStore } from '../../workspace/stores/workspace.store';
+import { AccountService } from '../../account/services/account.service';
 
 type AuthState = typeof initialAuthState;
 
@@ -55,7 +58,14 @@ export const AuthStore = signalStore(
     isLoading: computed(() => status() === 'loading'),
     isUnauthenticated: computed(() => status() === 'unauthenticated'),
   })),
-  withMethods((store, authService = inject(AuthService)) => {
+  withMethods(
+    (
+      store,
+      authService = inject(AuthService),
+      contextStore = inject(ContextStore),
+      workspaceStore = inject(WorkspaceStore),
+      accountService = inject(AccountService)
+    ) => {
     // Reactive login method using rxMethod
     // Zone-less: Observable operations update signals via patchState
     const loginEffect = rxMethod<{ email: string; password: string }>(
@@ -145,6 +155,8 @@ export const AuthStore = signalStore(
                 status: 'unauthenticated',
                 error: null,
               });
+              contextStore.clearContext();
+              workspaceStore.clearAll();
             }),
             catchError((error: any) => {
               patchState(store, {
@@ -205,13 +217,20 @@ export const AuthStore = signalStore(
     };
   }),
   withHooks({
-    onInit(store, authService = inject(AuthService)) {
+    onInit(store, authService = inject(AuthService), accountService = inject(AccountService)) {
       // Reactive method to sync auth state changes
       // Zone-less: This runs continuously, updating signals when Firebase auth state changes
       const syncAuthState = rxMethod<void>(
         pipe(
           switchMap(() => authService.authState$),
           tap((user) => {
+            if (user) {
+              accountService.ensureUserAccount({
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+              }).subscribe();
+            }
             store.setUser(user);
           }),
           catchError((error) => {

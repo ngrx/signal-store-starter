@@ -61,7 +61,8 @@ import { AuthStore } from '../../../../core/auth/stores/auth.store';
         </form>
 
         <div class="auth-links">
-          <a routerLink="/forgot-password">Forgot Password?</a>
+          <a routerLink="/reset-password">Reset Password</a>
+          <a routerLink="/verify-email">Verify Email</a>
           <a routerLink="/register">Don't have an account? Register</a>
         </div>
       </div>

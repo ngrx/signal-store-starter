@@ -59,5 +59,8 @@ export const WorkspaceStore = signalStore(
       this.upsertWorkspace(personal);
       this.setCurrentWorkspace(personal);
     },
+    clearAll() {
+      patchState(store, initialWorkspaceState);
+    },
   }))
 );
