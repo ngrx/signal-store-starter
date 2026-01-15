@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -190,6 +190,18 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   protected authStore = inject(AuthStore);
+
+  constructor() {
+    // Navigate reactively once authentication succeeds (zone-less friendly)
+    effect(
+      () => {
+        if (this.authStore.isAuthenticated()) {
+          this.router.navigate(['/dashboard']);
+        }
+      },
+      { allowSignalWrites: true }
+    );
+  }
 
   loginForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],

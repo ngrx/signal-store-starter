@@ -72,6 +72,7 @@ export const AuthStore = signalStore(
             }),
             catchError((error: any) => {
               patchState(store, {
+                user: null,
                 status: 'unauthenticated',
                 error: error.message || 'Login failed',
               });
@@ -97,6 +98,7 @@ export const AuthStore = signalStore(
             }),
             catchError((error: any) => {
               patchState(store, {
+                user: null,
                 status: 'unauthenticated',
                 error: error.message || 'Registration failed',
               });
@@ -146,6 +148,8 @@ export const AuthStore = signalStore(
             }),
             catchError((error: any) => {
               patchState(store, {
+                user: null,
+                status: 'unauthenticated',
                 error: error.message || 'Logout failed',
               });
               return of(null);
@@ -201,4 +205,3 @@ export const AuthStore = signalStore(
     },
   })
 );
-

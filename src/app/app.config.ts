@@ -64,13 +64,10 @@ export const appConfig: ApplicationConfig = {
     // This tells Angular to use signal-based change detection instead of Zone.js
     // Note: This is now a stable API in Angular 20+ (no longer experimental)
     provideZonelessChangeDetection(),
-    
+
     // Router configuration
     provideRouter(routes),
-    
-    // Router configuration
-    provideRouter(routes),
-    
+
     // Firebase App Initialization
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     
@@ -84,11 +81,17 @@ export const appConfig: ApplicationConfig = {
     ScreenTrackingService,
     UserTrackingService,
     
-    // Firebase App Check with reCAPTCHA Enterprise
-    provideAppCheck(() => {
-      const provider = new ReCaptchaEnterpriseProvider(environment.appCheckSiteKey);
-      return initializeAppCheck(undefined, { provider, isTokenAutoRefreshEnabled: true });
-    }),
+    // Firebase App Check with reCAPTCHA Enterprise (disabled in non-production to avoid local 403s)
+    ...(
+      environment.production && environment.appCheckSiteKey
+        ? [
+            provideAppCheck(() => {
+              const provider = new ReCaptchaEnterpriseProvider(environment.appCheckSiteKey);
+              return initializeAppCheck(undefined, { provider, isTokenAutoRefreshEnabled: true });
+            }),
+          ]
+        : []
+    ),
     provideDatabase(() => getDatabase()),
     provideDataConnect(() =>
       getDataConnect({
