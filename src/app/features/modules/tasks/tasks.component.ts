@@ -7,8 +7,8 @@
 import { Component, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TaskStore } from '../../../core/tasks/stores/task.store';
-import { ViewMode, TaskStatus, TaskPriority } from '../../../core/tasks/models/task.model';
+import { TaskStore } from '../../../core/workspace/stores/task.store';
+import { ViewMode, TaskStatus, TaskPriority } from '../../../core/workspace/models/task.model';
 import { ContextStore } from '../../../core/context/stores/context.store';
 
 @Component({

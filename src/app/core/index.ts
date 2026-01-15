@@ -29,7 +29,7 @@ export * from './partner/services/partner.service';
 
 // Workspace
 export * from './workspace/models/workspace.model';
-export * from './workspace/stores/workspace.state';
+export * from './workspace/state/workspace.state';
 export * from './workspace/stores/workspace.store';
 export * from './workspace/services/workspace.service';
 
@@ -40,7 +40,7 @@ export * from './auth/services/auth.service';
 export * from './auth/guards/auth.guard';
 
 // Tasks
-export * from './tasks/models/task.model';
-export * from './tasks/stores/task.state';
-export * from './tasks/stores/task.store';
-export * from './tasks/services/task.service';
+export * from './workspace/models/task.model';
+export * from './workspace/state/task.state';
+export * from './workspace/stores/task.store';
+export * from './workspace/services/task.service';

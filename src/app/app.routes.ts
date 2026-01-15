@@ -43,56 +43,56 @@ export const routes: Routes = [
       {
         path: 'overview',
         loadComponent: () =>
-          import('./features/workspace/overview/overview.component').then(
+          import('./features/modules/overview/overview.component').then(
             (m) => m.OverviewComponent
           ),
       },
       {
         path: 'documents',
         loadComponent: () =>
-          import('./features/workspace/documents/documents.component').then(
+          import('./features/modules/documents/documents.component').then(
             (m) => m.DocumentsComponent
           ),
       },
       {
         path: 'tasks',
         loadComponent: () =>
-          import('./features/workspace/tasks/tasks.component').then(
+          import('./features/modules/tasks/tasks.component').then(
             (m) => m.TasksComponent
           ),
       },
       {
         path: 'members',
         loadComponent: () =>
-          import('./features/workspace/members/members.component').then(
+          import('./features/modules/members/members.component').then(
             (m) => m.MembersComponent
           ),
       },
       {
         path: 'permissions',
         loadComponent: () =>
-          import('./features/workspace/permissions/permissions.component').then(
+          import('./features/modules/permissions/permissions.component').then(
             (m) => m.PermissionsComponent
           ),
       },
       {
         path: 'audit',
         loadComponent: () =>
-          import('./features/workspace/audit/audit.component').then(
+          import('./features/modules/audit/audit.component').then(
             (m) => m.AuditComponent
           ),
       },
       {
         path: 'settings',
         loadComponent: () =>
-          import('./features/workspace/settings/settings.component').then(
+          import('./features/modules/settings/settings.component').then(
             (m) => m.SettingsComponent
           ),
       },
       {
         path: 'journal',
         loadComponent: () =>
-          import('./features/workspace/journal/journal.component').then(
+          import('./features/modules/journal/journal.component').then(
             (m) => m.JournalComponent
           ),
       },

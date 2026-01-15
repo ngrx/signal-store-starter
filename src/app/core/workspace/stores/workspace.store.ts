@@ -6,7 +6,7 @@ import {
   withState,
 } from '@ngrx/signals';
 import { computed } from '@angular/core';
-import { initialWorkspaceState } from './workspace.state';
+import { initialWorkspaceState } from '../state/workspace.state';
 
 export const WorkspaceStore = signalStore(
   { providedIn: 'root' },

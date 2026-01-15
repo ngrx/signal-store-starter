@@ -9,7 +9,7 @@ import { patchState, signalStore, withComputed, withHooks, withMethods, withStat
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap, catchError, of } from 'rxjs';
 import { TaskService } from '../services/task.service';
-import { initialTaskState, TaskState } from './task.state';
+import { initialTaskState, TaskState } from '../state/task.state';
 import { Task, TaskFilter, ViewMode, TaskTreeNode, GanttTaskData, TimelineEvent } from '../models/task.model';
 
 export const TaskStore = signalStore(
