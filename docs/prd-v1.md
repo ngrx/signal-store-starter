@@ -118,3 +118,20 @@ FeatureToggle = @angular/fire (RemoteConfigFlag | ABTesting | GradualRollout)
 
 
 ---
+
+### ⚠️ 可能未來要注意(V2)
+
+1. **現場施工 / 工地任務**
+
+   * 如果將來要加 WorkPackage / 現場班組 / 設備管理，要在 Workspace 下新增模組，不要跟 Task 混合
+
+2. **事件流隔離**
+
+   * TaskEventStream / IssueEventStream 保持各自 ProjectionSignals
+   * 以防同名事件或 Signal 投影互相污染
+
+3. **EntityAdapter 分開**
+
+   * 現在是 `核心 Task / Issue`，未來新增模組就增加 `Equipment / Safety / WorkPackage`
+
+---
