@@ -1,9 +1,9 @@
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthStore } from '../../core/auth/stores/auth.store';
+import { AuthStore, AuthStoreInstance } from '../../core/auth/stores/auth.store';
 import { HeaderComponent } from '../../shared/components/header/header.component';
-import { ContextStore } from '../../core/context/stores/context.store';
+import { ContextStore, ContextStoreInstance } from '../../core/context/stores/context.store';
 import { ProjectStore } from '../../core/project/stores/project.store';
 
 @Component({
@@ -224,9 +224,9 @@ import { ProjectStore } from '../../core/project/stores/project.store';
   `],
 })
 export class DashboardComponent implements OnDestroy {
-  protected authStore = inject(AuthStore);
+  protected authStore = inject<AuthStoreInstance>(AuthStore);
   private fb = inject(FormBuilder);
-  protected contextStore = inject(ContextStore);
+  protected contextStore = inject<ContextStoreInstance>(ContextStore);
   protected projectStore = inject(ProjectStore);
   protected toast = signal('');
   private toastTimeout: ReturnType<typeof setTimeout> | null = null;

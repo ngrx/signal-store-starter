@@ -1,10 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { AuthStore } from '../../../core/auth/stores/auth.store';
+import { AuthStore, AuthStoreInstance } from '../../../core/auth/stores/auth.store';
 import { AvatarService } from '../../services/avatar.service';
 import { MenuService } from '../../services/menu.service';
-import { ContextStore } from '../../../core/context/stores/context.store';
+import { ContextStore, ContextStoreInstance } from '../../../core/context/stores/context.store';
 import { MenuItem } from '../../models/menu.model';
 
 @Component({
@@ -331,8 +331,8 @@ import { MenuItem } from '../../models/menu.model';
   `],
 })
 export class HeaderComponent {
-  protected authStore = inject(AuthStore);
-  protected contextStore = inject(ContextStore);
+  protected authStore = inject<AuthStoreInstance>(AuthStore);
+  protected contextStore = inject<ContextStoreInstance>(ContextStore);
   private router = inject(Router);
   private avatarService = inject(AvatarService);
   private menuService = inject(MenuService);

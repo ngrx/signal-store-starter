@@ -7,12 +7,29 @@ import {
   withHooks,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { computed, inject } from '@angular/core';
+import { computed, inject, Type } from '@angular/core';
 import { pipe, switchMap, tap, catchError, of } from 'rxjs';
-import { initialAuthState } from './auth.state';
+import { initialAuthState } from '../state/auth.state';
 import { AuthService } from '../services/auth.service';
+import { WorkspaceStore, WorkspaceStoreInstance } from '../../workspace/stores/workspace.store';
+import { AccountService } from '../../account/services/account.service';
 
 type AuthState = typeof initialAuthState;
+
+export interface AuthStoreInstance {
+  user: () => any;
+  status: () => AuthState['status'];
+  error: () => string | null;
+  isAuthenticated: () => boolean;
+  isLoading: () => boolean;
+  isUnauthenticated: () => boolean;
+  login(credentials: { email: string; password: string }): Promise<void>;
+  register(credentials: { email: string; password: string }): Promise<void>;
+  resetPassword(data: { email: string }): Promise<void>;
+  logout(): Promise<void>;
+  verifyEmail(): Promise<void>;
+  setUser(user: any): void;
+}
 
 /**
  * AuthStore - Zone-less Compatible Signal Store
@@ -36,7 +53,7 @@ type AuthState = typeof initialAuthState;
  * Architecture Compliance:
  * - Account: Firebase Auth provides identity (who you are)
  * - AuthStore: Manages authentication state (signal-based)
- * - Workspace: ContextStore reacts to auth changes (Account → Workspace)
+ * - Workspace: WorkspaceStore reacts to auth changes (Account → Workspace)
  * 
  * Why this works without Zone.js:
  * - rxMethod() subscribes to observables and updates signals
@@ -55,7 +72,13 @@ export const AuthStore = signalStore(
     isLoading: computed(() => status() === 'loading'),
     isUnauthenticated: computed(() => status() === 'unauthenticated'),
   })),
-  withMethods((store, authService = inject(AuthService)) => {
+  withMethods(
+    (
+      store,
+      authService = inject(AuthService),
+      workspaceStore = inject<WorkspaceStoreInstance>(WorkspaceStore),
+      accountService = inject(AccountService)
+    ) => {
     // Reactive login method using rxMethod
     // Zone-less: Observable operations update signals via patchState
     const loginEffect = rxMethod<{ email: string; password: string }>(
@@ -145,12 +168,33 @@ export const AuthStore = signalStore(
                 status: 'unauthenticated',
                 error: null,
               });
+              workspaceStore.clearAll();
             }),
             catchError((error: any) => {
               patchState(store, {
                 user: null,
                 status: 'unauthenticated',
                 error: error.message || 'Logout failed',
+              });
+              return of(null);
+            })
+          )
+        )
+      )
+    );
+
+    const verifyEmailEffect = rxMethod<void>(
+      pipe(
+        tap(() => patchState(store, { status: 'loading', error: null })),
+        switchMap(() =>
+          authService.sendVerificationEmail().pipe(
+            tap(() => {
+              patchState(store, { status: 'idle' });
+            }),
+            catchError((error: any) => {
+              patchState(store, {
+                error: error.message || 'Verification email failed',
+                status: 'idle',
               });
               return of(null);
             })
@@ -173,6 +217,9 @@ export const AuthStore = signalStore(
       async logout(): Promise<void> {
         logoutEffect();
       },
+      async verifyEmail(): Promise<void> {
+        verifyEmailEffect();
+      },
       setUser(user: any) {
         patchState(store, {
           user,
@@ -182,14 +229,26 @@ export const AuthStore = signalStore(
     };
   }),
   withHooks({
-    onInit(store, authService = inject(AuthService)) {
+    onInit(store, authService = inject(AuthService), accountService = inject(AccountService)) {
       // Reactive method to sync auth state changes
       // Zone-less: This runs continuously, updating signals when Firebase auth state changes
       const syncAuthState = rxMethod<void>(
         pipe(
           switchMap(() => authService.authState$),
-          tap((user) => {
+          switchMap((user) => {
             store.setUser(user);
+
+            if (!user) {
+              return of(null);
+            }
+
+            return accountService.ensureUserAccount({
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              emailVerified: user.emailVerified,
+            });
           }),
           catchError((error) => {
             console.error('Auth state sync error:', error);
@@ -204,4 +263,4 @@ export const AuthStore = signalStore(
       syncAuthState();
     },
   })
-);
+) as unknown as Type<AuthStoreInstance>;

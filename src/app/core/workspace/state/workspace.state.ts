@@ -5,6 +5,7 @@ export interface WorkspaceState {
   currentWorkspace: Workspace | null;
   loading: boolean;
   error: string | null;
+  workspaceById: Record<string, Workspace>;
 }
 
 export const initialWorkspaceState: WorkspaceState = {
@@ -12,4 +13,5 @@ export const initialWorkspaceState: WorkspaceState = {
   currentWorkspace: null,
   loading: false,
   error: null,
+  workspaceById: {},
 };

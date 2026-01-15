@@ -17,20 +17,41 @@ export class AccountService {
   private firestore = inject(Firestore);
   private collectionName = 'accounts';
 
-  createUserAccount(user: { uid: string; email?: string | null; displayName?: string | null }): Observable<void> {
+  createUserAccount(user: { uid: string; email?: string | null; displayName?: string | null; emailVerified?: boolean | null; photoURL?: string | null }): Observable<void> {
     const docRef = doc(collection(this.firestore, this.collectionName), user.uid);
     const account: Account = {
       id: user.uid,
       type: 'user',
       email: user.email ?? '',
       displayName: user.displayName ?? '',
+      photoURL: user.photoURL ?? '',
       createdAt: new Date(),
       updatedAt: new Date(),
       metadata: {
-        emailVerified: false,
+        emailVerified: user.emailVerified ?? false,
       },
     };
-    return from(setDoc(docRef, account));
+    return from(setDoc(docRef, account, { merge: true }));
+  }
+
+  /**
+   * Idempotent write that guarantees an account document exists.
+   * Uses merge to avoid overwriting existing data.
+   */
+  ensureUserAccount(user: { uid: string; email?: string | null; displayName?: string | null; emailVerified?: boolean | null; photoURL?: string | null }): Observable<void> {
+    const docRef = doc(collection(this.firestore, this.collectionName), user.uid);
+    const account: Partial<Account> = {
+      id: user.uid,
+      type: 'user',
+      email: user.email ?? '',
+      displayName: user.displayName ?? '',
+      photoURL: user.photoURL ?? '',
+      updatedAt: new Date(),
+      metadata: {
+        emailVerified: user.emailVerified ?? false,
+      },
+    };
+    return from(setDoc(docRef, account, { merge: true }));
   }
 
   getAccount(id: string): Observable<Account | null> {

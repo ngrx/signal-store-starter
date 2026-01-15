@@ -20,6 +20,7 @@ export interface Organization {
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
+  ownerId?: string;
   
   // Status
   status: 'active' | 'suspended' | 'inactive';
