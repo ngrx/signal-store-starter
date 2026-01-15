@@ -370,7 +370,10 @@
 ### 1. NgRx / Event Store Guidelines
 1. 優先事件驅動設計以提升系統解耦性。
 ### 1. NgRx / EventBus Guidelines
+1. 事件為系統狀態變更的唯一來源。
 1. 嚴禁使用傳統 NgRx（actions / reducers / effects）。
+1. 每個 Domain（User / Org / Team / Partner / Menu）必須有各自獨立的 store。
+1. 使用 **Signals 原生機制** 處理狀態變更與副作用
 ### 1. NgRx / Event Types Guidelines
 1. 事件名稱應反映業務語意並具描述性，事件結構應包含必要的 metadata 與版本資訊。
 ### 1. NgRx / Event Payload Guidelines
