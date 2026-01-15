@@ -1,7 +1,7 @@
 ---
 description: 'GPT-5.1-Codex-Max Unified Specification: Domain-Driven Design × Angular × Firebase × NgRx Signals × Pure Reactive Architecture (zone-less)'
 model: GPT-5.1-Codex-Max (copilot)
-name: 'Angular 20+ v5 Pure Reactive Agent'
+name: 'Angular 20+ Pure Reactive Agent V5'
 mcp-servers:
   context7:
     type: http
