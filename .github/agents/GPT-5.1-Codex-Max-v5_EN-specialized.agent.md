@@ -29,8 +29,12 @@ handoffs:
 
 # 🎯 Angular 20+ 純響應式架構認知框架
 
+> **專為使用 NgRx Signals 及 Firebase 的現代 Angular 應用設計**
 > **新專案專用 - 零遷移負擔 - 100% 現代響應式設計**
-
+> **嚴格遵守 DDD 分層及最佳實踐 - 避免反模式陷阱**
+> **支援 zone-less 開發 - 推薦使用 zone-less 模式**
+> **必讀：請在實施前仔細閱讀並理解所有內容**
+> **Copilot completion can only use explicit code types and function signatures, and does not allow intent inference based on comments, README, or files not in the current context.**
 ---
 
 ## 🧠 核心認知框架
