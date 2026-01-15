@@ -21,6 +21,23 @@ import { AuthStore } from '../../auth/stores/auth.store';
 import { OrganizationService } from '../../organization/services/organization.service';
 import { TeamService } from '../../team/services/team.service';
 import { PartnerService } from '../../partner/services/partner.service';
+import { EventBusStore } from '../../event-bus/stores/event-bus.store';
+import { Organization, OrganizationSettings } from '../../organization/models/organization.model';
+import { Team } from '../../team/models/team.model';
+import { Partner } from '../../partner/models/partner.model';
+
+const defaultOrganizationSettings: OrganizationSettings = {
+  allowPartnerInvitation: true,
+  allowTeamCreation: true,
+  defaultWorkspaceQuota: 1,
+  requireEmailVerification: false,
+  features: {
+    auditEnabled: true,
+    documentsEnabled: true,
+    journalEnabled: true,
+    tasksEnabled: true,
+  },
+};
 
 export const ContextStore = signalStore(
   { providedIn: 'root' },
@@ -69,97 +86,84 @@ export const ContextStore = signalStore(
       );
     }),
   })),
-  withMethods((store, authStore = inject(AuthStore)) => ({
-    switchContext(context: AppContext): void {
-      const event: ContextSwitchEvent = {
-        type: context.type,
-        id:
-          context.type === 'user'
-            ? context.userId
-            : context.type === 'organization'
-            ? context.organizationId
-            : context.type === 'team'
-            ? context.teamId
-            : context.partnerId,
-        timestamp: Date.now(),
-      };
-
-      patchState(store, {
-        current: context,
-        history: [...store.history(), event],
-      });
-    },
-    setAvailableOrganizations(organizations: OrganizationContext[]): void {
-      patchState(store, (state) => ({
-        available: {
-          ...state.available,
-          organizations,
-        },
-      }));
-    },
-    setAvailableTeams(teams: TeamContext[]): void {
-      patchState(store, (state) => ({
-        available: {
-          ...state.available,
-          teams,
-        },
-      }));
-    },
-    setAvailablePartners(partners: PartnerContext[]): void {
-      patchState(store, (state) => ({
-        available: {
-          ...state.available,
-          partners,
-        },
-      }));
-    },
-    resetContext(): void {
-      const user = authStore.user();
-      if (user) {
-        patchState(store, {
-          current: {
-            type: 'user',
-            userId: user.uid,
-            email: user.email || '',
-            displayName: user.displayName ?? null,
-          },
-        });
-      } else {
-        patchState(store, initialContextState);
-      }
-    },
-    clearContext(): void {
-      patchState(store, initialContextState);
-    },
-  })),
-  withHooks({
-    onInit(
+  withMethods(
+    (
       store,
       authStore = inject(AuthStore),
       orgService = inject(OrganizationService),
       teamService = inject(TeamService),
-      partnerService = inject(PartnerService)
-    ) {
-      // Reactive method to load available contexts when user is authenticated
+      partnerService = inject(PartnerService),
+      eventBus = inject(EventBusStore)
+    ) => {
+      const clearContextState = () => patchState(store, initialContextState);
+
+      const applySwitchContext = (context: AppContext): void => {
+        const event: ContextSwitchEvent = {
+          type: context.type,
+          id:
+            context.type === 'user'
+              ? context.userId
+              : context.type === 'organization'
+              ? context.organizationId
+              : context.type === 'team'
+              ? context.teamId
+              : context.partnerId,
+          timestamp: Date.now(),
+        };
+
+        patchState(store, {
+          current: context,
+          history: [...store.history(), event],
+        });
+        eventBus.emit({
+          type: 'context.switched',
+          payload: event,
+          scope: 'workspace',
+          timestamp: Date.now(),
+          producer: 'ContextStore',
+        });
+      };
+
+      const setAvailableOrganizations = (organizations: OrganizationContext[]) =>
+        patchState(store, (state) => ({
+          available: {
+            ...state.available,
+            organizations,
+          },
+        }));
+
+      const setAvailableTeams = (teams: TeamContext[]) =>
+        patchState(store, (state) => ({
+          available: {
+            ...state.available,
+            teams,
+          },
+        }));
+
+      const setAvailablePartners = (partners: PartnerContext[]) =>
+        patchState(store, (state) => ({
+          available: {
+            ...state.available,
+            partners,
+          },
+        }));
+
       const loadAvailableContexts = rxMethod<void>(
         pipe(
           switchMap(() => {
             const user = authStore.user();
             if (!user) {
-              // Clear context when user logs out
-              store.clearContext();
+              clearContextState();
               return of(null);
             }
 
-            // Initialize user context
-            store.switchContext({
+            applySwitchContext({
               type: 'user',
               userId: user.uid,
               email: user.email || '',
               displayName: user.displayName ?? null,
             });
 
-            // Load all available contexts reactively
             return combineLatest([
               orgService.list({}),
               teamService.list({}),
@@ -169,34 +173,33 @@ export const ContextStore = signalStore(
           tap((result) => {
             if (result) {
               const [orgs, teams, partners] = result;
-              
-              // Transform to context objects
-              const orgContexts: OrganizationContext[] = orgs.map((org: any) => ({
+
+              const orgContexts: OrganizationContext[] = orgs.map((org: Organization) => ({
                 type: 'organization' as const,
                 organizationId: org.id,
                 name: org.name,
-                role: 'member' as const, // Should come from membership data
+                role: 'member' as const,
               }));
 
-              const teamContexts: TeamContext[] = teams.map((team: any) => ({
+              const teamContexts: TeamContext[] = teams.map((team: Team) => ({
                 type: 'team' as const,
                 teamId: team.id,
                 organizationId: team.organizationId,
                 name: team.name,
-                role: 'member' as const, // Should come from membership data
+                role: 'member' as const,
               }));
 
-              const partnerContexts: PartnerContext[] = partners.map((partner: any) => ({
+              const partnerContexts: PartnerContext[] = partners.map((partner: Partner) => ({
                 type: 'partner' as const,
                 partnerId: partner.id,
                 organizationId: partner.organizationId,
                 name: partner.name,
-                accessLevel: 'readonly' as const, // Should come from access data
+                accessLevel: 'readonly' as const,
               }));
 
-              store.setAvailableOrganizations(orgContexts);
-              store.setAvailableTeams(teamContexts);
-              store.setAvailablePartners(partnerContexts);
+              setAvailableOrganizations(orgContexts);
+              setAvailableTeams(teamContexts);
+              setAvailablePartners(partnerContexts);
             }
           }),
           catchError((error) => {
@@ -206,9 +209,245 @@ export const ContextStore = signalStore(
         )
       );
 
-      // Trigger loading immediately (user may already be authenticated from APP_INITIALIZER)
+      const createOrganizationEffect = rxMethod<{ name: string; description?: string }>(
+        pipe(
+          switchMap((payload) => {
+            const user = authStore.user();
+            if (!user) {
+              console.warn('[ContextStore] Cannot create organization without user');
+              return of(null);
+            }
+
+            const now = new Date();
+            const org: Omit<Organization, 'id'> = {
+              name: payload.name,
+              displayName: payload.name,
+              description: payload.description ?? '',
+              createdAt: now,
+              updatedAt: now,
+              createdBy: user.uid,
+              status: 'active',
+              settings: defaultOrganizationSettings,
+            };
+
+            return orgService.createOrganization(org).pipe(
+              tap((organizationId) => {
+                if (!organizationId) {
+                  eventBus.emit({
+                    type: 'context.organization.failed',
+                    payload: { name: payload.name, reason: 'missing id' },
+                    scope: 'workspace',
+                    timestamp: Date.now(),
+                    producer: 'ContextStore',
+                  });
+                  return;
+                }
+                const orgContext: OrganizationContext = {
+                  type: 'organization',
+                  organizationId,
+                  name: payload.name,
+                  role: 'owner',
+                };
+                setAvailableOrganizations([...store.available().organizations, orgContext]);
+                applySwitchContext(orgContext);
+                eventBus.emit({
+                  type: 'context.organization.created',
+                  payload: { organizationId, name: payload.name },
+                  scope: 'workspace',
+                  timestamp: Date.now(),
+                  producer: 'ContextStore',
+                });
+              }),
+              catchError((error) => {
+                console.error('[ContextStore] Failed to create organization', error);
+                return of(null);
+              })
+            );
+          })
+        )
+      );
+
+      const createTeamEffect = rxMethod<{ name: string; description?: string; organizationId?: string }>(
+        pipe(
+          switchMap((payload) => {
+            const user = authStore.user();
+            if (!user) {
+              console.warn('[ContextStore] Cannot create team without user');
+              return of(null);
+            }
+            const currentContext = store.current();
+            const organizationId =
+              payload.organizationId ||
+              (currentContext?.type === 'organization' ? currentContext.organizationId : null);
+
+            if (!organizationId) {
+              console.warn('[ContextStore] Team creation requires organization context');
+              return of(null);
+            }
+
+            const now = new Date();
+            const team: Omit<Team, 'id'> = {
+              name: payload.name,
+              displayName: payload.name,
+              description: payload.description ?? '',
+              organizationId,
+              type: 'internal',
+              memberCount: 1,
+              visibility: 'private',
+              createdAt: now,
+              updatedAt: now,
+              createdBy: user.uid,
+              status: 'active',
+            };
+
+            return teamService.createTeam(team).pipe(
+              tap((teamId) => {
+                if (!teamId) {
+                  eventBus.emit({
+                    type: 'context.team.failed',
+                    payload: { name: payload.name, organizationId, reason: 'missing id' },
+                    scope: 'workspace',
+                    timestamp: Date.now(),
+                    producer: 'ContextStore',
+                  });
+                  return;
+                }
+                const teamContext: TeamContext = {
+                  type: 'team',
+                  teamId,
+                  organizationId,
+                  name: payload.name,
+                  role: 'lead',
+                };
+                setAvailableTeams([...store.available().teams, teamContext]);
+                applySwitchContext(teamContext);
+                eventBus.emit({
+                  type: 'context.team.created',
+                  payload: { teamId, organizationId, name: payload.name },
+                  scope: 'workspace',
+                  timestamp: Date.now(),
+                  producer: 'ContextStore',
+                });
+              }),
+              catchError((error) => {
+                console.error('[ContextStore] Failed to create team', error);
+                return of(null);
+              })
+            );
+          })
+        )
+      );
+
+      const createPartnerEffect = rxMethod<{ name: string; description?: string; organizationId?: string }>(
+        pipe(
+          switchMap((payload) => {
+            const user = authStore.user();
+            if (!user) {
+              console.warn('[ContextStore] Cannot create partner without user');
+              return of(null);
+            }
+            const currentContext = store.current();
+            const organizationId =
+              payload.organizationId ||
+              (currentContext?.type === 'organization' ? currentContext.organizationId : null);
+
+            if (!organizationId) {
+              console.warn('[ContextStore] Partner creation requires organization context');
+              return of(null);
+            }
+
+            const now = new Date();
+            const partner: Omit<Partner, 'id'> = {
+              name: payload.name,
+              displayName: payload.name,
+              description: payload.description ?? '',
+              organizationId,
+              type: 'external',
+              accessLevel: 'read',
+              createdAt: now,
+              updatedAt: now,
+              createdBy: user.uid,
+              status: 'active',
+            };
+
+            return partnerService.createPartner(partner).pipe(
+              tap((partnerId) => {
+                if (!partnerId) {
+                  eventBus.emit({
+                    type: 'context.partner.failed',
+                    payload: { name: payload.name, organizationId, reason: 'missing id' },
+                    scope: 'workspace',
+                    timestamp: Date.now(),
+                    producer: 'ContextStore',
+                  });
+                  return;
+                }
+                const partnerContext: PartnerContext = {
+                  type: 'partner',
+                  partnerId,
+                  organizationId,
+                  name: payload.name,
+                  accessLevel: 'readonly',
+                };
+                setAvailablePartners([...store.available().partners, partnerContext]);
+                eventBus.emit({
+                  type: 'context.partner.created',
+                  payload: { partnerId, organizationId, name: payload.name },
+                  scope: 'workspace',
+                  timestamp: Date.now(),
+                  producer: 'ContextStore',
+                });
+              }),
+              catchError((error) => {
+                console.error('[ContextStore] Failed to create partner', error);
+                return of(null);
+              })
+            );
+          })
+        )
+      );
+
+      return {
+        switchContext: applySwitchContext,
+        setAvailableOrganizations,
+        setAvailableTeams,
+        setAvailablePartners,
+        resetContext(): void {
+          const user = authStore.user();
+          if (user) {
+            patchState(store, {
+              current: {
+                type: 'user',
+                userId: user.uid,
+                email: user.email || '',
+                displayName: user.displayName ?? null,
+              },
+            });
+          } else {
+            patchState(store, initialContextState);
+          }
+        },
+        clearContext: clearContextState,
+        refreshAvailableContexts(): void {
+          loadAvailableContexts();
+        },
+        createOrganization(payload: { name: string; description?: string }): void {
+          createOrganizationEffect(payload);
+        },
+        createTeam(payload: { name: string; description?: string; organizationId?: string }): void {
+          createTeamEffect(payload);
+        },
+        createPartner(payload: { name: string; description?: string; organizationId?: string }): void {
+          createPartnerEffect(payload);
+        },
+      };
+    }
+  ),
+  withHooks({
+    onInit(store) {
+      // Trigger loading immediately (handles already-authenticated sessions)
       // This will also react to auth state changes
-      loadAvailableContexts();
+      store.refreshAvailableContexts();
     },
   })
 );
