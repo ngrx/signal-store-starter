@@ -9,6 +9,10 @@ export interface Workspace {
   name: string;
   displayName?: string;
   description?: string;
+  contextRef?: {
+    type: 'personal' | 'organization' | 'team' | 'partner';
+    id: string;
+  };
   ownerId?: string;
   settings?: WorkspaceSettings;
   modules?: {

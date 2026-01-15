@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthStore } from '../../../core/auth/stores/auth.store';
+import { AuthStore, AuthStoreInstance } from '../../../core/auth/stores/auth.store';
 import { AccountService } from '../../../core/account/services/account.service';
 
 @Component({
@@ -18,7 +18,7 @@ import { AccountService } from '../../../core/account/services/account.service';
         </label>
         <label>
           Email
-          <input type="email" formControlName="email" disabled />
+          <input type="email" formControlName="email" [disabled]="true" />
         </label>
         <button type="submit" [disabled]="form.invalid || saving">
           @if (saving) { Saving... } @else { Save changes }
@@ -41,7 +41,7 @@ import { AccountService } from '../../../core/account/services/account.service';
   `],
 })
 export class SettingsComponent {
-  protected authStore = inject(AuthStore);
+  protected authStore = inject<AuthStoreInstance>(AuthStore);
   private accountService = inject(AccountService);
   private fb = inject(FormBuilder);
 

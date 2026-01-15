@@ -2,7 +2,7 @@ import { Component, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthStore } from '../../../../core/auth/stores/auth.store';
+import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.store';
 
 @Component({
   selector: 'app-login',
@@ -190,7 +190,7 @@ import { AuthStore } from '../../../../core/auth/stores/auth.store';
 export class LoginComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  protected authStore = inject(AuthStore);
+  protected authStore = inject<AuthStoreInstance>(AuthStore);
 
   constructor() {
     // Navigate reactively once authentication succeeds (zone-less friendly)

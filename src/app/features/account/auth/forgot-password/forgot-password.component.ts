@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AuthStore } from '../../../../core/auth/stores/auth.store';
+import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.store';
 
 @Component({
   selector: 'app-forgot-password',
@@ -191,7 +191,7 @@ import { AuthStore } from '../../../../core/auth/stores/auth.store';
 })
 export class ForgotPasswordComponent {
   private fb = inject(FormBuilder);
-  protected authStore = inject(AuthStore);
+  protected authStore = inject<AuthStoreInstance>(AuthStore);
   protected emailSent = signal(false);
 
   forgotPasswordForm: FormGroup = this.fb.group({

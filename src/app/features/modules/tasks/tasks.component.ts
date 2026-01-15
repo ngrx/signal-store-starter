@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskStore } from '../../../core/workspace/stores/task.store';
 import { ViewMode, TaskStatus, TaskPriority } from '../../../core/workspace/models/task.model';
-import { ContextStore } from '../../../core/context/stores/context.store';
+import { ContextStore, ContextStoreInstance } from '../../../core/context/stores/context.store';
 
 @Component({
   selector: 'app-tasks',
@@ -725,7 +725,7 @@ import { ContextStore } from '../../../core/context/stores/context.store';
 })
 export class TasksComponent implements OnInit {
   taskStore = inject(TaskStore);
-  contextStore = inject(ContextStore);
+  contextStore = inject<ContextStoreInstance>(ContextStore);
 
   searchText = '';
   filterStatus: TaskStatus | '' = '';

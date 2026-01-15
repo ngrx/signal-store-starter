@@ -7,17 +7,18 @@ import {
   withHooks,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { computed, inject } from '@angular/core';
+import { Type, computed, inject } from '@angular/core';
 import { pipe, switchMap, tap, catchError, of, combineLatest } from 'rxjs';
 import { initialContextState } from './context.state';
 import {
   AppContext,
+  ContextState,
   ContextSwitchEvent,
   OrganizationContext,
   TeamContext,
   PartnerContext,
 } from '../models/context.model';
-import { AuthStore } from '../../auth/stores/auth.store';
+import { AuthStore, AuthStoreInstance } from '../../auth/stores/auth.store';
 import { OrganizationService } from '../../organization/services/organization.service';
 import { TeamService } from '../../team/services/team.service';
 import { PartnerService } from '../../partner/services/partner.service';
@@ -25,7 +26,34 @@ import { EventBusStore } from '../../event-bus/stores/event-bus.store';
 import { Organization, OrganizationSettings } from '../../organization/models/organization.model';
 import { Team } from '../../team/models/team.model';
 import { Partner } from '../../partner/models/partner.model';
-import { WorkspaceStore } from '../../workspace/stores/workspace.store';
+import {
+  WorkspaceStore,
+  WorkspaceStoreInstance,
+  workspaceFromContext,
+} from '../../workspace/stores/workspace.store';
+
+export interface ContextStoreInstance {
+  current: () => AppContext | null;
+  available: () => ContextState['available'];
+  history: () => ContextState['history'];
+  currentContextType: () => AppContext['type'] | null;
+  currentContextId: () => string | null;
+  currentContextName: () => string | null;
+  hasOrganizations: () => boolean;
+  hasTeams: () => boolean;
+  hasPartners: () => boolean;
+  canSwitchContext: () => boolean;
+  switchContext: (context: AppContext) => void;
+  setAvailableOrganizations: (organizations: OrganizationContext[]) => void;
+  setAvailableTeams: (teams: TeamContext[]) => void;
+  setAvailablePartners: (partners: PartnerContext[]) => void;
+  resetContext: () => void;
+  clearContext: () => void;
+  refreshAvailableContexts: () => void;
+  createOrganization: (payload: { name: string; description?: string }) => void;
+  createTeam: (payload: { name: string; description?: string; organizationId?: string }) => void;
+  createPartner: (payload: { name: string; description?: string; organizationId?: string }) => void;
+}
 
 const defaultOrganizationSettings: OrganizationSettings = {
   allowPartnerInvitation: true,
@@ -90,12 +118,12 @@ export const ContextStore = signalStore(
   withMethods(
     (
       store,
-      authStore = inject(AuthStore),
+      authStore = inject<AuthStoreInstance>(AuthStore),
       orgService = inject(OrganizationService),
       teamService = inject(TeamService),
       partnerService = inject(PartnerService),
       eventBus = inject(EventBusStore),
-      workspaceStore = inject(WorkspaceStore)
+      workspaceStore = inject<WorkspaceStoreInstance>(WorkspaceStore)
     ) => {
       const clearContextState = () => {
         patchState(store, initialContextState);
@@ -121,36 +149,9 @@ export const ContextStore = signalStore(
           history: [...store.history(), event],
         });
         // Keep workspace store in sync so modules resolve current workspace
-        const workspaceShape =
-          context.type === 'user'
-            ? {
-                id: context.userId,
-                name: context.displayName || context.email,
-                description: 'Personal workspace',
-                type: 'personal' as const,
-              }
-            : context.type === 'organization'
-            ? {
-                id: context.organizationId,
-                name: context.name,
-                description: 'Organization workspace',
-                type: 'organization' as const,
-              }
-            : context.type === 'team'
-            ? {
-                id: context.teamId,
-                name: context.name,
-                description: 'Team workspace',
-                type: 'team' as const,
-              }
-            : {
-                id: context.partnerId,
-                name: context.name,
-                description: 'Partner workspace',
-                type: 'partner' as const,
-              };
-        workspaceStore.upsertWorkspace(workspaceShape as any);
-        workspaceStore.setCurrentWorkspace(workspaceShape as any);
+        const workspaceShape = workspaceFromContext(context);
+        workspaceStore.upsertWorkspace(workspaceShape);
+        workspaceStore.setCurrentWorkspace(workspaceShape);
         eventBus.emit({
           type: 'context.switched',
           payload: event,
@@ -487,4 +488,4 @@ export const ContextStore = signalStore(
       store.refreshAvailableContexts();
     },
   })
-);
+) as unknown as Type<ContextStoreInstance>;

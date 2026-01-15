@@ -11,7 +11,7 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap, catchError, of } from 'rxjs';
 import { CreateProjectPayload, Project, applyProjectScopes } from '../models/project.model';
 import { ProjectService } from '../services/project.service';
-import { AuthStore } from '../../auth/stores/auth.store';
+import { AuthStore, AuthStoreInstance } from '../../auth/stores/auth.store';
 
 interface ProjectState {
   projects: Project[];
@@ -32,7 +32,8 @@ export const ProjectStore = signalStore(
     projectCount: computed(() => projects().length),
     isLoading: computed(() => loading()),
   })),
-  withMethods((store, projectService = inject(ProjectService), authStore = inject(AuthStore)) => {
+  withMethods(
+    (store, projectService = inject(ProjectService), authStore = inject<AuthStoreInstance>(AuthStore)) => {
     const loadProjects = rxMethod<Record<string, any> | undefined>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),

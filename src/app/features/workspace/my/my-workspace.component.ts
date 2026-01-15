@@ -1,7 +1,7 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { WorkspaceStore } from '../../../core/workspace/stores/workspace.store';
+import { WorkspaceStore, WorkspaceStoreInstance } from '../../../core/workspace/stores/workspace.store';
 
 @Component({
   selector: 'app-my-workspace',
@@ -33,9 +33,9 @@ import { WorkspaceStore } from '../../../core/workspace/stores/workspace.store';
                 <div class="workspace-body">
                   <p>{{ workspace.description || 'No description' }}</p>
                   <div class="links">
-                    <a [routerLink]="['/workspace/overview']">Overview</a>
-                    <a [routerLink]="['/workspace/documents']">Documents</a>
-                    <a [routerLink]="['/workspace/tasks']">Tasks</a>
+                    <a [routerLink]="['/workspace', workspace.id, 'overview']">Overview</a>
+                    <a [routerLink]="['/workspace', workspace.id, 'documents']">Documents</a>
+                    <a [routerLink]="['/workspace', workspace.id, 'tasks']">Tasks</a>
                   </div>
                 </div>
               }
@@ -62,7 +62,7 @@ import { WorkspaceStore } from '../../../core/workspace/stores/workspace.store';
   `],
 })
 export class MyWorkspaceComponent {
-  private workspaceStore = inject(WorkspaceStore);
+  private workspaceStore = inject<WorkspaceStoreInstance>(WorkspaceStore);
   protected workspaces = this.workspaceStore.workspaces;
   protected expanded = signal<Set<string>>(new Set());
 

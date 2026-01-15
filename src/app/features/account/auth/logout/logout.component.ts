@@ -1,7 +1,7 @@
 import { Component, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { AuthStore } from '../../../../core/auth/stores/auth.store';
+import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.store';
 
 @Component({
   selector: 'app-logout',
@@ -25,7 +25,7 @@ import { AuthStore } from '../../../../core/auth/stores/auth.store';
   `],
 })
 export class LogoutComponent {
-  private authStore = inject(AuthStore);
+  private authStore = inject<AuthStoreInstance>(AuthStore);
   private router = inject(Router);
 
   constructor() {

@@ -2,7 +2,7 @@ import { Component, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthStore } from '../../../../core/auth/stores/auth.store';
+import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.store';
 
 @Component({
   selector: 'app-register',
@@ -199,7 +199,7 @@ import { AuthStore } from '../../../../core/auth/stores/auth.store';
 export class RegisterComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  protected authStore = inject(AuthStore);
+  protected authStore = inject<AuthStoreInstance>(AuthStore);
 
   constructor() {
     // Redirect once the user is authenticated (zone-less reactive)

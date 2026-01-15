@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ContextStore } from '../../../core/context/stores/context.store';
+import { ContextStore, ContextStoreInstance } from '../../../core/context/stores/context.store';
 
 @Component({
   selector: 'app-overview',
@@ -181,5 +181,5 @@ import { ContextStore } from '../../../core/context/stores/context.store';
   `]
 })
 export class OverviewComponent {
-  contextStore = inject(ContextStore);
+  contextStore = inject<ContextStoreInstance>(ContextStore);
 }
