@@ -1,6 +1,6 @@
 import { Component, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AuthStore } from '../../../core/auth/stores/auth.store';
+import { AuthStore, AuthStoreInstance } from '../../../core/auth/stores/auth.store';
 
 @Component({
   selector: 'app-account-profile',
@@ -25,7 +25,7 @@ import { AuthStore } from '../../../core/auth/stores/auth.store';
   `],
 })
 export class AccountProfileComponent {
-  private authStore = inject(AuthStore);
+  private authStore = inject<AuthStoreInstance>(AuthStore);
   protected userEmail: string | null = null;
   protected displayName: string | null = null;
 

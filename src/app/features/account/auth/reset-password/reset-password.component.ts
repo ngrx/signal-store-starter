@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AuthStore } from '../../../../core/auth/stores/auth.store';
+import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.store';
 
 @Component({
   selector: 'app-reset-password',
@@ -46,7 +46,7 @@ import { AuthStore } from '../../../../core/auth/stores/auth.store';
   `],
 })
 export class ResetPasswordComponent {
-  protected authStore = inject(AuthStore);
+  protected authStore = inject<AuthStoreInstance>(AuthStore);
   private fb = inject(FormBuilder);
   protected message = '';
 

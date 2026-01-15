@@ -1,7 +1,7 @@
 import { Injectable, inject, computed, Signal } from '@angular/core';
 import { User } from '@angular/fire/auth';
-import { ContextStore } from '../../core/context/stores/context.store';
-import { AuthStore } from '../../core/auth/stores/auth.store';
+import { ContextStore, ContextStoreInstance } from '../../core/context/stores/context.store';
+import { AuthStore, AuthStoreInstance } from '../../core/auth/stores/auth.store';
 import {
   DynamicMenu,
   MenuItem,
@@ -11,14 +11,20 @@ import {
   MODULE_LABELS,
   WorkspaceModule,
 } from '../models/menu.model';
-import { AppContext } from '../../core/context/models/context.model';
+import {
+  AppContext,
+  OrganizationContext,
+  PartnerContext,
+  TeamContext,
+} from '../../core/context/models/context.model';
+import { workspaceIdFromContext } from '../../core/workspace/stores/workspace.store';
 
 @Injectable({
   providedIn: 'root',
 })
 export class MenuService {
-  private contextStore = inject(ContextStore);
-  private authStore = inject(AuthStore);
+  private contextStore = inject<ContextStoreInstance>(ContextStore);
+  private authStore = inject<AuthStoreInstance>(AuthStore);
 
   /**
    * Computed signal for dynamic menu based on current context
@@ -119,7 +125,7 @@ export class MenuService {
     }
 
     // Add organizations
-    orgs.forEach((org) => {
+    orgs.forEach((org: OrganizationContext) => {
       items.push({
         id: `context-org-${org.organizationId}`,
         type: 'action',
@@ -139,7 +145,7 @@ export class MenuService {
         id: 'context-teams-divider',
         type: 'divider',
       });
-      teams.forEach((team) => {
+      teams.forEach((team: TeamContext) => {
         items.push({
           id: `context-team-${team.teamId}`,
           type: 'action',
@@ -160,7 +166,7 @@ export class MenuService {
         id: 'context-partners-divider',
         type: 'divider',
       });
-      partners.forEach((partner) => {
+      partners.forEach((partner: PartnerContext) => {
         items.push({
           id: `context-partner-${partner.partnerId}`,
           type: 'action',
@@ -437,8 +443,8 @@ export class MenuService {
    * Get base route for context
    */
   private getBaseRouteForContext(context: AppContext): string {
-    // All contexts use /workspace as the base route for modules
-    return '/workspace';
+    const workspaceId = workspaceIdFromContext(context);
+    return `/workspace/${workspaceId}`;
   }
 
   /**

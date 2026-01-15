@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AuthStore } from '../../../../core/auth/stores/auth.store';
+import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.store';
 
 @Component({
   selector: 'app-verify-email',
@@ -34,7 +34,7 @@ import { AuthStore } from '../../../../core/auth/stores/auth.store';
   `],
 })
 export class VerifyEmailComponent {
-  protected authStore = inject(AuthStore);
+  protected authStore = inject<AuthStoreInstance>(AuthStore);
   protected message = '';
 
   async send(): Promise<void> {

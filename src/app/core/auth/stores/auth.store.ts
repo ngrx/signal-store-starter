@@ -7,15 +7,30 @@ import {
   withHooks,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { computed, inject } from '@angular/core';
+import { computed, inject, Type } from '@angular/core';
 import { pipe, switchMap, tap, catchError, of } from 'rxjs';
 import { initialAuthState } from './auth.state';
 import { AuthService } from '../services/auth.service';
-import { ContextStore } from '../../context/stores/context.store';
-import { WorkspaceStore } from '../../workspace/stores/workspace.store';
+import { ContextStore, ContextStoreInstance } from '../../context/stores/context.store';
+import { WorkspaceStore, WorkspaceStoreInstance } from '../../workspace/stores/workspace.store';
 import { AccountService } from '../../account/services/account.service';
 
 type AuthState = typeof initialAuthState;
+
+export interface AuthStoreInstance {
+  user: () => any;
+  status: () => AuthState['status'];
+  error: () => string | null;
+  isAuthenticated: () => boolean;
+  isLoading: () => boolean;
+  isUnauthenticated: () => boolean;
+  login(credentials: { email: string; password: string }): Promise<void>;
+  register(credentials: { email: string; password: string }): Promise<void>;
+  resetPassword(data: { email: string }): Promise<void>;
+  logout(): Promise<void>;
+  verifyEmail(): Promise<void>;
+  setUser(user: any): void;
+}
 
 /**
  * AuthStore - Zone-less Compatible Signal Store
@@ -62,8 +77,8 @@ export const AuthStore = signalStore(
     (
       store,
       authService = inject(AuthService),
-      contextStore = inject(ContextStore),
-      workspaceStore = inject(WorkspaceStore),
+      contextStore = inject<ContextStoreInstance>(ContextStore),
+      workspaceStore = inject<WorkspaceStoreInstance>(WorkspaceStore),
       accountService = inject(AccountService)
     ) => {
     // Reactive login method using rxMethod
@@ -246,4 +261,4 @@ export const AuthStore = signalStore(
       syncAuthState();
     },
   })
-);
+) as unknown as Type<AuthStoreInstance>;
