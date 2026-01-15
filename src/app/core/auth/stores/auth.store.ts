@@ -235,15 +235,20 @@ export const AuthStore = signalStore(
       const syncAuthState = rxMethod<void>(
         pipe(
           switchMap(() => authService.authState$),
-          tap((user) => {
-            if (user) {
-              accountService.ensureUserAccount({
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName,
-              }).subscribe();
-            }
+          switchMap((user) => {
             store.setUser(user);
+
+            if (!user) {
+              return of(null);
+            }
+
+            return accountService.ensureUserAccount({
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              emailVerified: user.emailVerified,
+            });
           }),
           catchError((error) => {
             console.error('Auth state sync error:', error);
