@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -200,6 +200,18 @@ export class RegisterComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   protected authStore = inject(AuthStore);
+
+  constructor() {
+    // Redirect once the user is authenticated (zone-less reactive)
+    effect(
+      () => {
+        if (this.authStore.isAuthenticated()) {
+          this.router.navigate(['/dashboard']);
+        }
+      },
+      { allowSignalWrites: true }
+    );
+  }
 
   registerForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
