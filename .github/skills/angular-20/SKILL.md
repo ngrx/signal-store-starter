@@ -3,7 +3,7 @@
 📌 Angular 20 技能 Skill (SKILL.md)
 
 ---
-name: angular-20-skill
+name: angular-20
 description: >
   Angular 20 knowledge and best practices. Use this skill when asked about Angular 20 development,
   architecture, components, routing, state management, performance, testing, and deployment.
@@ -106,11 +106,11 @@ Refer to official Angular docs and community standards for evolving best practic
 
 🎯 **專案內技能（對這個 Repo 專用）**
 
-/.github/skills/angular-20-skill/SKILL.md
+/.github/skills/angular-20/SKILL.md
 
 🎯 **個人全局技能（跨專案共用）**
 
-~/.copilot/skills/angular-20-skill/SKILL.md
+~/.copilot/skills/angular-20/SKILL.md
 
 💡 Copilot agent 會根據你 prompt 的內容，自動決定何時載入這份技能文件。技能必須放在 `skills` 子資料夾並命名為 `SKILL.md`。1
 
