@@ -382,8 +382,6 @@ async fetchUser(userId: string): Promise<IUser> { ... }
 
 ---
 
-如果你要，我還可以幫你產出 **Angular + Copilot 專用 prompt 模板**（包含輸入提示、命名規範、例子、測試 stub 樣板），讓 Copilot 生成代碼時 *一次就合你 style*，不犯錯～ 想要嗎？ 😏
-
 [1]: https://gist.github.com/juanpabloaj/d95233b74203d8a7e586723f14d3fb0e?utm_source=chatgpt.com "General guidelines and best practices for AI code generation · GitHub"
 [2]: https://copilotthatjawn.com/tips/copilot-instructions-md.md?utm_source=chatgpt.com "Level Up GitHub Copilot with copilot-instructions.md - Copilot That Jawn"
 [3]: https://docs.github.com/en/enterprise-cloud%40latest/copilot/how-tos/agents/copilot-coding-agent/best-practices-for-using-copilot-to-work-on-tasks?utm_source=chatgpt.com "Best practices for using GitHub Copilot to work on tasks - GitHub Enterprise Cloud Docs"
