@@ -98,8 +98,8 @@ export const ProjectStore = signalStore(
     };
   }),
   withHooks({
-    onInit(store) {
-      store.loadProjects();
+    onDestroy(store) {
+      patchState(store, initialProjectState);
     },
   })
 );

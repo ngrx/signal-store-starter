@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthStore } from '../../core/auth/stores/auth.store';
@@ -223,13 +223,14 @@ import { ProjectStore } from '../../core/project/stores/project.store';
     }
   `],
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnDestroy {
   protected authStore = inject(AuthStore);
   private fb = inject(FormBuilder);
   protected contextStore = inject(ContextStore);
   protected projectStore = inject(ProjectStore);
   protected toast = signal('');
-  private toastTimeout: any;
+  private toastTimeout: ReturnType<typeof setTimeout> | null = null;
+  private readonly toastDurationMs = 2500;
   private readonly toastMessages = {
     orgCreated: 'Organization created and set as current context.',
     teamCreated: 'Team created and set as current context.',
@@ -298,6 +299,13 @@ export class DashboardComponent {
     if (this.toastTimeout) {
       clearTimeout(this.toastTimeout);
     }
-    this.toastTimeout = setTimeout(() => this.toast.set(''), 2500);
+    this.toastTimeout = setTimeout(() => this.toast.set(''), this.toastDurationMs);
+  }
+
+  ngOnDestroy(): void {
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
+      this.toastTimeout = null;
+    }
   }
 }

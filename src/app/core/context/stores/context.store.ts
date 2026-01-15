@@ -22,9 +22,22 @@ import { OrganizationService } from '../../organization/services/organization.se
 import { TeamService } from '../../team/services/team.service';
 import { PartnerService } from '../../partner/services/partner.service';
 import { EventBusStore } from '../../event-bus/stores/event-bus.store';
-import { Organization } from '../../organization/models/organization.model';
+import { Organization, OrganizationSettings } from '../../organization/models/organization.model';
 import { Team } from '../../team/models/team.model';
 import { Partner } from '../../partner/models/partner.model';
+
+const defaultOrganizationSettings: OrganizationSettings = {
+  allowPartnerInvitation: true,
+  allowTeamCreation: true,
+  defaultWorkspaceQuota: 1,
+  requireEmailVerification: false,
+  features: {
+    auditEnabled: true,
+    documentsEnabled: true,
+    journalEnabled: true,
+    tasksEnabled: true,
+  },
+};
 
 export const ContextStore = signalStore(
   { providedIn: 'root' },
@@ -214,23 +227,21 @@ export const ContextStore = signalStore(
               updatedAt: now,
               createdBy: user.uid,
               status: 'active',
-              settings: {
-                allowPartnerInvitation: true,
-                allowTeamCreation: true,
-                defaultWorkspaceQuota: 1,
-                requireEmailVerification: false,
-                features: {
-                  auditEnabled: true,
-                  documentsEnabled: true,
-                  journalEnabled: true,
-                  tasksEnabled: true,
-                },
-              },
+              settings: defaultOrganizationSettings,
             };
 
             return orgService.createOrganization(org).pipe(
               tap((organizationId) => {
-                if (!organizationId) return;
+                if (!organizationId) {
+                  eventBus.emit({
+                    type: 'context.organization.failed',
+                    payload: { name: payload.name, reason: 'missing id' },
+                    scope: 'workspace',
+                    timestamp: Date.now(),
+                    producer: 'ContextStore',
+                  });
+                  return;
+                }
                 const orgContext: OrganizationContext = {
                   type: 'organization',
                   organizationId,
@@ -291,7 +302,16 @@ export const ContextStore = signalStore(
 
             return teamService.createTeam(team).pipe(
               tap((teamId) => {
-                if (!teamId) return;
+                if (!teamId) {
+                  eventBus.emit({
+                    type: 'context.team.failed',
+                    payload: { name: payload.name, organizationId, reason: 'missing id' },
+                    scope: 'workspace',
+                    timestamp: Date.now(),
+                    producer: 'ContextStore',
+                  });
+                  return;
+                }
                 const teamContext: TeamContext = {
                   type: 'team',
                   teamId,
@@ -352,7 +372,16 @@ export const ContextStore = signalStore(
 
             return partnerService.createPartner(partner).pipe(
               tap((partnerId) => {
-                if (!partnerId) return;
+                if (!partnerId) {
+                  eventBus.emit({
+                    type: 'context.partner.failed',
+                    payload: { name: payload.name, organizationId, reason: 'missing id' },
+                    scope: 'workspace',
+                    timestamp: Date.now(),
+                    producer: 'ContextStore',
+                  });
+                  return;
+                }
                 const partnerContext: PartnerContext = {
                   type: 'partner',
                   partnerId,

@@ -51,6 +51,10 @@ export class ProjectService {
       ...applyProjectScopes(payload),
     };
 
-    return from(setDoc(docRef, project).then(() => docRef.id));
+    return from(setDoc(docRef, project).then(() => docRef.id)).pipe(
+      catchError((error) => {
+        throw new Error(error?.message || 'Failed to create project');
+      })
+    );
   }
 }
