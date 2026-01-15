@@ -11,7 +11,6 @@ import { computed, inject, Type } from '@angular/core';
 import { pipe, switchMap, tap, catchError, of } from 'rxjs';
 import { initialAuthState } from './auth.state';
 import { AuthService } from '../services/auth.service';
-import { ContextStore, ContextStoreInstance } from '../../context/stores/context.store';
 import { WorkspaceStore, WorkspaceStoreInstance } from '../../workspace/stores/workspace.store';
 import { AccountService } from '../../account/services/account.service';
 
@@ -54,7 +53,7 @@ export interface AuthStoreInstance {
  * Architecture Compliance:
  * - Account: Firebase Auth provides identity (who you are)
  * - AuthStore: Manages authentication state (signal-based)
- * - Workspace: ContextStore reacts to auth changes (Account → Workspace)
+ * - Workspace: WorkspaceStore reacts to auth changes (Account → Workspace)
  * 
  * Why this works without Zone.js:
  * - rxMethod() subscribes to observables and updates signals
@@ -77,7 +76,6 @@ export const AuthStore = signalStore(
     (
       store,
       authService = inject(AuthService),
-      contextStore = inject<ContextStoreInstance>(ContextStore),
       workspaceStore = inject<WorkspaceStoreInstance>(WorkspaceStore),
       accountService = inject(AccountService)
     ) => {
@@ -170,7 +168,6 @@ export const AuthStore = signalStore(
                 status: 'unauthenticated',
                 error: null,
               });
-              contextStore.clearContext();
               workspaceStore.clearAll();
             }),
             catchError((error: any) => {
