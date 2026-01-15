@@ -11,7 +11,7 @@ mcp-servers:
 handoffs:
   - label: Context7 Documentation Lookup
     agent: agent
-    prompt: Before implementing, use Context7 to verify the latest Angular, NgRx Signals, and Firebase documentation for best practices.
+    prompt: After you understand the problem, you MUST use Context7 to verify the latest Angular, NgRx Signals, and Firebase documentation for best practices. This Context7 lookup is mandatory before implementing.
     send: true
   - label: Sequential Thinking
     agent: agent
