@@ -5,19 +5,13 @@
 
 export interface Workspace {
   id: string;
-  organizationId: string;
+  organizationId?: string;
   name: string;
-  displayName: string;
+  displayName?: string;
   description?: string;
-  
-  // Ownership
-  ownerId: string;
-  
-  // Settings
+  ownerId?: string;
   settings?: WorkspaceSettings;
-  
-  // Modules enabled
-  modules: {
+  modules?: {
     overview: boolean;
     documents: boolean;
     tasks: boolean;
@@ -27,21 +21,16 @@ export interface Workspace {
     settings: boolean;
     journal: boolean;
   };
-  
-  // Metadata
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
   lastAccessedAt?: Date;
-  
-  // Status
-  status: 'active' | 'archived' | 'suspended';
-  
-  // Resources
+  status?: 'active' | 'archived' | 'suspended';
   resourceCount?: {
     documents: number;
     tasks: number;
     members: number;
   };
+  type?: 'personal' | 'organization' | 'team' | 'partner';
 }
 
 export interface WorkspaceSettings {

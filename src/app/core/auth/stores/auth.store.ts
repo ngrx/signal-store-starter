@@ -159,6 +159,26 @@ export const AuthStore = signalStore(
       )
     );
 
+    const verifyEmailEffect = rxMethod<void>(
+      pipe(
+        tap(() => patchState(store, { status: 'loading', error: null })),
+        switchMap(() =>
+          authService.sendVerificationEmail().pipe(
+            tap(() => {
+              patchState(store, { status: 'idle' });
+            }),
+            catchError((error: any) => {
+              patchState(store, {
+                error: error.message || 'Verification email failed',
+                status: 'idle',
+              });
+              return of(null);
+            })
+          )
+        )
+      )
+    );
+
     return {
       // Expose async methods that call the reactive effects
       async login(credentials: { email: string; password: string }): Promise<void> {
@@ -172,6 +192,9 @@ export const AuthStore = signalStore(
       },
       async logout(): Promise<void> {
         logoutEffect();
+      },
+      async verifyEmail(): Promise<void> {
+        verifyEmailEffect();
       },
       setUser(user: any) {
         patchState(store, {

@@ -29,6 +29,20 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./features/account/auth/reset-password/reset-password.component').then(
+        (m) => m.ResetPasswordComponent
+      ),
+  },
+  {
+    path: 'verify-email',
+    loadComponent: () =>
+      import('./features/account/auth/verify-email/verify-email.component').then(
+        (m) => m.VerifyEmailComponent
+      ),
+  },
+  {
     path: 'dashboard',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -40,6 +54,13 @@ export const routes: Routes = [
     path: 'workspace',
     canActivate: [authGuard],
     children: [
+      {
+        path: 'my',
+        loadComponent: () =>
+          import('./features/workspace/my/my-workspace.component').then(
+            (m) => m.MyWorkspaceComponent
+          ),
+      },
       {
         path: 'overview',
         loadComponent: () =>
@@ -97,6 +118,30 @@ export const routes: Routes = [
           ),
       },
     ],
+  },
+  {
+    path: 'profile',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/account/profile/profile.component').then(
+        (m) => m.AccountProfileComponent
+      ),
+  },
+  {
+    path: 'settings',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/account/settings/settings.component').then(
+        (m) => m.SettingsComponent
+      ),
+  },
+  {
+    path: 'logout',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/account/auth/logout/logout.component').then(
+        (m) => m.LogoutComponent
+      ),
   },
   {
     path: '**',

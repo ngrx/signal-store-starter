@@ -200,6 +200,14 @@ export class MenuService {
           visible: true,
         },
         {
+          id: 'my-workspace',
+          type: 'link',
+          label: 'My Workspace',
+          icon: '📂',
+          route: '/workspace/my',
+          visible: true,
+        },
+        {
           id: 'my-tasks',
           type: 'link',
           label: 'My Tasks',
@@ -398,6 +406,14 @@ export class MenuService {
               label: 'Dashboard',
               icon: '📊',
               route: '/dashboard',
+              visible: true,
+            },
+            {
+              id: 'fallback-my-workspace',
+              type: 'link',
+              label: 'My Workspace',
+              icon: '📂',
+              route: '/workspace/my',
               visible: true,
             },
             {
