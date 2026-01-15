@@ -148,8 +148,8 @@ export const AuthStore = signalStore(
             }),
             catchError((error: any) => {
               patchState(store, {
-                user: store.user(),
-                status: store.user() ? 'authenticated' : 'unauthenticated',
+                user: null,
+                status: 'unauthenticated',
                 error: error.message || 'Logout failed',
               });
               return of(null);
