@@ -1,18 +1,18 @@
 import { Component, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthStore } from '../../../core/auth/stores/auth.store';
+import { AuthStore } from '../../../../core/auth/stores/auth.store';
 
 @Component({
-  selector: 'app-register',
+  selector: 'app-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="auth-container">
       <div class="auth-card">
-        <h1>Create Account</h1>
-        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <h1>Login</h1>
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
           <div class="form-group">
             <label for="email">Email</label>
             <input
@@ -20,9 +20,9 @@ import { AuthStore } from '../../../core/auth/stores/auth.store';
               type="email"
               formControlName="email"
               placeholder="Enter your email"
-              [class.error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+              [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
             />
-            @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+            @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
               <span class="error-message">Please enter a valid email</span>
             }
           </div>
@@ -33,25 +33,11 @@ import { AuthStore } from '../../../core/auth/stores/auth.store';
               id="password"
               type="password"
               formControlName="password"
-              placeholder="Enter your password (min 6 characters)"
-              [class.error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+              placeholder="Enter your password"
+              [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
             />
-            @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
-              <span class="error-message">Password must be at least 6 characters</span>
-            }
-          </div>
-
-          <div class="form-group">
-            <label for="confirmPassword">Confirm Password</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              formControlName="confirmPassword"
-              placeholder="Confirm your password"
-              [class.error]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched"
-            />
-            @if (registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched) {
-              <span class="error-message">Passwords must match</span>
+            @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+              <span class="error-message">Password is required</span>
             }
           </div>
 
@@ -63,19 +49,20 @@ import { AuthStore } from '../../../core/auth/stores/auth.store';
 
           <button
             type="submit"
-            [disabled]="registerForm.invalid || authStore.isLoading()"
+            [disabled]="loginForm.invalid || authStore.isLoading()"
             class="btn btn-primary"
           >
             @if (authStore.isLoading()) {
-              <span>Creating account...</span>
+              <span>Logging in...</span>
             } @else {
-              <span>Register</span>
+              <span>Login</span>
             }
           </button>
         </form>
 
         <div class="auth-links">
-          <a routerLink="/login">Already have an account? Login</a>
+          <a routerLink="/forgot-password">Forgot Password?</a>
+          <a routerLink="/register">Don't have an account? Register</a>
         </div>
       </div>
     </div>
@@ -183,6 +170,9 @@ import { AuthStore } from '../../../core/auth/stores/auth.store';
     .auth-links {
       margin-top: 20px;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .auth-links a {
@@ -196,13 +186,13 @@ import { AuthStore } from '../../../core/auth/stores/auth.store';
     }
   `],
 })
-export class RegisterComponent {
+export class LoginComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   protected authStore = inject(AuthStore);
 
   constructor() {
-    // Redirect once the user is authenticated (zone-less reactive)
+    // Navigate reactively once authentication succeeds (zone-less friendly)
     effect(
       () => {
         if (this.authStore.isAuthenticated()) {
@@ -213,29 +203,15 @@ export class RegisterComponent {
     );
   }
 
-  registerForm: FormGroup = this.fb.group({
+  loginForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
-    confirmPassword: ['', [Validators.required]],
-  }, {
-    validators: this.passwordMatchValidator
   });
 
-  passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-    const password = control.get('password');
-    const confirmPassword = control.get('confirmPassword');
-
-    if (!password || !confirmPassword) {
-      return null;
-    }
-
-    return password.value === confirmPassword.value ? null : { passwordMismatch: true };
-  }
-
   onSubmit(): void {
-    if (this.registerForm.valid) {
-      const { email, password } = this.registerForm.value;
-      this.authStore.register({ email, password }).then(() => {
+    if (this.loginForm.valid) {
+      const { email, password } = this.loginForm.value;
+      this.authStore.login({ email, password }).then(() => {
         if (this.authStore.isAuthenticated()) {
           this.router.navigate(['/dashboard']);
         }
