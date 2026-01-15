@@ -64,10 +64,13 @@ export const appConfig: ApplicationConfig = {
     // This tells Angular to use signal-based change detection instead of Zone.js
     // Note: This is now a stable API in Angular 20+ (no longer experimental)
     provideZonelessChangeDetection(),
-
+    
     // Router configuration
     provideRouter(routes),
-
+    
+    // Router configuration
+    provideRouter(routes),
+    
     // Firebase App Initialization
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     
@@ -81,17 +84,11 @@ export const appConfig: ApplicationConfig = {
     ScreenTrackingService,
     UserTrackingService,
     
-    // Firebase App Check with reCAPTCHA Enterprise (disabled in non-production to avoid local 403s)
-    ...(
-      environment.production && environment.appCheckSiteKey
-        ? [
-            provideAppCheck(() => {
-              const provider = new ReCaptchaEnterpriseProvider(environment.appCheckSiteKey);
-              return initializeAppCheck(undefined, { provider, isTokenAutoRefreshEnabled: true });
-            }),
-          ]
-        : []
-    ),
+    // Firebase App Check with reCAPTCHA Enterprise
+    provideAppCheck(() => {
+      const provider = new ReCaptchaEnterpriseProvider(environment.appCheckSiteKey);
+      return initializeAppCheck(undefined, { provider, isTokenAutoRefreshEnabled: true });
+    }),
     provideDatabase(() => getDatabase()),
     provideDataConnect(() =>
       getDataConnect({
@@ -126,6 +123,10 @@ export const appConfig: ApplicationConfig = {
       useFactory: (initService: AppInitializerService) => () => initService.initialize(),
       deps: [AppInitializerService],
       multi: true,
-    },
+    }, provideFirebaseApp(() => initializeApp({ projectId: "elite-chiller-455712-c4", appId: "1:7807661688:web:2864a76608f64ac61d1f8d", databaseURL: "https://elite-chiller-455712-c4-default-rtdb.asia-southeast1.firebasedatabase.app", storageBucket: "elite-chiller-455712-c4.firebasestorage.app", apiKey: "AIzaSyCJ-eayGjJwBKsNIh3oEAG2GjbfTrvAMEI", authDomain: "elite-chiller-455712-c4.firebaseapp.com", messagingSenderId: "7807661688", measurementId: "G-46E86BNYM7" })), provideAuth(() => getAuth()), provideAnalytics(() => getAnalytics()), ScreenTrackingService, UserTrackingService, provideAppCheck(() => {
+  // TODO get a reCAPTCHA Enterprise here https://console.cloud.google.com/security/recaptcha?project=_
+  const provider = new ReCaptchaEnterpriseProvider('6LeEPkksAAAAACnwP_vo-8h5KOWZCSvIeM0C2_xB');
+  return initializeAppCheck(undefined, { provider, isTokenAutoRefreshEnabled: true });
+}), provideFirestore(() => getFirestore()), provideDatabase(() => getDatabase()), provideDataConnect(() => getDataConnect({connector: "example",location: "northamerica-northeast1",service: "signal-store-starter"})), provideFunctions(() => getFunctions()), provideMessaging(() => getMessaging()), providePerformance(() => getPerformance()), provideStorage(() => getStorage()), provideRemoteConfig(() => getRemoteConfig()), provideVertexAI(() => getVertexAI()),
   ],
 };

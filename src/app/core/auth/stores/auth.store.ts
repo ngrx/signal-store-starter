@@ -14,6 +14,37 @@ import { AuthService } from '../services/auth.service';
 
 type AuthState = typeof initialAuthState;
 
+/**
+ * AuthStore - Zone-less Compatible Signal Store
+ * 
+ * This store manages authentication state using @ngrx/signals, which is fully compatible
+ * with Angular's zone-less change detection mode.
+ * 
+ * Zone-less Compatibility:
+ * - All state is managed through signals (withState, withComputed)
+ * - All async operations use rxMethod() which properly integrates with signals
+ * - patchState() updates signals, triggering change detection automatically
+ * - No Zone.js needed for change detection - signals handle it
+ * 
+ * Reactive Patterns:
+ * 1. User interactions call methods (login, logout, etc.)
+ * 2. Methods trigger rxMethod effects
+ * 3. Effects update state via patchState (signal modification)
+ * 4. Signal updates automatically trigger UI updates in zone-less mode
+ * 5. Computed signals derive additional state reactively
+ * 
+ * Architecture Compliance:
+ * - Account: Firebase Auth provides identity (who you are)
+ * - AuthStore: Manages authentication state (signal-based)
+ * - Workspace: ContextStore reacts to auth changes (Account → Workspace)
+ * 
+ * Why this works without Zone.js:
+ * - rxMethod() subscribes to observables and updates signals
+ * - patchState() is the only way to modify state (enforced by @ngrx/signals)
+ * - Every patchState() call triggers signal updates
+ * - Signal updates trigger change detection in zone-less mode
+ * - No manual markForCheck() needed
+ */
 export const AuthStore = signalStore(
   { providedIn: 'root' },
   withState(initialAuthState),
@@ -26,6 +57,7 @@ export const AuthStore = signalStore(
   })),
   withMethods((store, authService = inject(AuthService)) => {
     // Reactive login method using rxMethod
+    // Zone-less: Observable operations update signals via patchState
     const loginEffect = rxMethod<{ email: string; password: string }>(
       pipe(
         tap(() => patchState(store, { status: 'loading', error: null })),
@@ -40,6 +72,7 @@ export const AuthStore = signalStore(
             }),
             catchError((error: any) => {
               patchState(store, {
+                user: null,
                 status: 'unauthenticated',
                 error: error.message || 'Login failed',
               });
@@ -65,6 +98,7 @@ export const AuthStore = signalStore(
             }),
             catchError((error: any) => {
               patchState(store, {
+                user: null,
                 status: 'unauthenticated',
                 error: error.message || 'Registration failed',
               });
@@ -114,6 +148,8 @@ export const AuthStore = signalStore(
             }),
             catchError((error: any) => {
               patchState(store, {
+                user: null,
+                status: 'unauthenticated',
                 error: error.message || 'Logout failed',
               });
               return of(null);
@@ -148,6 +184,7 @@ export const AuthStore = signalStore(
   withHooks({
     onInit(store, authService = inject(AuthService)) {
       // Reactive method to sync auth state changes
+      // Zone-less: This runs continuously, updating signals when Firebase auth state changes
       const syncAuthState = rxMethod<void>(
         pipe(
           switchMap(() => authService.authState$),
@@ -162,8 +199,9 @@ export const AuthStore = signalStore(
       );
 
       // Start syncing auth state
+      // This creates a reactive subscription that updates signals
+      // Signal updates trigger change detection in zone-less mode
       syncAuthState();
     },
   })
 );
-
