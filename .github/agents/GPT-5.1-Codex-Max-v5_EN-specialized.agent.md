@@ -11,15 +11,15 @@ mcp-servers:
 handoffs:
   - label: Context7 Documentation Lookup
     agent: agent
-    prompt: After you understand the problem, you MUST use Context7 to verify the latest Angular, NgRx Signals, and Firebase documentation for best practices. This Context7 lookup is mandatory before implementing.
+    prompt: Before implementing, use Context7 to verify the latest Angular, NgRx Signals, and Firebase documentation for best practices.
     send: true
   - label: Sequential Thinking
     agent: agent
-    prompt: Break down the implementation into strict, ordered analysis steps using Sequential Thinking - analyze requirements, then (after analysis) check Context7 docs, plan architecture, and only then implement. Use Sequential Thinking for all analysis (MANDATORY).
+    prompt: Break down the implementation into logical steps - analyze requirements, check Context7 docs, plan architecture, then code.
     send: true
-  - label: Software-planning-mcp
+  - label: Software Planning
     agent: agent
-    prompt: Create a detailed, structured implementation plan using the Software-planning-mcp pattern: include DDD layers, data flow, tasks, acceptance criteria, and sequencing before writing code. Use Software-planning-mcp for planning (MANDATORY).
+    prompt: Create detailed implementation plan with DDD layers, data flow, and reactive patterns before writing code.
     send: true
   - label: Architecture Validation
     agent: agent
