@@ -21,8 +21,8 @@ import { appConfig } from './app/app.config';
  * 
  * Bootstrap sequence:
  * 1. bootstrapApplication() starts with zone-less providers
- * 2. APP_INITIALIZER runs (AppInitializerService.initialize())
- * 3. Firebase Auth state is loaded (via firstValueFrom)
+ * 2. AuthStore.withHooks.onInit wires authState$ to signals
+ * 3. Firebase Auth state is loaded reactively
  * 4. AuthStore.setUser() updates signals
  * 5. Signal updates trigger change detection
  * 6. ContextStore reacts to auth changes via withHooks.onInit
@@ -80,4 +80,3 @@ bootstrapApplication(AppComponent, appConfig)
       </div>
     `;
   });
-

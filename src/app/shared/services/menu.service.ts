@@ -1,4 +1,5 @@
 import { Injectable, inject, computed, Signal } from '@angular/core';
+import { User } from '@angular/fire/auth';
 import { ContextStore } from '../../core/context/stores/context.store';
 import { AuthStore } from '../../core/auth/stores/auth.store';
 import {
@@ -26,8 +27,12 @@ export class MenuService {
     const context = this.contextStore.current();
     const isAuthenticated = this.authStore.isAuthenticated();
 
-    if (!isAuthenticated || !context) {
+    if (!isAuthenticated) {
       return { sections: [] };
+    }
+
+    if (!context) {
+      return this.buildFallbackMenuForUser(this.authStore.user());
     }
 
     return this.buildMenuForContext(context);
@@ -373,6 +378,42 @@ export class MenuService {
         },
       ],
       visible: true,
+    };
+  }
+
+  /**
+   * Fallback menu shown when context is not yet available but user is authenticated.
+   * Guarantees the dropdown renders logout and a quick navigation target.
+   */
+  private buildFallbackMenuForUser(user: User | null): DynamicMenu {
+    return {
+      sections: [
+        {
+          id: 'fallback-user',
+          title: user?.email || 'Account',
+          items: [
+            {
+              id: 'fallback-dashboard',
+              type: 'link',
+              label: 'Dashboard',
+              icon: '📊',
+              route: '/dashboard',
+              visible: true,
+            },
+            {
+              id: 'logout',
+              type: 'action',
+              label: 'Logout',
+              icon: '🚪',
+              action: () => this.authStore.logout(),
+              visible: true,
+            },
+          ],
+          visible: true,
+        },
+      ],
+      contextName: user?.email || 'Account',
+      contextType: 'user',
     };
   }
 

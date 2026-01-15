@@ -340,12 +340,13 @@ export class HeaderComponent {
   protected dynamicMenu = this.menuService.menu;
 
   constructor() {
-    // Close menu when clicking outside
+    // Close menu when clicking outside of the user section/dropdown
     if (typeof document !== 'undefined') {
-      document.addEventListener('click', () => {
-        if (this.menuOpen()) {
-          this.menuOpen.set(false);
-        }
+      document.addEventListener('click', (event) => {
+        const target = event.target as HTMLElement | null;
+        const isUserArea = target?.closest('.user-section');
+        if (!this.menuOpen() || isUserArea) return;
+        this.menuOpen.set(false);
       });
     }
   }
@@ -389,7 +390,10 @@ export class HeaderComponent {
     if (item.route) {
       this.router.navigate([item.route]);
     } else if (item.action) {
-      item.action();
+      const result = item.action();
+      if (item.id === 'logout') {
+        Promise.resolve(result).finally(() => this.router.navigate(['/login']));
+      }
     }
   }
 
