@@ -9,7 +9,7 @@ import {
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { computed, inject, Type } from '@angular/core';
 import { pipe, switchMap, tap, catchError, of } from 'rxjs';
-import { initialAuthState } from './auth.state';
+import { initialAuthState } from '../state/auth.state';
 import { AuthService } from '../services/auth.service';
 import { WorkspaceStore, WorkspaceStoreInstance } from '../../workspace/stores/workspace.store';
 import { AccountService } from '../../account/services/account.service';

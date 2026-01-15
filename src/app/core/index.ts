@@ -34,7 +34,7 @@ export * from './workspace/stores/workspace.store';
 export * from './workspace/services/workspace.service';
 
 // Auth
-export * from './auth/stores/auth.state';
+export * from './auth/state/auth.state';
 export * from './auth/stores/auth.store';
 export * from './auth/services/auth.service';
 export * from './auth/guards/auth.guard';
