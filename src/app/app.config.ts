@@ -106,11 +106,11 @@ export const appConfig: ApplicationConfig = {
     provideVertexAI(() => getVertexAI()),
 
     /**
-     * NOTE: APP_INITIALIZER is deprecated in Angular 20.
-     * Reactive bootstrap is handled directly inside the signal stores:
-     * - AuthStore.withHooks.onInit() subscribes to authState$ and updates signals
-     * - ContextStore reacts to AuthStore signal changes to build the workspace context
-     * This keeps the app fully zone-less without legacy initializer tokens.
+     * Bootstrapping is now 100% reactive:
+     * - AuthStore.withHooks.onInit() syncs Firebase auth state into signals
+     * - ContextStore reacts to AuthStore signals to build workspace context
+     * This removes any reliance on legacy initializer tokens and keeps the app
+     * fully zone-less.
      */
   ],
 };
