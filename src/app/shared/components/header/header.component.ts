@@ -122,25 +122,33 @@ import { MenuItem } from '../../models/menu.model';
                     <button class="context-btn" (click)="toggleContextSwitcher()">
                       <span class="context-icon">👥</span>
                       <span>{{ contextStore.currentContextName() }}</span>
-                      @if (contextStore.teamsInCurrentOrg().length > 1) {
-                        <span class="dropdown-icon">▼</span>
-                      }
+                      <span class="dropdown-icon">▼</span>
                     </button>
                     
-                    @if (contextSwitcherOpen() && contextStore.teamsInCurrentOrg().length > 1) {
+                    @if (contextSwitcherOpen()) {
                       <div class="context-dropdown" (click)="$event.stopPropagation()">
                         <div class="context-section">
-                          <div class="section-title">Switch Team</div>
-                          @for (team of contextStore.teamsInCurrentOrg(); track team.teamId) {
-                            <button 
-                              class="context-item"
-                              [class.active]="contextStore.currentContextId() === team.teamId"
-                              (click)="switchToContext(team)">
-                              <span class="context-icon">👥</span>
-                              <span>{{ team.name }}</span>
-                            </button>
-                          }
+                          <button 
+                            class="context-item context-back-item"
+                            (click)="backToPersonal()">
+                            <span class="context-icon">◀</span>
+                            <span>Back to Personal</span>
+                          </button>
                         </div>
+                        @if (contextStore.teamsInCurrentOrg().length > 1) {
+                          <div class="context-section">
+                            <div class="section-title">Switch Team</div>
+                            @for (team of contextStore.teamsInCurrentOrg(); track team.teamId) {
+                              <button 
+                                class="context-item"
+                                [class.active]="contextStore.currentContextId() === team.teamId"
+                                (click)="switchToContext(team)">
+                                <span class="context-icon">👥</span>
+                                <span>{{ team.name }}</span>
+                              </button>
+                            }
+                          </div>
+                        }
                       </div>
                     }
                   </div>
@@ -154,25 +162,33 @@ import { MenuItem } from '../../models/menu.model';
                     <button class="context-btn" (click)="toggleContextSwitcher()">
                       <span class="context-icon">🤝</span>
                       <span>{{ contextStore.currentContextName() }}</span>
-                      @if (contextStore.partnersInCurrentOrg().length > 1) {
-                        <span class="dropdown-icon">▼</span>
-                      }
+                      <span class="dropdown-icon">▼</span>
                     </button>
                     
-                    @if (contextSwitcherOpen() && contextStore.partnersInCurrentOrg().length > 1) {
+                    @if (contextSwitcherOpen()) {
                       <div class="context-dropdown" (click)="$event.stopPropagation()">
                         <div class="context-section">
-                          <div class="section-title">Switch Partner</div>
-                          @for (partner of contextStore.partnersInCurrentOrg(); track partner.partnerId) {
-                            <button 
-                              class="context-item"
-                              [class.active]="contextStore.currentContextId() === partner.partnerId"
-                              (click)="switchToContext(partner)">
-                              <span class="context-icon">🤝</span>
-                              <span>{{ partner.name }}</span>
-                            </button>
-                          }
+                          <button 
+                            class="context-item context-back-item"
+                            (click)="backToPersonal()">
+                            <span class="context-icon">◀</span>
+                            <span>Back to Personal</span>
+                          </button>
                         </div>
+                        @if (contextStore.partnersInCurrentOrg().length > 1) {
+                          <div class="context-section">
+                            <div class="section-title">Switch Partner</div>
+                            @for (partner of contextStore.partnersInCurrentOrg(); track partner.partnerId) {
+                              <button 
+                                class="context-item"
+                                [class.active]="contextStore.currentContextId() === partner.partnerId"
+                                (click)="switchToContext(partner)">
+                                <span class="context-icon">🤝</span>
+                                <span>{{ partner.name }}</span>
+                              </button>
+                            }
+                          </div>
+                        }
                       </div>
                     }
                   </div>
@@ -302,6 +318,9 @@ import { MenuItem } from '../../models/menu.model';
       position: sticky;
       top: 0;
       z-index: 1000;
+      width: 100%;
+      backdrop-filter: blur(10px);
+      background-color: rgba(255, 255, 255, 0.98);
     }
 
     .header-content {
@@ -625,6 +644,16 @@ import { MenuItem } from '../../models/menu.model';
       font-weight: 600;
     }
 
+    .context-back-item {
+      color: #667eea;
+      font-weight: 500;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .context-back-item:hover {
+      background-color: #f8f9ff;
+    }
+
     .workspace-switcher {
       position: relative;
       margin-right: 1rem;
@@ -824,6 +853,13 @@ export class HeaderComponent {
     this.contextStore.navigateBack();
     this.contextSwitcherOpen.set(false);
     // Navigate to workspace list in parent context
+    this.router.navigate(['/workspace']);
+  }
+
+  backToPersonal(): void {
+    this.contextStore.resetContext();
+    this.contextSwitcherOpen.set(false);
+    // Navigate to workspace list in personal context
     this.router.navigate(['/workspace']);
   }
 
