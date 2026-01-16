@@ -1,6 +1,7 @@
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthStore, AuthStoreInstance } from '../../core/auth/stores/auth.store';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { ContextStore, ContextStoreInstance } from '../../core/context/stores/context.store';
@@ -226,6 +227,7 @@ import { WorkspaceListStore, WorkspaceListStoreInstance, WorkspaceListItem } fro
 export class DashboardComponent implements OnDestroy {
   protected authStore = inject<AuthStoreInstance>(AuthStore);
   private fb = inject(FormBuilder);
+  private router = inject(Router);
   protected contextStore = inject<ContextStoreInstance>(ContextStore);
   protected workspaceListStore = inject<WorkspaceListStoreInstance>(WorkspaceListStore);
   protected toast = signal('');
@@ -302,6 +304,11 @@ export class DashboardComponent implements OnDestroy {
     this.workspaceListStore.createWorkspace(payload);
     this.projectForm.reset();
     this.showToast(this.toastMessages.projectCreated);
+    
+    // Auto-navigate to workspace list to see newly created project
+    setTimeout(() => {
+      this.router.navigate(['/workspace']);
+    }, 1000); // Delay to allow toast to be visible
   }
 
   private showToast(message: string): void {
