@@ -4,12 +4,6 @@
     
     <form [formGroup]="editForm" (ngSubmit)="onSubmit()">
       <!-- TODO: Add form fields for Organization -->
-      
-      @if (store.error && store.error()) {
-        <div class="alert alert-error">
-          {{ store.error() }}
-        </div>
-      }
 
       <div class="form-actions">
         <button 
@@ -21,14 +15,10 @@
         </button>
         <button 
           type="submit" 
-          [disabled]="editForm.invalid || (store.isLoading && store.isLoading())"
+          [disabled]="editForm.invalid"
           class="btn btn-primary"
         >
-          @if (store.isLoading && store.isLoading()) {
-            <span>Processing...</span>
-          } @else {
-            <span>Edit</span>
-          }
+          Edit
         </button>
       </div>
     </form>

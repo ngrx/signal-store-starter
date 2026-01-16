@@ -5,7 +5,7 @@
     <form [formGroup]="createForm" (ngSubmit)="onSubmit()">
       <!-- TODO: Add form fields for Product -->
       
-      @if (store.error && store.error()) {
+      @if (store.error?.()) {
         <div class="alert alert-error">
           {{ store.error() }}
         </div>
@@ -21,10 +21,10 @@
         </button>
         <button 
           type="submit" 
-          [disabled]="createForm.invalid || (store.isLoading && store.isLoading())"
+          [disabled]="createForm.invalid || (store.isLoading())"
           class="btn btn-primary"
         >
-          @if (store.isLoading && store.isLoading()) {
+          @if (store.isLoading()) {
             <span>Processing...</span>
           } @else {
             <span>Create</span>

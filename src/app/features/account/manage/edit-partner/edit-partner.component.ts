@@ -2,7 +2,7 @@ import { Component, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { PartnerStore, PartnerStoreInstance } from '../../../core/partner/stores/partner.store';
+import { ContextStore, ContextStoreInstance} from '../../../../core/context/stores/context.store';
 
 @Component({
   selector: 'app-edit-partner',
@@ -14,20 +14,15 @@ import { PartnerStore, PartnerStoreInstance } from '../../../core/partner/stores
 export class EditPartnerComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  protected store = inject<PartnerStoreInstance>(PartnerStore);
+  protected store = inject<ContextStoreInstance>(ContextStore);
 
   editForm: FormGroup = this.fb.group({
     // TODO: Add form controls for Partner
   });
 
-  constructor() {
-    // Reactive effects for store updates
-    effect(() => {
-      if (this.store.error && this.store.error()) {
-        console.error('Partner edit error:', this.store.error());
-      }
-    }, { allowSignalWrites: true });
-  }
+  // constructor() {
+    // Reactive effects for store updates - ContextStore does not have error property
+  // }
 
   onSubmit(): void {
     if (this.editForm.valid) {

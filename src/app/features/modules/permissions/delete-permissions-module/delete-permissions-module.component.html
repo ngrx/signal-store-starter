@@ -5,7 +5,7 @@
     <form [formGroup]="deleteForm" (ngSubmit)="onSubmit()">
       <!-- TODO: Add form fields for PermissionsModule -->
       
-      @if (store.error && store.error()) {
+      @if (store.error?.()) {
         <div class="alert alert-error">
           {{ store.error() }}
         </div>
@@ -21,10 +21,10 @@
         </button>
         <button 
           type="submit" 
-          [disabled]="deleteForm.invalid || (store.isLoading && store.isLoading())"
+          [disabled]="deleteForm.invalid || (store.isLoading())"
           class="btn btn-primary"
         >
-          @if (store.isLoading && store.isLoading()) {
+          @if (store.isLoading()) {
             <span>Processing...</span>
           } @else {
             <span>Delete</span>

@@ -51,26 +51,20 @@ export * from './workspace/stores/workspace.store';
 export * from './workspace/services/workspace.service';
 export * from './workspace/models/overview.model';
 export * from './workspace/models/document.model';
-export * from './workspace/models/audit-log.model';
-export * from './workspace/models/settings.model';
+export * from './workspace/models/audit.model';
 export * from './workspace/models/task.model';
-export * from './workspace/models/members.model';
-export * from './workspace/models/journal.model';
-export * from './workspace/models/permissions.model';
+export * from './workspace/models/permission.model';
 export * from './workspace/state/overview.state';
 export * from './workspace/state/document.state';
 export * from './workspace/state/audit.state';
 export * from './workspace/state/settings.state';
 export * from './workspace/state/task.state';
-export * from './workspace/state/members.state';
 export * from './workspace/state/permission.state';
-export * from './workspace/state/journal.state';
 export * from './workspace/stores/overview.store';
 export * from './workspace/stores/document.store';
 export * from './workspace/stores/audit.store';
 export * from './workspace/stores/settings.store';
 export * from './workspace/stores/task.store';
-export * from './workspace/stores/members.store';
 export * from './workspace/stores/permission.store';
 export * from './workspace/stores/journal.store';
 export * from './workspace/services/audit-log.service';
@@ -120,24 +114,9 @@ export * from './workspace/state/members.state';
 export * from './workspace/stores/members.store';
 export * from './workspace/services/members.service';
 
-export * from './workspace/models/document.model';
-export * from './workspace/state/document.state';
-export * from './workspace/stores/document.store';
-export * from './workspace/services/document.service';
-
-export * from './workspace/models/audit.model';
-export * from './workspace/state/audit.state';
-export * from './workspace/stores/audit.store';
-export * from './workspace/services/audit-log.service';
-
 // Journal - explicit exports to avoid JournalEntry conflict
 export { JournalEntry as JournalEntryModel, JournalFilter } from './workspace/models/journal.model';
 export * from './workspace/state/journal.state';
-export * from './workspace/stores/journal.store';
-
-export * from './workspace/models/permission.model';
-export * from './workspace/state/permission.state';
-export * from './workspace/stores/permission.store';
 
 // Settings - explicit exports to avoid WorkspaceSettings conflict
 export {
@@ -147,5 +126,5 @@ export {
   SecuritySettings,
   IntegrationSettings
 } from './workspace/models/settings.model';
-export * from './workspace/state/settings.state';
-export * from './workspace/stores/settings.store';
+
+export * from './workspace/services/document.service';

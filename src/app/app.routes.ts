@@ -346,7 +346,7 @@ export const routes: Routes = [
             path: 'settings',
             loadComponent: () =>
               import('./features/modules/settings').then(
-                (m) => m.WorkspaceSettingsComponent
+                (m) => m.SettingsComponent
               ),
           },
           {

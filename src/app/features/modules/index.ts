@@ -5,7 +5,7 @@ export * from './tasks';
 export * from './members';
 export * from './permissions';
 export * from './audit';
-export * from './settings';
+export { SettingsComponent as WorkspaceSettingsComponent } from './settings';
 export * from './journal';
 
 // Module CRUD component exports (not used in routes, but available for future use)

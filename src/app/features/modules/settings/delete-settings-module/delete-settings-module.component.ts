@@ -2,7 +2,7 @@ import { Component, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { WorkspaceStore, WorkspaceStoreInstance } from '../../../core/workspace/stores/workspace.store';
+import { WorkspaceStore, WorkspaceStoreInstance } from '../../../../core/workspace/stores/workspace.store';
 
 @Component({
   selector: 'app-delete-settings-module',

@@ -2,7 +2,7 @@ import { Component, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { TeamStore, TeamStoreInstance } from '../../../core/team/stores/team.store';
+import { ContextStore, ContextStoreInstance } from '../../../../core/context/stores/context.store';
 
 @Component({
   selector: 'app-edit-team',
@@ -14,20 +14,15 @@ import { TeamStore, TeamStoreInstance } from '../../../core/team/stores/team.sto
 export class EditTeamComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  protected store = inject<TeamStoreInstance>(TeamStore);
+  protected store = inject<ContextStoreInstance>(ContextStore);
 
   editForm: FormGroup = this.fb.group({
     // TODO: Add form controls for Team
   });
 
-  constructor() {
-    // Reactive effects for store updates
-    effect(() => {
-      if (this.store.error && this.store.error()) {
-        console.error('Team edit error:', this.store.error());
-      }
-    }, { allowSignalWrites: true });
-  }
+  // constructor() {
+    // Reactive effects for store updates - ContextStore does not have error property
+  // }
 
   onSubmit(): void {
     if (this.editForm.valid) {

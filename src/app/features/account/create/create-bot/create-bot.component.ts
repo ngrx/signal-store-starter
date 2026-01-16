@@ -2,7 +2,7 @@ import { Component, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AccountStore, AccountStoreInstance } from '../../../core/account/stores/account.store';
+import { ContextStore, ContextStoreInstance } from '../../../../core/context/stores/context.store';
 
 @Component({
   selector: 'app-create-bot',
@@ -14,20 +14,15 @@ import { AccountStore, AccountStoreInstance } from '../../../core/account/stores
 export class CreateBotComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  protected store = inject<AccountStoreInstance>(AccountStore);
+  protected store = inject<ContextStoreInstance>(ContextStore);
 
   createForm: FormGroup = this.fb.group({
     // TODO: Add form controls for Bot
   });
 
-  constructor() {
-    // Reactive effects for store updates
-    effect(() => {
-      if (this.store.error && this.store.error()) {
-        console.error('Bot create error:', this.store.error());
-      }
-    }, { allowSignalWrites: true });
-  }
+  // constructor() {
+    // Reactive effects for store updates - ContextStore does not have error property
+  // }
 
   onSubmit(): void {
     if (this.createForm.valid) {

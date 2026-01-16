@@ -1,5 +1,5 @@
 // Main module component
-export { WorkspaceSettingsComponent } from './settings.component';
+export { SettingsComponent } from './settings.component';
 
 // CRUD components for settings module configuration
 export { CreateSettingsModuleComponent } from './create-settings-module/create-settings-module.component';
