@@ -212,11 +212,8 @@ export class LoginComponent {
   onSubmit(): void {
     if (this.loginForm.valid) {
       const { email, password } = this.loginForm.value;
-      this.authStore.login({ email, password }).then(() => {
-        if (this.authStore.isAuthenticated()) {
-          this.router.navigate(['/dashboard']);
-        }
-      });
+      // Just trigger login, navigation handled by effect above
+      this.authStore.login({ email, password });
     }
   }
 }
