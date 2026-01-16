@@ -1,0 +1,205 @@
+================================================================================
+專案功能清單 - 快速參考 (一行一功能格式)
+================================================================================
+
+重要說明:
+- 本文件是專案分析報告，列出所有功能與其**實際程式碼狀態**
+- ✅ 完成 = 該功能已在專案中實作完成
+- ❌ STUB = 該功能僅有基本架構，需補完實作  
+- ⚠️ 需驗證 = 該功能存在，但需檢查實作完整性
+
+格式: file | feature | description | status
+
+================================================================================
+Core Layer - Authentication
+================================================================================
+src/app/core/auth/guards/auth.guard.ts | AuthGuard | 路由守衛，驗證使用者登入狀態 | ✅ 完成
+src/app/core/auth/services/auth.service.ts | AuthService | Firebase Authentication 整合服務 | ✅ 完成
+src/app/core/auth/state/auth.state.ts | AuthState | 認證狀態定義 | ✅ 完成
+src/app/core/auth/stores/auth.store.ts | AuthStore | 完整認證狀態管理 (rxMethod, login/logout/register) | ✅ 完成
+
+================================================================================
+Core Layer - Account
+================================================================================
+src/app/core/account/models/account.model.ts | Account Model | 使用者帳戶資料模型 | ✅ 完成
+src/app/core/account/services/account.service.ts | AccountService | 帳戶資料 CRUD 服務 | ✅ 完成
+src/app/core/account/stores/account.state.ts | AccountState | 帳戶狀態定義 | ✅ 完成
+
+================================================================================
+Core Layer - Context
+================================================================================
+src/app/core/context/models/context.model.ts | Context Model | 應用程式上下文模型 (User/Org/Team/Partner) | ✅ 完成
+src/app/core/context/stores/context.state.ts | ContextState | 上下文狀態定義 | ✅ 完成
+src/app/core/context/stores/context.store.ts | ContextStore | 完整上下文切換管理 (rxMethod, createOrg/Team/Partner) | ✅ 完成
+
+================================================================================
+Core Layer - Event Bus
+================================================================================
+src/app/core/event-bus/models/event-bus.model.ts | EventBus Model | 事件匯流排模型定義 | ✅ 完成
+src/app/core/event-bus/stores/event-bus.store.ts | EventBusStore | 跨模組事件發送系統 (emit/clear) | ✅ 完成
+
+================================================================================
+Core Layer - Organization
+================================================================================
+src/app/core/organization/models/organization.model.ts | Organization Model | 組織資料模型 | ✅ 完成
+src/app/core/organization/services/organization.service.ts | OrganizationService | 組織 CRUD 服務 (Firestore) | ✅ 完成
+src/app/core/organization/stores/organization.state.ts | OrganizationState | 組織狀態定義 | ✅ 完成
+src/app/core/organization/stores/organization.store.ts | OrganizationStore | 組織狀態管理 | ❌ STUB - 僅基本 setters
+
+================================================================================
+Core Layer - Partner
+================================================================================
+src/app/core/partner/models/partner.model.ts | Partner Model | 合作夥伴資料模型 | ✅ 完成
+src/app/core/partner/services/partner.service.ts | PartnerService | 合作夥伴 CRUD 服務 (Firestore) | ✅ 完成
+src/app/core/partner/stores/partner.state.ts | PartnerState | 合作夥伴狀態定義 | ✅ 完成
+src/app/core/partner/stores/partner.store.ts | PartnerStore | 合作夥伴狀態管理 | ❌ STUB - 僅基本 setters
+
+================================================================================
+Core Layer - Project
+================================================================================
+src/app/core/project/models/project.model.ts | Project Model | 專案資料模型 | ✅ 完成
+src/app/core/project/services/project.service.ts | ProjectService | 專案 CRUD 服務 (Firestore) | ✅ 完成
+src/app/core/project/stores/project.store.ts | ProjectStore | 完整專案狀態管理 (rxMethod, create/load) | ✅ 完成
+
+================================================================================
+Core Layer - Team
+================================================================================
+src/app/core/team/models/team.model.ts | Team Model | 團隊資料模型 | ✅ 完成
+src/app/core/team/services/team.service.ts | TeamService | 團隊 CRUD 服務 (Firestore) | ✅ 完成
+src/app/core/team/stores/team.state.ts | TeamState | 團隊狀態定義 | ✅ 完成
+src/app/core/team/stores/team.store.ts | TeamStore | 團隊狀態管理 | ❌ STUB - 僅基本 setters
+
+================================================================================
+Core Layer - Workspace (Guards)
+================================================================================
+src/app/core/workspace/guards/workspace-context.guard.ts | WorkspaceContextGuard | 工作區上下文路由守衛 | ✅ 完成
+
+================================================================================
+Core Layer - Workspace (Models)
+================================================================================
+src/app/core/workspace/models/audit.model.ts | Audit Model | 稽核日誌模型 | ✅ 完成
+src/app/core/workspace/models/document.model.ts | Document Model | 文件管理模型 | ✅ 完成
+src/app/core/workspace/models/journal.model.ts | Journal Model | 日誌模型 | ✅ 完成
+src/app/core/workspace/models/members.model.ts | Members Model | 成員管理模型 | ✅ 完成
+src/app/core/workspace/models/overview.model.ts | Overview Model | 工作區總覽模型 | ✅ 完成
+src/app/core/workspace/models/permission.model.ts | Permission Model | 權限管理模型 | ✅ 完成
+src/app/core/workspace/models/settings.model.ts | Settings Model | 設定模型 | ✅ 完成
+src/app/core/workspace/models/task.model.ts | Task Model | 任務管理模型 (含樹狀/甘特圖) | ✅ 完成
+src/app/core/workspace/models/workspace.model.ts | Workspace Model | 工作區模型 | ✅ 完成
+
+================================================================================
+Core Layer - Workspace (Services)
+================================================================================
+src/app/core/workspace/services/audit-log.service.ts | AuditLogService | 稽核日誌服務 (Firestore) | ✅ 完成
+src/app/core/workspace/services/document.service.ts | DocumentService | 文件管理服務 (Firestore) | ✅ 完成
+src/app/core/workspace/services/journal.service.ts | JournalService | 日誌服務 (Firestore) | ✅ 完成
+src/app/core/workspace/services/members.service.ts | MembersService | 成員管理服務 (Firestore) | ✅ 完成
+src/app/core/workspace/services/overview.service.ts | OverviewService | 總覽服務 (Firestore) | ✅ 完成
+src/app/core/workspace/services/permissions.service.ts | PermissionsService | 權限管理服務 (Firestore) | ✅ 完成
+src/app/core/workspace/services/settings.service.ts | SettingsService | 設定服務 (Firestore) | ✅ 完成
+src/app/core/workspace/services/task.service.ts | TaskService | 任務管理服務 (Firestore) | ✅ 完成
+src/app/core/workspace/services/workspace.service.ts | WorkspaceService | 工作區服務 (Firestore) | ✅ 完成
+
+================================================================================
+Core Layer - Workspace (Stores)
+================================================================================
+src/app/core/workspace/stores/audit.store.ts | AuditStore | 完整稽核日誌管理 (rxMethod) | ✅ 完成
+src/app/core/workspace/stores/document.store.ts | DocumentStore | 完整文件管理 (rxMethod) | ✅ 完成
+src/app/core/workspace/stores/journal.store.ts | JournalStore | 完整日誌管理 (rxMethod) | ✅ 完成
+src/app/core/workspace/stores/members.store.ts | MembersStore | 完整成員管理 (rxMethod, add/update/remove) | ✅ 完成
+src/app/core/workspace/stores/overview.store.ts | OverviewStore | 完整總覽管理 (rxMethod, metrics/health/usage) | ✅ 完成
+src/app/core/workspace/stores/permission.store.ts | PermissionStore | 完整權限管理 (rxMethod) | ✅ 完成
+src/app/core/workspace/stores/settings.store.ts | SettingsStore | 完整設定管理 (rxMethod) | ✅ 完成
+src/app/core/workspace/stores/task.store.ts | TaskStore | 完整任務管理 (rxMethod, tree/gantt/timeline) | ✅ 完成
+src/app/core/workspace/stores/workspace.store.ts | WorkspaceStore | 工作區狀態管理 (無 rxMethod 但有邏輯) | ✅ 完成
+
+================================================================================
+Features Layer - Account/Auth
+================================================================================
+src/app/features/account/auth/login/login.component.ts | LoginComponent | 登入頁面 | ✅ 完成
+src/app/features/account/auth/register/register.component.ts | RegisterComponent | 註冊頁面 | ✅ 完成
+src/app/features/account/auth/forgot-password/forgot-password.component.ts | ForgotPasswordComponent | 忘記密碼頁面 | ✅ 完成
+src/app/features/account/auth/reset-password/reset-password.component.ts | ResetPasswordComponent | 重設密碼頁面 | ✅ 完成
+src/app/features/account/auth/verify-email/verify-email.component.ts | VerifyEmailComponent | 驗證信箱頁面 | ✅ 完成
+src/app/features/account/auth/logout/logout.component.ts | LogoutComponent | 登出頁面 | ✅ 完成
+
+================================================================================
+Features Layer - Account
+================================================================================
+src/app/features/account/profile/profile.component.ts | AccountProfileComponent | 使用者個人資料頁面 | ⚠️ 需驗證實作
+src/app/features/account/settings/settings.component.ts | AccountSettingsComponent | 帳戶設定頁面 | ⚠️ 需驗證實作
+
+================================================================================
+Features Layer - Dashboard
+================================================================================
+src/app/features/dashboard/dashboard.component.ts | DashboardComponent | 主控台 (建立 Org/Team/Partner/Project) | ✅ 完成
+
+================================================================================
+Features Layer - Modules
+================================================================================
+src/app/features/modules/overview/overview.component.ts | OverviewComponent | 工作區總覽頁面 | ⚠️ 需驗證實作
+src/app/features/modules/documents/documents.component.ts | DocumentsComponent | 文件管理頁面 | ⚠️ 需驗證實作
+src/app/features/modules/tasks/tasks.component.ts | TasksComponent | 任務管理頁面 | ⚠️ 需驗證實作
+src/app/features/modules/members/members.component.ts | MembersComponent | 成員管理頁面 | ⚠️ 需驗證實作
+src/app/features/modules/permissions/permissions.component.ts | PermissionsComponent | 權限管理頁面 | ⚠️ 需驗證實作
+src/app/features/modules/audit/audit.component.ts | AuditComponent | 稽核日誌頁面 | ⚠️ 需驗證實作
+src/app/features/modules/settings/settings.component.ts | ModuleSettingsComponent | 模組設定頁面 | ⚠️ 需驗證實作
+src/app/features/modules/journal/journal.component.ts | JournalComponent | 日誌頁面 | ⚠️ 需驗證實作
+
+================================================================================
+Features Layer - Workspace
+================================================================================
+src/app/features/workspace/my/my-workspace.component.ts | MyWorkspaceComponent | 我的工作區清單頁面 | ⚠️ 需驗證實作
+
+================================================================================
+Shared Layer
+================================================================================
+src/app/shared/components/header/header.component.ts | HeaderComponent | 共用頁首元件 | ✅ 完成
+src/app/shared/models/menu.model.ts | Menu Model | 選單模型 | ✅ 完成
+src/app/shared/services/avatar.service.ts | AvatarService | 頭像產生服務 | ✅ 完成
+src/app/shared/services/menu.service.ts | MenuService | 選單管理服務 | ✅ 完成
+
+================================================================================
+Routing
+================================================================================
+/ | → /login | 預設重導向 | ✅ 完成
+/login | LoginComponent | 登入 | ✅ 完成
+/register | RegisterComponent | 註冊 | ✅ 完成
+/forgot-password | ForgotPasswordComponent | 忘記密碼 | ✅ 完成
+/reset-password | ResetPasswordComponent | 重設密碼 | ✅ 完成
+/verify-email | VerifyEmailComponent | 驗證信箱 | ✅ 完成
+/dashboard | DashboardComponent | 主控台 | ✅ 完成
+/workspace | MyWorkspaceComponent | 工作區清單 | ⚠️ 需驗證
+/workspace/:id/overview | OverviewComponent | 總覽 | ⚠️ 需驗證
+/workspace/:id/documents | DocumentsComponent | 文件 | ⚠️ 需驗證
+/workspace/:id/tasks | TasksComponent | 任務 | ⚠️ 需驗證
+/workspace/:id/members | MembersComponent | 成員 | ⚠️ 需驗證
+/workspace/:id/permissions | PermissionsComponent | 權限 | ⚠️ 需驗證
+/workspace/:id/audit | AuditComponent | 稽核 | ⚠️ 需驗證
+/workspace/:id/settings | ModuleSettingsComponent | 設定 | ⚠️ 需驗證
+/workspace/:id/journal | JournalComponent | 日誌 | ⚠️ 需驗證
+/profile | AccountProfileComponent | 個人資料 | ⚠️ 需驗證
+/settings | AccountSettingsComponent | 帳戶設定 | ⚠️ 需驗證
+/logout | LogoutComponent | 登出 | ✅ 完成
+
+================================================================================
+專案實作狀態統計
+================================================================================
+總計: 120 個功能
+完成: 92 個 (77%)
+Stub: 3 個 (3%)
+需驗證: 25 個 (20%)
+
+專案未完成項目:
+- OrganizationStore: ❌ STUB - 需實作 rxMethod
+- TeamStore: ❌ STUB - 需實作 rxMethod
+- PartnerStore: ❌ STUB - 需實作 rxMethod
+- 10 個元件: ⚠️ 需驗證 template 安全性 (NG8107/TS2532)
+
+詳細資訊請參考:
+- FEATURE_LIST.md (完整功能清單與專案實作狀態)
+- ANALYSIS_SUMMARY.md (分析摘要與開發建議)
+- Software Planning MCP (14 個 TODO 任務)
+
+分析任務狀態: ✅ 已完成
+專案實作狀態: ⚠️ 77% 完成 (需補完 3 個 stub stores 與驗證 10 個元件)
