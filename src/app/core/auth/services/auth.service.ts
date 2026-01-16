@@ -30,21 +30,28 @@ export class AuthService {
       if (mockUserData) {
         try {
           const mockUser = JSON.parse(mockUserData);
-          // Return a combined observable that emits mock user first, then Firebase auth state
+          // CRITICAL FIX: Return ONLY the mock user observable
+          // Don't subscribe to Firebase auth state as it will emit null and cause UI flicker
+          // The mock user will be cleared on explicit logout via the logout() method
           return new Observable((subscriber) => {
             // Emit mock user immediately
             subscriber.next(mockUser as User);
             
-            // Then subscribe to real auth state (for cleanup when logout happens)
+            // Keep the observable alive but don't emit null from Firebase auth
+            // This prevents the "user disappears on re-render" bug
             const subscription = authState(this.auth).subscribe({
               next: (user) => {
-                // If Firebase says no user, clear mock user from storage
-                if (!user && mockUserData) {
-                  sessionStorage.removeItem('mockAuthUser');
+                // Only emit if Firebase has a real user (shouldn't happen with mock user active)
+                // OR if someone explicitly logged out (clearing the mock user)
+                const stillHasMockUser = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('mockAuthUser');
+                if (!stillHasMockUser) {
+                  // Mock user was cleared (logout), so emit null
                   subscriber.next(null);
-                } else {
+                } else if (user) {
+                  // Firebase has a real user, override mock
                   subscriber.next(user);
                 }
+                // IMPORTANT: Don't emit Firebase's null while mock user is active
               },
               error: (err) => subscriber.error(err),
               complete: () => subscriber.complete(),
