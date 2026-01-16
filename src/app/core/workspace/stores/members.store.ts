@@ -20,119 +20,93 @@ import { MembersService } from '../services/members.service';
 export const MembersStore = signalStore(
   { providedIn: 'root' },
   withState(initialMembersState),
-  withComputed(({ byWorkspace, invitationsByWorkspace, currentWorkspaceId, selectedMemberId, loading }) => ({
-    // Current workspace members
-    members: computed(() => {
-      const id = currentWorkspaceId();
+  withComputed((store) => {
+    // Create a base computed for current workspace members to avoid repetition
+    const currentMembers = computed(() => {
+      const id = store.currentWorkspaceId();
       if (!id) return [];
-      return byWorkspace()[id] ?? [];
-    }),
+      return store.byWorkspace()[id] ?? [];
+    });
 
-    // Current workspace invitations
-    invitations: computed(() => {
-      const id = currentWorkspaceId();
+    const currentInvitations = computed(() => {
+      const id = store.currentWorkspaceId();
       if (!id) return [];
-      return invitationsByWorkspace()[id] ?? [];
-    }),
+      return store.invitationsByWorkspace()[id] ?? [];
+    });
 
-    // Selected member details
-    selectedMember: computed(() => {
-      const memberId = selectedMemberId();
-      if (!memberId) return null;
-      const members = computed(() => {
-        const id = currentWorkspaceId();
-        return id ? byWorkspace()[id] : [];
-      })();
-      return members.find(m => m.id === memberId) ?? null;
-    }),
+    return {
+      // Current workspace members
+      members: currentMembers,
 
-    // Member statistics
-    totalMembers: computed(() => {
-      const members = computed(() => {
-        const id = currentWorkspaceId();
-        return id ? byWorkspace()[id] : [];
-      })();
-      return members.length;
-    }),
+      // Current workspace invitations
+      invitations: currentInvitations,
 
-    activeMembers: computed(() => {
-      const members = computed(() => {
-        const id = currentWorkspaceId();
-        return id ? byWorkspace()[id] : [];
-      })();
-      return members.filter(m => m.status === 'Active').length;
-    }),
+      // Selected member details
+      selectedMember: computed(() => {
+        const memberId = store.selectedMemberId();
+        if (!memberId) return null;
+        const members = currentMembers();
+        return members.find(m => m.id === memberId) ?? null;
+      }),
 
-    pendingInvitations: computed(() => {
-      const invitations = computed(() => {
-        const id = currentWorkspaceId();
-        return id ? invitationsByWorkspace()[id] : [];
-      })();
-      return invitations.filter(i => i.status === 'pending').length;
-    }),
+      // Member statistics
+      totalMembers: computed(() => currentMembers().length),
 
-    // Members by role
-    owners: computed(() => {
-      const members = computed(() => {
-        const id = currentWorkspaceId();
-        return id ? byWorkspace()[id] : [];
-      })();
-      return members.filter(m => m.role === 'Owner');
-    }),
+      activeMembers: computed(() => 
+        currentMembers().filter(m => m.status === 'Active').length
+      ),
 
-    admins: computed(() => {
-      const members = computed(() => {
-        const id = currentWorkspaceId();
-        return id ? byWorkspace()[id] : [];
-      })();
-      return members.filter(m => m.role === 'Admin');
-    }),
+      pendingInvitations: computed(() => 
+        currentInvitations().filter(i => i.status === 'pending').length
+      ),
 
-    regularMembers: computed(() => {
-      const members = computed(() => {
-        const id = currentWorkspaceId();
-        return id ? byWorkspace()[id] : [];
-      })();
-      return members.filter(m => m.role === 'Member');
-    }),
+      // Members by role
+      owners: computed(() => 
+        currentMembers().filter(m => m.role === 'Owner')
+      ),
 
-    guests: computed(() => {
-      const members = computed(() => {
-        const id = currentWorkspaceId();
-        return id ? byWorkspace()[id] : [];
-      })();
-      return members.filter(m => m.role === 'Guest');
-    }),
+      admins: computed(() => 
+        currentMembers().filter(m => m.role === 'Admin')
+      ),
 
-    // Loading state
-    isLoading: computed(() => loading()),
+      regularMembers: computed(() => 
+        currentMembers().filter(m => m.role === 'Member')
+      ),
 
-    // Has selected member
-    hasSelection: computed(() => selectedMemberId() !== null),
-  })),
+      guests: computed(() => 
+        currentMembers().filter(m => m.role === 'Guest')
+      ),
+
+      // Loading state
+      isLoading: computed(() => store.loading()),
+
+      // Has selected member
+      hasSelection: computed(() => store.selectedMemberId() !== null),
+    };
+  }),
   withMethods((store, membersService = inject(MembersService)) => {
     /**
      * Load members using rxMethod
      */
     const loadMembers = rxMethod<string>(
       pipe(
-        tap((workspaceId) =>
+        tap((workspaceId: string) =>
           patchState(store, {
             currentWorkspaceId: workspaceId,
             loading: true,
             error: null,
           })
         ),
-        switchMap((workspaceId) =>
+        switchMap((workspaceId: string) =>
           membersService.getMembers(workspaceId).pipe(
-            tap((members) => {
+            tap((members: WorkspaceMember[]) => {
               const next = { ...store.byWorkspace(), [workspaceId]: members };
               patchState(store, {
                 byWorkspace: next,
                 loading: false,
               });
             }),
-            catchError((err) => {
+            catchError((err: Error) => {
               patchState(store, {
                 error: err.message || 'Failed to load members',
                 loading: false,
@@ -150,16 +124,16 @@ export const MembersStore = signalStore(
     const loadInvitations = rxMethod<string>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap((workspaceId) =>
+        switchMap((workspaceId: string) =>
           membersService.getInvitations(workspaceId).pipe(
-            tap((invitations) => {
+            tap((invitations: WorkspaceInvitation[]) => {
               const next = { ...store.invitationsByWorkspace(), [workspaceId]: invitations };
               patchState(store, {
                 invitationsByWorkspace: next,
                 loading: false,
               });
             }),
-            catchError((err) => {
+            catchError((err: Error) => {
               patchState(store, {
                 error: err.message || 'Failed to load invitations',
                 loading: false,
@@ -177,14 +151,14 @@ export const MembersStore = signalStore(
     const addMember = rxMethod<{ workspaceId: string; member: Omit<WorkspaceMember, 'id' | 'createdAt' | 'updatedAt'> }>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap(({ workspaceId, member }) =>
+        switchMap(({ workspaceId, member }: { workspaceId: string; member: Omit<WorkspaceMember, 'id' | 'createdAt' | 'updatedAt'> }) =>
           membersService.addMember(workspaceId, member).pipe(
             tap(() => {
               patchState(store, { loading: false });
               // Reload members to get the updated list
               loadMembers(workspaceId);
             }),
-            catchError((err) => {
+            catchError((err: Error) => {
               patchState(store, {
                 error: err.message || 'Failed to add member',
                 loading: false,
@@ -202,14 +176,14 @@ export const MembersStore = signalStore(
     const updateMember = rxMethod<{ workspaceId: string; memberId: string; updates: Partial<WorkspaceMember> }>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap(({ workspaceId, memberId, updates }) =>
+        switchMap(({ workspaceId, memberId, updates }: { workspaceId: string; memberId: string; updates: Partial<WorkspaceMember> }) =>
           membersService.updateMember(workspaceId, memberId, updates).pipe(
             tap(() => {
               patchState(store, { loading: false });
               // Reload members to get the updated list
               loadMembers(workspaceId);
             }),
-            catchError((err) => {
+            catchError((err: Error) => {
               patchState(store, {
                 error: err.message || 'Failed to update member',
                 loading: false,
@@ -227,14 +201,14 @@ export const MembersStore = signalStore(
     const removeMember = rxMethod<{ workspaceId: string; memberId: string }>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap(({ workspaceId, memberId }) =>
+        switchMap(({ workspaceId, memberId }: { workspaceId: string; memberId: string }) =>
           membersService.removeMember(workspaceId, memberId).pipe(
             tap(() => {
               patchState(store, { loading: false, selectedMemberId: null });
               // Reload members to get the updated list
               loadMembers(workspaceId);
             }),
-            catchError((err) => {
+            catchError((err: Error) => {
               patchState(store, {
                 error: err.message || 'Failed to remove member',
                 loading: false,
@@ -252,14 +226,14 @@ export const MembersStore = signalStore(
     const sendInvitation = rxMethod<{ workspaceId: string; invitation: Omit<WorkspaceInvitation, 'id' | 'invitedAt' | 'status'> }>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap(({ workspaceId, invitation }) =>
+        switchMap(({ workspaceId, invitation }: { workspaceId: string; invitation: Omit<WorkspaceInvitation, 'id' | 'invitedAt' | 'status'> }) =>
           membersService.sendInvitation(workspaceId, invitation).pipe(
             tap(() => {
               patchState(store, { loading: false });
               // Reload invitations to get the updated list
               loadInvitations(workspaceId);
             }),
-            catchError((err) => {
+            catchError((err: Error) => {
               patchState(store, {
                 error: err.message || 'Failed to send invitation',
                 loading: false,
@@ -277,14 +251,14 @@ export const MembersStore = signalStore(
     const revokeInvitation = rxMethod<{ workspaceId: string; invitationId: string }>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap(({ workspaceId, invitationId }) =>
+        switchMap(({ workspaceId, invitationId }: { workspaceId: string; invitationId: string }) =>
           membersService.revokeInvitation(workspaceId, invitationId).pipe(
             tap(() => {
               patchState(store, { loading: false });
               // Reload invitations to get the updated list
               loadInvitations(workspaceId);
             }),
-            catchError((err) => {
+            catchError((err: Error) => {
               patchState(store, {
                 error: err.message || 'Failed to revoke invitation',
                 loading: false,
