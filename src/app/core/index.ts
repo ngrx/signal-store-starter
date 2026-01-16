@@ -23,24 +23,24 @@ export * from './account/stores/account.state';
 
 // Context
 export * from './context/models/context.model';
-export * from './context/stores/context.state';
+export * from './context/state/context.state';
 export * from './context/stores/context.store';
 
 // Organization
 export * from './organization/models/organization.model';
-export * from './organization/stores/organization.state';
+export * from './organization/state/organization.state';
 export * from './organization/stores/organization.store';
 export * from './organization/services/organization.service';
 
 // Team
 export * from './team/models/team.model';
-export * from './team/stores/team.state';
+export * from './team/state/team.state';
 export * from './team/stores/team.store';
 export * from './team/services/team.service';
 
 // Partner
 export * from './partner/models/partner.model';
-export * from './partner/stores/partner.state';
+export * from './partner/state/partner.state';
 export * from './partner/stores/partner.store';
 export * from './partner/services/partner.service';
 

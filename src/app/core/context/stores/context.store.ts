@@ -9,7 +9,7 @@ import {
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { Type, computed, inject } from '@angular/core';
 import { pipe, switchMap, tap, catchError, of, combineLatest } from 'rxjs';
-import { initialContextState } from './context.state';
+import { initialContextState } from '../state/context.state';
 import {
   AppContext,
   ContextState,
