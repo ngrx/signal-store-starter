@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthStore, AuthStoreInstance } from '../../core/auth/stores/auth.store';
-import { HeaderComponent } from '../../shared/components/header/header.component';
+import { HeaderComponent } from '../../shared/layouts/header/header.component';
 import { ContextStore, ContextStoreInstance } from '../../core/context/stores/context.store';
 import { WorkspaceListStore, WorkspaceListStoreInstance, WorkspaceListItem } from '../../core';
 
