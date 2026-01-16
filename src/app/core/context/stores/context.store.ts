@@ -573,6 +573,8 @@ export const ContextStore = signalStore(
   ),
   withHooks({
     onInit(store, authStore = inject<AuthStoreInstance>(AuthStore)) {
+      const eventBus = inject(EventBusStore);
+      
       // Trigger loading on auth changes (handles login/logout after app init)
       effect(() => {
         const initialized = authStore.initialized();
@@ -581,6 +583,14 @@ export const ContextStore = signalStore(
           return;
         }
         store.refreshAvailableContexts();
+      });
+      
+      // Listen for logout events to clear context using effect
+      effect(() => {
+        const lastEvent = eventBus.lastEvent();
+        if (lastEvent && lastEvent.type === 'auth.logout') {
+          patchState(store, initialContextState);
+        }
       });
     },
   })
