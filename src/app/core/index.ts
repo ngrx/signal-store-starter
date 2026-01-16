@@ -80,19 +80,24 @@ export * from './workspace/state/members.state';
 export * from './workspace/stores/members.store';
 export * from './workspace/services/members.service';
 
+export * from './workspace/models/document.model';
 export * from './workspace/state/document.state';
 export * from './workspace/stores/document.store';
 export * from './workspace/services/document.service';
 
+export * from './workspace/models/audit.model';
 export * from './workspace/state/audit.state';
 export * from './workspace/stores/audit.store';
 export * from './workspace/services/audit-log.service';
 
+export * from './workspace/models/journal.model';
 export * from './workspace/state/journal.state';
 export * from './workspace/stores/journal.store';
 
+export * from './workspace/models/permission.model';
 export * from './workspace/state/permission.state';
 export * from './workspace/stores/permission.store';
 
+export * from './workspace/models/settings.model';
 export * from './workspace/state/settings.state';
 export * from './workspace/stores/settings.store';
