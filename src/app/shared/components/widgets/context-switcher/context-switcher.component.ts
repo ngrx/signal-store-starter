@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal, output } from '@angular/core';
+import { Component, DestroyRef, inject, computed, signal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ContextStore, ContextStoreInstance } from '../../../../core/context/stores/context.store';
 import type { AppContext } from '../../../../core/context/models/context.model';
@@ -234,6 +234,7 @@ import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.
 export class ContextSwitcherComponent {
   private contextStore = inject<ContextStoreInstance>(ContextStore);
   private authStore = inject<AuthStoreInstance>(AuthStore);
+  private destroyRef = inject(DestroyRef);
   protected dropdownOpen = signal(false);
   protected dropdownId = 'context-switcher-menu';
 
@@ -269,12 +270,16 @@ export class ContextSwitcherComponent {
   
   constructor() {
     if (typeof document !== 'undefined') {
-      document.addEventListener('click', (event) => {
+      const onDocumentClick = (event: MouseEvent) => {
         const target = event.target as HTMLElement | null;
         const isContextArea = target?.closest('.context-switcher');
         if (this.dropdownOpen() && !isContextArea) {
           this.dropdownOpen.set(false);
         }
+      };
+      document.addEventListener('click', onDocumentClick);
+      this.destroyRef.onDestroy(() => {
+        document.removeEventListener('click', onDocumentClick);
       });
     }
   }
@@ -284,12 +289,20 @@ export class ContextSwitcherComponent {
   }
 
   handleSwitchToPersonal(): void {
+    const user = this.authStore.user();
+    if (!user) {
+      this.dropdownOpen.set(false);
+      return;
+    }
+    const personalContext: AppContext = {
+      type: 'user',
+      userId: user.uid,
+      email: user.email || '',
+      displayName: user.displayName ?? null,
+    };
     this.contextStore.resetContext();
     this.dropdownOpen.set(false);
-    const ctx = this.contextStore.current();
-    if (ctx) {
-      this.contextSwitch.emit(ctx);
-    }
+    this.contextSwitch.emit(personalContext);
   }
 
   handleSwitchContext(context: AppContext): void {
@@ -320,7 +333,13 @@ export class ContextSwitcherComponent {
     console.log('[ContextSwitcher] Navigate back from', currentType);
     this.dropdownOpen.set(false);
     
+    const beforeType = this.contextStore.currentContextType();
+    const beforeId = this.contextStore.currentContextId();
     this.contextStore.navigateBack();
-    this.navigateBack.emit();
+    const afterType = this.contextStore.currentContextType();
+    const afterId = this.contextStore.currentContextId();
+    if (beforeType !== afterType || beforeId !== afterId) {
+      this.navigateBack.emit();
+    }
   }
 }
