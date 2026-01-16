@@ -28,8 +28,8 @@ import { ThemeToggleComponent } from '../../components/widgets/theme-toggle/them
         </div>
 
         <!-- Navigation Controls -->
-        <nav class="nav">
-          @if (authStore.isAuthenticated()) {
+        @if (authStore.isAuthenticated()) {
+          <nav class="nav">
             <app-context-switcher 
               (contextSwitch)="onContextSwitch()"
               (navigateBack)="onNavigateBack()" />
@@ -38,11 +38,11 @@ import { ThemeToggleComponent } from '../../components/widgets/theme-toggle/them
               (workspaceSelect)="onWorkspaceSelect($event)" />
             
             <app-theme-toggle />
-          }
-        </nav>
-
-        <!-- User Menu -->
-        <app-user-avatar (menuItemClick)="onMenuItemClick($event)" />
+            
+            <!-- User Menu -->
+            <app-user-avatar (menuItemClick)="onMenuItemClick($event)" />
+          </nav>
+        }
       </div>
     </header>
   `,
