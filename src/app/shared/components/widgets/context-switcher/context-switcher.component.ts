@@ -8,74 +8,84 @@ import { ContextStore, ContextStoreInstance } from '../../../../core/context/sto
   imports: [CommonModule],
   template: `
     <div class="context-switcher">
-      @if (hasOrganizations() || currentContextType() !== 'user') {
-        <!-- Back Button (if not in Personal) -->
-        @if (currentContextType() !== 'user') {
-          <button class="context-back-btn" (click)="handleNavigateBack()" 
-            [title]="currentContextType() === 'organization' ? 'Back to Personal' : 'Back to Organization'">
-            <span>◀</span>
-          </button>
-        }
-        
-        <!-- Context Switcher Button -->
-        <button class="context-btn" (click)="toggleDropdown()">
-          <span class="context-icon">{{ contextIcon() }}</span>
-          <span>{{ currentContextName() || 'Personal' }}</span>
-          <span class="dropdown-icon">▼</span>
+      <!-- Back Button (if not in Personal) -->
+      @if (currentContextType() !== 'user') {
+        <button class="context-back-btn" (click)="handleNavigateBack()" 
+          [title]="currentContextType() === 'organization' ? 'Back to Personal' : 'Back to Organization'">
+          <span>◀</span>
         </button>
-        
-        <!-- Unified Dropdown Menu -->
-        @if (dropdownOpen()) {
-          <div class="context-dropdown" (click)="$event.stopPropagation()">
-            <!-- Organizations Section -->
-            @if (availableContexts().organizations.length > 0) {
-              <div class="context-section">
-                <div class="section-title">Switch to Organization</div>
-                @for (org of availableContexts().organizations; track org.organizationId) {
-                  <button 
-                    class="context-item"
-                    [class.active]="currentContextType() === 'organization' && currentContextId() === org.organizationId"
-                    (click)="handleSwitchContext(org)">
-                    <span class="context-icon">🏢</span>
-                    <span>{{ org.name }}</span>
-                  </button>
-                }
-              </div>
-            }
-            
-            <!-- Teams Section -->
-            @if (availableContexts().teams.length > 0) {
-              <div class="context-section">
-                <div class="section-title">Switch to Team</div>
-                @for (team of availableContexts().teams; track team.teamId) {
-                  <button 
-                    class="context-item"
-                    [class.active]="currentContextType() === 'team' && currentContextId() === team.teamId"
-                    (click)="handleSwitchContext(team)">
-                    <span class="context-icon">👥</span>
-                    <span>{{ team.name }}</span>
-                  </button>
-                }
-              </div>
-            }
-            
-            <!-- Partners Section -->
-            @if (availableContexts().partners.length > 0) {
-              <div class="context-section">
-                <div class="section-title">Switch to Partner</div>
-                @for (partner of availableContexts().partners; track partner.partnerId) {
-                  <button 
-                    class="context-item"
-                    [class.active]="currentContextType() === 'partner' && currentContextId() === partner.partnerId"
-                    (click)="handleSwitchContext(partner)">
-                    <span class="context-icon">🤝</span>
-                    <span>{{ partner.name }}</span>
-                  </button>
-                }
-              </div>
-            }
+      }
+      
+      <!-- Context Switcher Button - Always Visible -->
+      <button class="context-btn" (click)="toggleDropdown()">
+        <span class="context-icon">{{ contextIcon() }}</span>
+        <span>{{ currentContextName() || 'Personal' }}</span>
+        <span class="dropdown-icon">▼</span>
+      </button>
+      
+      <!-- Unified Dropdown Menu -->
+      @if (dropdownOpen()) {
+        <div class="context-dropdown" (click)="$event.stopPropagation()">
+          <!-- Personal Section - Always show -->
+          <div class="context-section">
+            <div class="section-title">Personal</div>
+            <button 
+              class="context-item"
+              [class.active]="currentContextType() === 'user'"
+              (click)="handleSwitchToPersonal()">
+              <span class="context-icon">👤</span>
+              <span>Personal</span>
+            </button>
           </div>
-        }
+          
+          <!-- Organizations Section -->
+          @if (availableContexts().organizations.length > 0) {
+            <div class="context-section">
+              <div class="section-title">Organizations</div>
+              @for (org of availableContexts().organizations; track org.organizationId) {
+                <button 
+                  class="context-item"
+                  [class.active]="currentContextType() === 'organization' && currentContextId() === org.organizationId"
+                  (click)="handleSwitchContext(org)">
+                  <span class="context-icon">🏢</span>
+                  <span>{{ org.name }}</span>
+                </button>
+              }
+            </div>
+          }
+          
+          <!-- Teams Section -->
+          @if (availableContexts().teams.length > 0) {
+            <div class="context-section">
+              <div class="section-title">Teams</div>
+              @for (team of availableContexts().teams; track team.teamId) {
+                <button 
+                  class="context-item"
+                  [class.active]="currentContextType() === 'team' && currentContextId() === team.teamId"
+                  (click)="handleSwitchContext(team)">
+                  <span class="context-icon">👥</span>
+                  <span>{{ team.name }}</span>
+                </button>
+              }
+            </div>
+          }
+          
+          <!-- Partners Section -->
+          @if (availableContexts().partners.length > 0) {
+            <div class="context-section">
+              <div class="section-title">Partners</div>
+              @for (partner of availableContexts().partners; track partner.partnerId) {
+                <button 
+                  class="context-item"
+                  [class.active]="currentContextType() === 'partner' && currentContextId() === partner.partnerId"
+                  (click)="handleSwitchContext(partner)">
+                  <span class="context-icon">🤝</span>
+                  <span>{{ partner.name }}</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
       }
     </div>
   `,
@@ -233,6 +243,12 @@ export class ContextSwitcherComponent {
     this.contextStore.switchContext(context);
     this.dropdownOpen.set(false);
     this.contextSwitch.emit(context);
+  }
+
+  handleSwitchToPersonal(): void {
+    this.contextStore.resetContext();
+    this.dropdownOpen.set(false);
+    this.navigateBack.emit();
   }
 
   handleNavigateBack(): void {
