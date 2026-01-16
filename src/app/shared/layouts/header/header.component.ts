@@ -35,7 +35,8 @@ import { ThemeToggleComponent } from '../../components/widgets/theme-toggle/them
         </div>
 
         <!-- Navigation Controls -->
-        @if (isAuthenticated()) {
+        <!-- Don't hide during initialization - prevents UI flash and widget destruction -->
+        @if (!isInitializing() && isAuthenticated()) {
           <nav class="nav">
             <app-context-switcher 
               (contextSwitch)="onContextSwitch()"
@@ -62,6 +63,12 @@ import { ThemeToggleComponent } from '../../components/widgets/theme-toggle/them
               }
             }
           </nav>
+        } @else if (isInitializing()) {
+          <!-- Show loading state during initialization instead of hiding widgets -->
+          <div class="nav-loading">
+            <span class="loading-spinner">⟳</span>
+            <span class="loading-text">Loading...</span>
+          </div>
         }
       </div>
     </header>
@@ -107,6 +114,24 @@ import { ThemeToggleComponent } from '../../components/widgets/theme-toggle/them
       align-items: center;
     }
 
+    .nav-loading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .loading-spinner {
+      animation: spin 1s linear infinite;
+      font-size: 16px;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     @media (max-width: 768px) {
       .nav {
         gap: 4px;
@@ -121,6 +146,7 @@ export class HeaderComponent {
   
   // Computed signals wrapping store access
   protected isAuthenticated = computed(() => this.authStore.isAuthenticated());
+  protected isInitializing = computed(() => this.authStore.isInitializing());
   protected currentContextType = computed(() => this.contextStore.currentContextType());
 
   onContextSwitch(): void {

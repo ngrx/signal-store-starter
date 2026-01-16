@@ -76,8 +76,10 @@ export class AppComponent {
     this.configStore.loadRemoteConfig();
 
     // Auto-load workspace list when user authenticates
+    // Critical: Only trigger after auth initialization completes
     effect(() => {
-      if (this.authStore.isAuthenticated()) {
+      // Wait for initialization to complete before loading workspaces
+      if (!this.authStore.isInitializing() && this.authStore.isAuthenticated()) {
         this.workspaceListStore.loadWorkspaces();
       }
     });

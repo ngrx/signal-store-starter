@@ -228,8 +228,14 @@ export const ContextStore = signalStore(
         pipe(
           switchMap(() => {
             const user = authStore.user();
+            // Critical: Don't clear context during initialization
+            // Only clear if we're initialized and confirmed unauthenticated
             if (!user) {
-              clearContextState();
+              if (authStore.initialized()) {
+                // Actually logged out - clear context
+                clearContextState();
+              }
+              // Not authenticated - skip context loading
               return of(null);
             }
 
