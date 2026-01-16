@@ -3,77 +3,198 @@
  * Per prd-sup.md section on WorkspaceListStore
  */
 
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import {
+  Firestore,
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  setDoc,
+  updateDoc,
+  query,
+  where,
+} from '@angular/fire/firestore';
+import { Observable, from, map } from 'rxjs';
 import { WorkspaceListItem, WorkspaceMembership } from '../models/workspace-list.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WorkspaceListService {
+  private firestore = inject(Firestore);
+  private workspacesCollection = 'workspaces';
+  private membershipsCollection = 'workspace-memberships';
+
   /**
    * Get all workspaces for the current user
-   * In real implementation, this would query Firestore for workspaces where user is a member
+   * Queries Firestore for workspaces where user is a member
    */
   getWorkspaces(userId: string): Observable<WorkspaceListItem[]> {
-    // Mock implementation - replace with actual Firestore query
-    return of([]);
+    const membershipsRef = collection(this.firestore, this.membershipsCollection);
+    const q = query(membershipsRef, where('userId', '==', userId));
+    
+    return from(
+      getDocs(q).then(async (snapshot) => {
+        const workspaces: WorkspaceListItem[] = [];
+        
+        for (const membershipDoc of snapshot.docs) {
+          const membership = membershipDoc.data() as WorkspaceMembership;
+          const workspaceId = membershipDoc.data()['workspaceId'];
+          
+          // Get workspace details
+          const workspaceRef = doc(this.firestore, this.workspacesCollection, workspaceId);
+          const workspaceSnap = await getDoc(workspaceRef);
+          
+          if (workspaceSnap.exists()) {
+            const workspaceData = workspaceSnap.data();
+            workspaces.push({
+              id: workspaceSnap.id,
+              name: workspaceData['name'] || '',
+              type: workspaceData['type'] || 'project',
+              description: workspaceData['description'] || '',
+              avatarUrl: workspaceData['avatarUrl'],
+              membership,
+              createdAt: workspaceData['createdAt']?.toDate() || new Date(),
+              updatedAt: workspaceData['updatedAt']?.toDate() || new Date(),
+            });
+          }
+        }
+        
+        return workspaces;
+      })
+    );
   }
 
   /**
    * Get workspace membership details
    */
   getMembership(workspaceId: string, userId: string): Observable<WorkspaceMembership | null> {
-    // Mock implementation - replace with actual Firestore query
-    return of(null);
+    const membershipsRef = collection(this.firestore, this.membershipsCollection);
+    const q = query(
+      membershipsRef,
+      where('workspaceId', '==', workspaceId),
+      where('userId', '==', userId)
+    );
+    
+    return from(
+      getDocs(q).then((snapshot) => {
+        if (snapshot.empty) return null;
+        return snapshot.docs[0].data() as WorkspaceMembership;
+      })
+    );
   }
 
   /**
    * Create a new workspace
    */
   createWorkspace(workspace: Omit<WorkspaceListItem, 'id'>): Observable<string> {
-    // Mock implementation - replace with actual Firestore write
-    const workspaceId = `workspace-${Date.now()}`;
-    return of(workspaceId);
+    const workspaceRef = doc(collection(this.firestore, this.workspacesCollection));
+    const workspaceId = workspaceRef.id;
+    
+    return from(
+      setDoc(workspaceRef, {
+        name: workspace.name,
+        type: workspace.type,
+        description: workspace.description,
+        avatarUrl: workspace.avatarUrl,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }).then(() => workspaceId)
+    );
   }
 
   /**
    * Update workspace
    */
   updateWorkspace(workspaceId: string, updates: Partial<WorkspaceListItem>): Observable<void> {
-    // Mock implementation - replace with actual Firestore update
-    return of(undefined);
+    const workspaceRef = doc(this.firestore, this.workspacesCollection, workspaceId);
+    return from(
+      updateDoc(workspaceRef, {
+        ...updates,
+        updatedAt: new Date(),
+      })
+    );
   }
 
   /**
    * Archive workspace
    */
   archiveWorkspace(workspaceId: string): Observable<void> {
-    // Mock implementation - replace with actual Firestore update
-    return of(undefined);
+    const workspaceRef = doc(this.firestore, this.workspacesCollection, workspaceId);
+    return from(
+      updateDoc(workspaceRef, {
+        archived: true,
+        updatedAt: new Date(),
+      })
+    );
   }
 
   /**
    * Leave workspace
    */
   leaveWorkspace(workspaceId: string, userId: string): Observable<void> {
-    // Mock implementation - replace with actual Firestore update
-    return of(undefined);
+    const membershipsRef = collection(this.firestore, this.membershipsCollection);
+    const q = query(
+      membershipsRef,
+      where('workspaceId', '==', workspaceId),
+      where('userId', '==', userId)
+    );
+    
+    return from(
+      getDocs(q).then(async (snapshot) => {
+        if (!snapshot.empty) {
+          await updateDoc(snapshot.docs[0].ref, {
+            status: 'Left',
+            updatedAt: new Date(),
+          });
+        }
+      })
+    );
   }
 
   /**
    * Toggle favorite
    */
   toggleFavorite(workspaceId: string, userId: string, isFavorite: boolean): Observable<void> {
-    // Mock implementation - replace with actual Firestore update
-    return of(undefined);
+    const membershipsRef = collection(this.firestore, this.membershipsCollection);
+    const q = query(
+      membershipsRef,
+      where('workspaceId', '==', workspaceId),
+      where('userId', '==', userId)
+    );
+    
+    return from(
+      getDocs(q).then(async (snapshot) => {
+        if (!snapshot.empty) {
+          await updateDoc(snapshot.docs[0].ref, {
+            isFavorite,
+            updatedAt: new Date(),
+          });
+        }
+      })
+    );
   }
 
   /**
    * Update last accessed time
    */
   updateLastAccessed(workspaceId: string, userId: string): Observable<void> {
-    // Mock implementation - replace with actual Firestore update
-    return of(undefined);
+    const membershipsRef = collection(this.firestore, this.membershipsCollection);
+    const q = query(
+      membershipsRef,
+      where('workspaceId', '==', workspaceId),
+      where('userId', '==', userId)
+    );
+    
+    return from(
+      getDocs(q).then(async (snapshot) => {
+        if (!snapshot.empty) {
+          await updateDoc(snapshot.docs[0].ref, {
+            lastAccessedAt: new Date(),
+          });
+        }
+      })
+    );
   }
 }
