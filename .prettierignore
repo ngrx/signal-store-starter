@@ -1,0 +1,7 @@
+# Ignore compiled / output files
+/dist
+/out-tsc
+/node_modules
+
+# Ignore environment files
+*.env

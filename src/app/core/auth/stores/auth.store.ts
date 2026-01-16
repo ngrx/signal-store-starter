@@ -20,6 +20,8 @@ export interface AuthStoreInstance {
   user: () => any;
   status: () => AuthState['status'];
   error: () => string | null;
+  initialized: () => boolean;
+  isInitializing: () => boolean;
   isAuthenticated: () => boolean;
   isLoading: () => boolean;
   isUnauthenticated: () => boolean;
@@ -65,12 +67,17 @@ export interface AuthStoreInstance {
 export const AuthStore = signalStore(
   { providedIn: 'root' },
   withState(initialAuthState),
-  withComputed(({ status, user }) => ({
+  withComputed(({ status, user, initialized }) => ({
+    isInitializing: computed(() => status() === 'initializing'),
     isAuthenticated: computed(() => {
-      return status() === 'authenticated' && user() !== null;
+      // Only return true if initialized AND authenticated with user
+      return initialized() && status() === 'authenticated' && user() !== null;
     }),
     isLoading: computed(() => status() === 'loading'),
-    isUnauthenticated: computed(() => status() === 'unauthenticated'),
+    isUnauthenticated: computed(() => {
+      // Only return true if initialized AND confirmed unauthenticated
+      return initialized() && status() === 'unauthenticated';
+    }),
   })),
   withMethods(
     (
@@ -91,6 +98,7 @@ export const AuthStore = signalStore(
                 user: user || null,
                 status: 'authenticated',
                 error: null,
+                initialized: true, // Mark as initialized after successful login
               });
             }),
             catchError((error: any) => {
@@ -98,6 +106,7 @@ export const AuthStore = signalStore(
                 user: null,
                 status: 'unauthenticated',
                 error: error.message || 'Login failed',
+                initialized: true, // Mark as initialized even on error
               });
               return of(null);
             })
@@ -117,6 +126,7 @@ export const AuthStore = signalStore(
                 user: user || null,
                 status: 'authenticated',
                 error: null,
+                initialized: true,
               });
             }),
             catchError((error: any) => {
@@ -124,6 +134,7 @@ export const AuthStore = signalStore(
                 user: null,
                 status: 'unauthenticated',
                 error: error.message || 'Registration failed',
+                initialized: true,
               });
               return of(null);
             })
@@ -167,6 +178,7 @@ export const AuthStore = signalStore(
                 user: null,
                 status: 'unauthenticated',
                 error: null,
+                initialized: true, // Keep initialized = true (we know the state)
               });
               workspaceStore.clearAll();
             }),
@@ -175,6 +187,7 @@ export const AuthStore = signalStore(
                 user: null,
                 status: 'unauthenticated',
                 error: error.message || 'Logout failed',
+                initialized: true,
               });
               return of(null);
             })
@@ -224,6 +237,7 @@ export const AuthStore = signalStore(
         patchState(store, {
           user,
           status: user ? 'authenticated' : 'unauthenticated',
+          initialized: true, // Auth state has been determined
         });
       },
     };

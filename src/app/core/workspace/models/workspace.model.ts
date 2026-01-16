@@ -6,6 +6,8 @@
 export interface Workspace {
   id: string;
   organizationId?: string;
+  teamId?: string;
+  partnerId?: string;
   name: string;
   displayName?: string;
   description?: string;
@@ -34,7 +36,7 @@ export interface Workspace {
     tasks: number;
     members: number;
   };
-  type?: 'personal' | 'organization' | 'team' | 'partner';
+  type?: 'project' | 'department' | 'client' | 'campaign' | 'product' | 'internal';
 }
 
 export interface WorkspaceSettings {

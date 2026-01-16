@@ -229,20 +229,20 @@ import { ContextStore, ContextStoreInstance } from '../../../core/context/stores
       </div>
 
       <!-- Task Detail Panel (if selected) -->
-      @if (taskStore.selectedTask()) {
+      @if (taskStore.selectedTask(); as selectedTask) {
         <div class="task-detail-panel">
           <div class="detail-header">
-            <h3>{{ taskStore.selectedTask()!.title }}</h3>
+            <h3>{{ selectedTask.title }}</h3>
             <button class="close-btn" (click)="taskStore.selectTask(null)">✕</button>
           </div>
           <div class="detail-content">
-            <p><strong>Status:</strong> {{ taskStore.selectedTask()!.status }}</p>
-            <p><strong>Priority:</strong> {{ taskStore.selectedTask()!.priority }}</p>
-            <p><strong>Description:</strong> {{ taskStore.selectedTask()!.description }}</p>
-            @if (taskStore.selectedTask()!.assigneeName) {
-              <p><strong>Assignee:</strong> {{ taskStore.selectedTask()!.assigneeName }}</p>
+            <p><strong>Status:</strong> {{ selectedTask.status }}</p>
+            <p><strong>Priority:</strong> {{ selectedTask.priority }}</p>
+            <p><strong>Description:</strong> {{ selectedTask.description }}</p>
+            @if (selectedTask.assigneeName) {
+              <p><strong>Assignee:</strong> {{ selectedTask.assigneeName }}</p>
             }
-            <p><strong>Progress:</strong> {{ taskStore.selectedTask()!.progress }}%</p>
+            <p><strong>Progress:</strong> {{ selectedTask.progress }}%</p>
           </div>
         </div>
       }
