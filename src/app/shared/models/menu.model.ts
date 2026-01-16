@@ -4,6 +4,7 @@
  */
 
 export type MenuItemType = 'link' | 'action' | 'divider' | 'header';
+export type ContextType = 'user' | 'organization' | 'team' | 'partner';
 export type WorkspaceModule = 
   | 'overview' 
   | 'documents' 
@@ -28,6 +29,8 @@ export interface MenuItem {
   module?: WorkspaceModule;
   requiredRole?: string[];
   requiredPermission?: string[];
+  contextType?: ContextType;
+  requiredContext?: ContextType[];
 }
 
 export interface MenuSection {
@@ -41,6 +44,12 @@ export interface DynamicMenu {
   sections: MenuSection[];
   contextName?: string;
   contextType?: string;
+}
+
+export interface ContextMenuConfig {
+  contextType: ContextType;
+  contextId: string;
+  contextName: string;
 }
 
 export interface MenuPermission {

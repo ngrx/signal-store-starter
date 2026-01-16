@@ -2,8 +2,12 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthStore, AuthStoreInstance } from '../../../core/auth/stores/auth.store';
+import { ContextStore, ContextStoreInstance } from '../../../core/context/stores/context.store';
 import { MenuItem } from '../../models/menu.model';
 import { UserAvatarComponent } from '../../components/widgets/user-avatar/user-avatar.component';
+import { OrganizationAvatarComponent } from '../../components/widgets/user-avatar/organization-avatar.component';
+import { TeamAvatarComponent } from '../../components/widgets/user-avatar/team-avatar.component';
+import { PartnerAvatarComponent } from '../../components/widgets/user-avatar/partner-avatar.component';
 import { ContextSwitcherComponent } from '../../components/widgets/context-switcher/context-switcher.component';
 import { WorkspaceSwitcherComponent } from '../../components/widgets/workspace-switcher/workspace-switcher.component';
 import { ThemeToggleComponent } from '../../components/widgets/theme-toggle/theme-toggle.component';
@@ -14,6 +18,9 @@ import { ThemeToggleComponent } from '../../components/widgets/theme-toggle/them
   imports: [
     CommonModule,
     UserAvatarComponent,
+    OrganizationAvatarComponent,
+    TeamAvatarComponent,
+    PartnerAvatarComponent,
     ContextSwitcherComponent,
     WorkspaceSwitcherComponent,
     ThemeToggleComponent,
@@ -39,8 +46,21 @@ import { ThemeToggleComponent } from '../../components/widgets/theme-toggle/them
             
             <app-theme-toggle />
             
-            <!-- User Menu -->
-            <app-user-avatar (menuItemClick)="onMenuItemClick($event)" />
+            <!-- Context-Aware Avatar -->
+            @switch (contextStore.currentContextType()) {
+              @case ('organization') {
+                <app-organization-avatar (menuItemClick)="onMenuItemClick($event)" />
+              }
+              @case ('team') {
+                <app-team-avatar (menuItemClick)="onMenuItemClick($event)" />
+              }
+              @case ('partner') {
+                <app-partner-avatar (menuItemClick)="onMenuItemClick($event)" />
+              }
+              @default {
+                <app-user-avatar (menuItemClick)="onMenuItemClick($event)" />
+              }
+            }
           </nav>
         }
       </div>
@@ -96,6 +116,7 @@ import { ThemeToggleComponent } from '../../components/widgets/theme-toggle/them
 })
 export class HeaderComponent {
   protected authStore = inject<AuthStoreInstance>(AuthStore);
+  protected contextStore = inject<ContextStoreInstance>(ContextStore);
   private router = inject(Router);
 
   onContextSwitch(): void {
