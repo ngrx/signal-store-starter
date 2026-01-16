@@ -128,23 +128,28 @@ export class ContextSwitcherComponent {
     const currentId = this.currentContextId();
     
     // Build list of all available contexts in order: Personal -> Organizations -> Teams -> Partners
-    const allContexts: any[] = [
-      { type: 'user', name: 'Personal' }, // Personal context
-    ];
+    const allContexts: any[] = [];
+    
+    // Add Personal context (always first)
+    allContexts.push({ 
+      type: 'user', 
+      name: 'Personal',
+      userId: currentId || '' // Will be populated when switching
+    });
     
     // Add all organizations
     contexts.organizations.forEach(org => {
-      allContexts.push({ ...org, type: 'organization' });
+      allContexts.push(org);
     });
     
     // Add all teams
     contexts.teams.forEach(team => {
-      allContexts.push({ ...team, type: 'team' });
+      allContexts.push(team);
     });
     
     // Add all partners
     contexts.partners.forEach(partner => {
-      allContexts.push({ ...partner, type: 'partner' });
+      allContexts.push(partner);
     });
     
     // If only Personal context exists, do nothing
@@ -153,31 +158,42 @@ export class ContextSwitcherComponent {
     }
     
     // Find current context index
-    let currentIndex = 0;
-    if (currentType === 'user') {
+    let currentIndex = -1;
+    
+    for (let i = 0; i < allContexts.length; i++) {
+      const ctx = allContexts[i];
+      
+      if (ctx.type === 'user' && currentType === 'user') {
+        currentIndex = i;
+        break;
+      } else if (ctx.type === 'organization' && currentType === 'organization' && ctx.organizationId === currentId) {
+        currentIndex = i;
+        break;
+      } else if (ctx.type === 'team' && currentType === 'team' && ctx.teamId === currentId) {
+        currentIndex = i;
+        break;
+      } else if (ctx.type === 'partner' && currentType === 'partner' && ctx.partnerId === currentId) {
+        currentIndex = i;
+        break;
+      }
+    }
+    
+    // If current context not found, default to Personal
+    if (currentIndex === -1) {
       currentIndex = 0;
-    } else {
-      currentIndex = allContexts.findIndex(ctx => {
-        if (ctx.type === 'organization') {
-          return ctx.type === currentType && ctx.organizationId === currentId;
-        } else if (ctx.type === 'team') {
-          return ctx.type === currentType && ctx.teamId === currentId;
-        } else if (ctx.type === 'partner') {
-          return ctx.type === currentType && ctx.partnerId === currentId;
-        }
-        return false;
-      });
     }
     
     // Cycle to next context (wrap around to 0 after last)
     const nextIndex = (currentIndex + 1) % allContexts.length;
     const nextContext = allContexts[nextIndex];
     
+    console.log('[ContextSwitcher] Cycling from', currentType, 'to', nextContext.type, nextContext);
+    
     // Switch to next context
     if (nextContext.type === 'user') {
       this.contextStore.resetContext(); // Switch to Personal
     } else {
-      this.handleSwitchContext(nextContext);
+      this.contextStore.switchContext(nextContext);
     }
   }
 
@@ -187,24 +203,37 @@ export class ContextSwitcherComponent {
     const currentId = this.currentContextId();
     
     // Build list of all available contexts
-    const allContexts: any[] = [{ type: 'user', name: 'Personal' }];
-    contexts.organizations.forEach(org => allContexts.push({ ...org, type: 'organization' }));
-    contexts.teams.forEach(team => allContexts.push({ ...team, type: 'team' }));
-    contexts.partners.forEach(partner => allContexts.push({ ...partner, type: 'partner' }));
+    const allContexts: any[] = [];
+    allContexts.push({ type: 'user', name: 'Personal' });
+    contexts.organizations.forEach(org => allContexts.push(org));
+    contexts.teams.forEach(team => allContexts.push(team));
+    contexts.partners.forEach(partner => allContexts.push(partner));
     
     if (allContexts.length <= 1) {
       return 'Personal Context';
     }
     
     // Find current index
-    let currentIndex = 0;
-    if (currentType !== 'user') {
-      currentIndex = allContexts.findIndex(ctx => {
-        if (ctx.type === 'organization') return ctx.organizationId === currentId;
-        if (ctx.type === 'team') return ctx.teamId === currentId;
-        if (ctx.type === 'partner') return ctx.partnerId === currentId;
-        return false;
-      });
+    let currentIndex = -1;
+    for (let i = 0; i < allContexts.length; i++) {
+      const ctx = allContexts[i];
+      if (ctx.type === 'user' && currentType === 'user') {
+        currentIndex = i;
+        break;
+      } else if (ctx.type === 'organization' && currentType === 'organization' && ctx.organizationId === currentId) {
+        currentIndex = i;
+        break;
+      } else if (ctx.type === 'team' && currentType === 'team' && ctx.teamId === currentId) {
+        currentIndex = i;
+        break;
+      } else if (ctx.type === 'partner' && currentType === 'partner' && ctx.partnerId === currentId) {
+        currentIndex = i;
+        break;
+      }
+    }
+    
+    if (currentIndex === -1) {
+      currentIndex = 0;
     }
     
     const nextIndex = (currentIndex + 1) % allContexts.length;
