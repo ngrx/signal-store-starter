@@ -11,19 +11,19 @@ mcp-servers:
 handoffs:
   - label: Context7 Documentation Lookup
     agent: agent
-    prompt: 使用 Context7 查詢 Angular / NgRx Signals / Firebase 官方文檔，必須完成
+    prompt: After you understand the problem, you MUST use Context7 to verify the latest Angular, NgRx Signals, and Firebase documentation for best practices. This Context7 lookup is mandatory before implementing.
     send: true
   - label: Sequential Thinking
     agent: agent
-    prompt: 使用順序思維分析問題，分解需求，標明步驟與優先順序
+    prompt: Break down the implementation into logical steps - analyze requirements, check Context7 docs, plan architecture, then code.
     send: true
   - label: Software Planning
     agent: agent
-    prompt: 將需求拆解為原子任務（DDD 分層、響應式設計、EventBus），生成 TODO 清單
+    prompt: Create detailed implementation plan with DDD layers, data flow, and reactive patterns before writing code.
     send: true
   - label: Architecture Validation
     agent: agent
-    prompt: 驗證代碼是否符合所有規範，檢查反模式
+    prompt: Validate the solution against the FORBIDDEN patterns list before finalizing code.
     send: true
 ---
 
