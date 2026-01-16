@@ -132,3 +132,37 @@ When generating code:
 > Plan before you code.  
 > Never violate forbidden constructs.  
 > Always produce a skeleton if context is insufficient.
+
+---
+
+## DOCUMENTATION NAVIGATION
+
+For comprehensive guidance, refer to the structured documentation:
+
+### 📚 Quick Reference
+
+- **[Documentation Index](../docs/README.md)** - Complete navigation guide
+- **[Architecture Overview](../docs/architecture/01-overview.md)** - System design and principles
+- **[Instruction Files](./instructions/README.md)** - Development patterns and guidelines
+
+### 🎯 By Task Type
+
+| Task | Documentation |
+|------|---------------|
+| **Adding Features** | [Module Layer](../docs/architecture/04-modules.md) → [DDD Architecture](./instructions/ddd-architecture.instructions.md) |
+| **State Management** | [NgRx Signals Architecture](../docs/architecture/07-ngrx-signals.md) → [Signals Patterns](./instructions/ngrx-signals.instructions.md) |
+| **Firebase Integration** | [Firebase Integration](../docs/architecture/08-firebase-integration.md) → [Service Patterns](./instructions/firebase-integration.instructions.md) |
+| **Authentication** | [Account & Identity](../docs/architecture/02-account-identity.md) → [Firebase Auth](./instructions/firebase-integration.instructions.md#firebase-auth-angularfireauth) |
+| **Workspace Features** | [Workspace Layer](../docs/architecture/03-workspace.md) → [Workspace Isolation](./instructions/ddd-architecture.instructions.md#workspace-isolation) |
+
+### 🔍 By Layer
+
+- **Domain** (`core/**/models`): [DDD Architecture](./instructions/ddd-architecture.instructions.md)
+- **Application** (`core/**/stores`): [NgRx Signals](./instructions/ngrx-signals.instructions.md)
+- **Infrastructure** (`core/**/services`): [Firebase Integration](./instructions/firebase-integration.instructions.md)
+- **Interface** (`features/**`): [Angular Instructions](./instructions/angular.instructions.md)
+
+### ⚙️ Configuration Files
+
+- **[Project Layer Mapping](./project-layer-mapping.yml)** - Layer to file path mapping
+- **[Forbidden Instructions](./forbidden-copilot-instructions.md)** - Files that must not be modified
