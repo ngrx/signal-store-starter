@@ -1,19 +1,17 @@
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthStore, AuthStoreInstance } from '../../core/auth/stores/auth.store';
-import { HeaderComponent } from '../../shared/components/header/header.component';
 import { ContextStore, ContextStoreInstance } from '../../core/context/stores/context.store';
-import { ProjectStore } from '../../core/project/stores/project.store';
+import { WorkspaceListStore, WorkspaceListStoreInstance, WorkspaceListItem } from '../../core';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
     <div class="dashboard">
-      <app-header></app-header>
-      
       <main class="dashboard-content">
         <div class="welcome-section">
           <h1>Welcome to Dashboard</h1>
@@ -84,9 +82,9 @@ import { ProjectStore } from '../../core/project/stores/project.store';
                 Description
                 <input formControlName="description" placeholder="Optional description" />
               </label>
-              <button class="primary" type="submit" [disabled]="projectForm.invalid || projectStore.isLoading()">Create</button>
-              @if (projectStore.error()) {
-                <p class="error">{{ projectStore.error() }}</p>
+              <button class="primary" type="submit" [disabled]="projectForm.invalid || workspaceListStore.loading()">Create</button>
+              @if (workspaceListStore.error()) {
+                <p class="error">{{ workspaceListStore.error() }}</p>
               }
             </form>
           </article>
@@ -226,8 +224,9 @@ import { ProjectStore } from '../../core/project/stores/project.store';
 export class DashboardComponent implements OnDestroy {
   protected authStore = inject<AuthStoreInstance>(AuthStore);
   private fb = inject(FormBuilder);
+  private router = inject(Router);
   protected contextStore = inject<ContextStoreInstance>(ContextStore);
-  protected projectStore = inject(ProjectStore);
+  protected workspaceListStore = inject<WorkspaceListStoreInstance>(WorkspaceListStore);
   protected toast = signal('');
   private toastTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly toastDurationMs = 2500;
@@ -263,6 +262,11 @@ export class DashboardComponent implements OnDestroy {
     this.contextStore.createOrganization(this.orgForm.getRawValue());
     this.orgForm.reset();
     this.showToast(this.toastMessages.orgCreated);
+    
+    // Navigate to workspace list to see workspaces in org context
+    setTimeout(() => {
+      this.router.navigate(['/workspace']);
+    }, 1000);
   }
 
   createTeam(): void {
@@ -270,6 +274,11 @@ export class DashboardComponent implements OnDestroy {
     this.contextStore.createTeam(this.teamForm.getRawValue());
     this.teamForm.reset();
     this.showToast(this.toastMessages.teamCreated);
+    
+    // Navigate to workspace list to see workspaces in team context
+    setTimeout(() => {
+      this.router.navigate(['/workspace']);
+    }, 1000);
   }
 
   createPartner(): void {
@@ -277,21 +286,51 @@ export class DashboardComponent implements OnDestroy {
     this.contextStore.createPartner(this.partnerForm.getRawValue());
     this.partnerForm.reset();
     this.showToast(this.toastMessages.partnerCreated);
+    
+    // Navigate to workspace list to see workspaces in partner context
+    setTimeout(() => {
+      this.router.navigate(['/workspace']);
+    }, 1000);
   }
 
   createProject(): void {
     if (this.projectForm.invalid) return;
-    const context = this.contextStore.current();
     const base = this.projectForm.getRawValue();
-    const payload = {
+    const ctx = this.contextStore.current();
+    
+    // Build payload with proper typing for optional fields
+    const organizationId = ctx?.type === 'organization' ? ctx.organizationId : undefined;
+    const teamId = ctx?.type === 'team' ? ctx.teamId : undefined;
+    const partnerId = ctx?.type === 'partner' ? ctx.partnerId : undefined;
+    
+    const payload: Omit<WorkspaceListItem, 'id'> = {
       name: base.name,
-      ...(base.description ? { description: base.description } : {}),
-      ...(context?.type === 'organization' ? { organizationId: context.organizationId } : {}),
-      ...(context?.type === 'team' ? { teamId: context.teamId } : {}),
+      description: base.description || '',
+      type: 'project' as const, // KEY: Set WorkspaceType per prd-sup.md
+      isFavorite: false,
+      status: 'active',
+      ...(organizationId && { organizationId }),
+      ...(teamId && { teamId }),
+      ...(partnerId && { partnerId }),
+      modules: {
+        overview: true,
+        documents: true,
+        tasks: true,
+        members: true,
+        permissions: true,
+        audit: true,
+        settings: true,
+        journal: true,
+      },
     };
-    this.projectStore.createProject(payload);
+    this.workspaceListStore.createWorkspace(payload);
     this.projectForm.reset();
     this.showToast(this.toastMessages.projectCreated);
+    
+    // Auto-navigate to workspace list to see newly created project
+    setTimeout(() => {
+      this.router.navigate(['/workspace']);
+    }, 1000); // Delay to allow toast to be visible
   }
 
   private showToast(message: string): void {

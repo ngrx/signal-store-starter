@@ -1,0 +1,7 @@
+# Ignore build artifacts
+/dist
+/out-tsc
+/node_modules
+
+# Ignore environment files
+*.env

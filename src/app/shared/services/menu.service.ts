@@ -1,4 +1,5 @@
 import { Injectable, inject, computed, Signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { User } from '@angular/fire/auth';
 import { ContextStore, ContextStoreInstance } from '../../core/context/stores/context.store';
 import { AuthStore, AuthStoreInstance } from '../../core/auth/stores/auth.store';
@@ -25,9 +26,13 @@ import { workspaceIdFromContext } from '../../core/workspace/stores/workspace.st
 export class MenuService {
   private contextStore = inject<ContextStoreInstance>(ContextStore);
   private authStore = inject<AuthStoreInstance>(AuthStore);
+  private router = inject(Router);
 
   /**
-   * Computed signal for dynamic menu based on current context
+   * Computed signal for dynamic menu based on current context and route
+   * Per prd-sup.md: Account → WorkspaceList → Workspace → Module
+   * - Global navigation when NOT in workspace
+   * - Module navigation when INSIDE workspace
    */
   menu: Signal<DynamicMenu> = computed(() => {
     const context = this.contextStore.current();
@@ -45,38 +50,40 @@ export class MenuService {
   });
 
   /**
-   * Build menu structure based on context type
+   * Check if current route is inside a workspace detail view
+   * Pattern: /workspace/:workspaceId/:module
+   */
+  private isInWorkspaceDetailRoute = computed(() => {
+    const url = this.router.url;
+    // Match pattern like /workspace/ws-123/overview or /workspace/ws-123/documents
+    const workspaceModulePattern = /^\/workspace\/[^\/]+\/(overview|documents|tasks|members|permissions|audit|settings|journal)/;
+    return workspaceModulePattern.test(url);
+  });
+
+  /**
+   * Build menu structure based on current route and context
+   * Per prd-sup.md architecture:
+   * - BEFORE workspace selection: Show global navigation (Dashboard, My Workspaces)
+   * - AFTER workspace selection: Show workspace modules (Overview, Documents, Tasks, etc.)
+   * - Context switching is HEADER-ONLY, not in sidebar
    */
   private buildMenuForContext(context: AppContext): DynamicMenu {
     const sections: MenuSection[] = [];
 
-    // Context switcher section
-    if (this.contextStore.canSwitchContext()) {
-      sections.push(this.buildContextSwitcherSection());
-    }
+    // Check if user is inside a workspace detail route
+    const isInWorkspace = this.isInWorkspaceDetailRoute();
 
-    // Main navigation section based on context type
-    switch (context.type) {
-      case 'user':
-        sections.push(this.buildUserMenu());
-        break;
-      case 'organization':
-        sections.push(this.buildOrganizationMenu(context));
-        break;
-      case 'team':
-        sections.push(this.buildTeamMenu(context));
-        break;
-      case 'partner':
-        sections.push(this.buildPartnerMenu(context));
-        break;
-    }
-
-    // Workspace modules section (if in organization/team/partner context)
-    if (context.type !== 'user') {
+    if (isInWorkspace) {
+      // LAYER 4: Module Navigation - User is inside a workspace
+      // Show ONLY workspace modules
       sections.push(this.buildWorkspaceModulesSection(context));
+    } else {
+      // LAYER 1-2: Global/Context Navigation - User is at dashboard or workspace list level
+      // Show standard navigation items
+      sections.push(this.buildGlobalNavigation(context));
     }
 
-    // Settings and user menu
+    // User profile section (always visible)
     sections.push(this.buildUserSection());
 
     return {
@@ -87,115 +94,14 @@ export class MenuService {
   }
 
   /**
-   * Build context switcher section
+   * Build global navigation section
+   * This is shown when NOT inside a workspace (dashboard, workspace list, etc.)
+   * Same navigation items regardless of context type
    */
-  private buildContextSwitcherSection(): MenuSection {
-    const orgs = this.contextStore.available().organizations;
-    const teams = this.contextStore.available().teams;
-    const partners = this.contextStore.available().partners;
-    const currentContext = this.contextStore.current();
-
-    const items: MenuItem[] = [
-      {
-        id: 'context-header',
-        type: 'header',
-        label: 'Switch Context',
-      },
-    ];
-
-    // Add user context
-    const user = this.authStore.user();
-    if (user) {
-      items.push({
-        id: 'context-user',
-        type: 'action',
-        label: 'Personal',
-        icon: '👤',
-        action: () => {
-          this.contextStore.switchContext({
-            type: 'user',
-            userId: user.uid,
-            email: user.email || '',
-            displayName: user.displayName ?? null,
-          });
-        },
-        visible: true,
-        disabled: currentContext?.type === 'user',
-      });
-    }
-
-    // Add organizations
-    orgs.forEach((org: OrganizationContext) => {
-      items.push({
-        id: `context-org-${org.organizationId}`,
-        type: 'action',
-        label: org.name,
-        icon: '🏢',
-        action: () => this.contextStore.switchContext(org),
-        visible: true,
-        disabled:
-          currentContext?.type === 'organization' &&
-          (currentContext as any).organizationId === org.organizationId,
-      });
-    });
-
-    // Add teams
-    if (teams.length > 0) {
-      items.push({
-        id: 'context-teams-divider',
-        type: 'divider',
-      });
-      teams.forEach((team: TeamContext) => {
-        items.push({
-          id: `context-team-${team.teamId}`,
-          type: 'action',
-          label: team.name,
-          icon: '👥',
-          action: () => this.contextStore.switchContext(team),
-          visible: true,
-          disabled:
-            currentContext?.type === 'team' &&
-            (currentContext as any).teamId === team.teamId,
-        });
-      });
-    }
-
-    // Add partners
-    if (partners.length > 0) {
-      items.push({
-        id: 'context-partners-divider',
-        type: 'divider',
-      });
-      partners.forEach((partner: PartnerContext) => {
-        items.push({
-          id: `context-partner-${partner.partnerId}`,
-          type: 'action',
-          label: partner.name,
-          icon: '🤝',
-          action: () => this.contextStore.switchContext(partner),
-          visible: true,
-          disabled:
-            currentContext?.type === 'partner' &&
-            (currentContext as any).partnerId === partner.partnerId,
-        });
-      });
-    }
-
+  private buildGlobalNavigation(context: AppContext): MenuSection {
     return {
-      id: 'context-switcher',
-      title: 'Context',
-      items,
-      visible: true,
-    };
-  }
-
-  /**
-   * Build user menu (personal workspace)
-   */
-  private buildUserMenu(): MenuSection {
-    return {
-      id: 'user-menu',
-      title: 'Personal',
+      id: 'global-nav',
+      title: 'Navigation',
       items: [
         {
           id: 'dashboard',
@@ -206,123 +112,12 @@ export class MenuService {
           visible: true,
         },
         {
-          id: 'my-workspace',
+          id: 'my-workspaces',
           type: 'link',
-          label: 'My Workspace',
+          label: 'My Workspaces',
           icon: '📂',
-          route: '/workspace/my',
+          route: '/workspace',
           visible: true,
-        },
-        {
-          id: 'my-tasks',
-          type: 'link',
-          label: 'My Tasks',
-          icon: '✓',
-          route: '/tasks',
-          visible: true,
-        },
-        {
-          id: 'my-documents',
-          type: 'link',
-          label: 'My Documents',
-          icon: '📄',
-          route: '/documents',
-          visible: true,
-        },
-      ],
-      visible: true,
-    };
-  }
-
-  /**
-   * Build organization menu
-   */
-  private buildOrganizationMenu(context: any): MenuSection {
-    return {
-      id: 'organization-menu',
-      title: context.name,
-      items: [
-        {
-          id: 'org-dashboard',
-          type: 'link',
-          label: 'Organization Dashboard',
-          icon: '🏢',
-          route: `/organization/${context.organizationId}`,
-          visible: true,
-        },
-        {
-          id: 'org-teams',
-          type: 'link',
-          label: 'Teams',
-          icon: '👥',
-          route: `/organization/${context.organizationId}/teams`,
-          visible: true,
-        },
-        {
-          id: 'org-partners',
-          type: 'link',
-          label: 'Partners',
-          icon: '🤝',
-          route: `/organization/${context.organizationId}/partners`,
-          visible: context.role === 'owner' || context.role === 'admin',
-        },
-      ],
-      visible: true,
-    };
-  }
-
-  /**
-   * Build team menu
-   */
-  private buildTeamMenu(context: any): MenuSection {
-    return {
-      id: 'team-menu',
-      title: context.name,
-      items: [
-        {
-          id: 'team-dashboard',
-          type: 'link',
-          label: 'Team Dashboard',
-          icon: '👥',
-          route: `/team/${context.teamId}`,
-          visible: true,
-        },
-        {
-          id: 'team-members',
-          type: 'link',
-          label: 'Team Members',
-          icon: '👤',
-          route: `/team/${context.teamId}/members`,
-          visible: true,
-        },
-      ],
-      visible: true,
-    };
-  }
-
-  /**
-   * Build partner menu
-   */
-  private buildPartnerMenu(context: any): MenuSection {
-    return {
-      id: 'partner-menu',
-      title: context.name,
-      items: [
-        {
-          id: 'partner-dashboard',
-          type: 'link',
-          label: 'Partner Dashboard',
-          icon: '🤝',
-          route: `/partner/${context.partnerId}`,
-          visible: true,
-        },
-        {
-          id: 'partner-integration',
-          type: 'link',
-          label: 'Integration',
-          icon: '🔗',
-          route: `/partner/${context.partnerId}/integration`,
-          visible: context.accessLevel === 'full',
         },
       ],
       visible: true,
@@ -331,6 +126,7 @@ export class MenuService {
 
   /**
    * Build workspace modules section
+   * ONLY shown when inside /workspace/:id/:module route
    */
   private buildWorkspaceModulesSection(context: AppContext): MenuSection {
     const items: MenuItem[] = WORKSPACE_MODULES.map((module) => {

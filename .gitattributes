@@ -1,0 +1,10 @@
+# Auto normalize line endings
+* text=auto eol=lf
+
+# Treat JSON, TS, JS, HTML, CSS, MD as text
+*.json text
+*.ts text
+*.js text
+*.html text
+*.css text
+*.md text
