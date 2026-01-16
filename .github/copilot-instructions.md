@@ -4,6 +4,15 @@
 
 ## 1. 基本概念 (Fundamentals)
 
+### Copilot Change Management Workflow
+All non-trivial changes MUST follow this workflow:
+
+1. Sequential reasoning must be documented
+2. Requirements must be decomposed into atomic steps
+3. Implementation is not allowed until planning is complete
+
+If these steps are skipped, the output is considered invalid.
+
 ### Copilot Memory Commands
 1. store_memory: 儲存目前對話內容至記憶體。
 1. retrieve_memory: 從記憶體中檢索相關資訊以供參考。
