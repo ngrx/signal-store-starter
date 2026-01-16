@@ -4,12 +4,13 @@
  * Per prd-sup.md section on GlobalShell.Config
  */
 
-import { computed } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, tap, of, catchError } from 'rxjs';
+import { pipe, tap, of, catchError, from, switchMap } from 'rxjs';
+import { RemoteConfig, getValue, fetchAndActivate } from '@angular/fire/remote-config';
 import { initialConfigState } from '../state/config.state';
-import { AppConfig, RemoteConfig, FeatureFlags } from '../models/config.model';
+import { AppConfig, RemoteConfig as RemoteConfigModel, FeatureFlags } from '../models/config.model';
 
 export const ConfigStore = signalStore(
   { providedIn: 'root' },
@@ -40,16 +41,43 @@ export const ConfigStore = signalStore(
     appVersion: computed(() => store.appConfig()?.appVersion ?? '0.0.0'),
   })),
   withMethods((store) => {
+    const remoteConfig = inject(RemoteConfig);
+
     /**
-     * Load remote config
-     * In real implementation, this would fetch from Firebase Remote Config
+     * Load remote config from Firebase Remote Config
      */
     const loadRemoteConfig = rxMethod<void>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
+        switchMap(() => from(fetchAndActivate(remoteConfig))),
         tap(() => {
-          // Mock implementation - replace with actual Firebase Remote Config
+          // Fetch remote config values
+          const maintenanceMode = getValue(remoteConfig, 'maintenanceMode').asBoolean();
+          const minAppVersion = getValue(remoteConfig, 'minAppVersion').asString();
+          const forceUpdate = getValue(remoteConfig, 'forceUpdate').asBoolean();
+          const maxUploadSize = getValue(remoteConfig, 'maxUploadSize').asNumber();
+          const maxWorkspaces = getValue(remoteConfig, 'maxWorkspaces').asNumber();
+          const maxMembersPerWorkspace = getValue(remoteConfig, 'maxMembersPerWorkspace').asNumber();
+          const apiCallsPerMinute = getValue(remoteConfig, 'apiCallsPerMinute').asNumber();
+          const apiCallsPerHour = getValue(remoteConfig, 'apiCallsPerHour').asNumber();
+          const maxConcurrentRequests = getValue(remoteConfig, 'maxConcurrentRequests').asNumber();
+          
+          const config: RemoteConfigModel = {
+            maintenanceMode,
+            minAppVersion: minAppVersion || '1.0.0',
+            forceUpdate,
+            maxUploadSize: maxUploadSize || 10485760, // 10MB default
+            maxWorkspaces: maxWorkspaces || 10,
+            maxMembersPerWorkspace: maxMembersPerWorkspace || 50,
+            rateLimits: {
+              apiCallsPerMinute: apiCallsPerMinute || 60,
+              apiCallsPerHour: apiCallsPerHour || 1000,
+              maxConcurrentRequests: maxConcurrentRequests || 10,
+            },
+          };
+          
           patchState(store, {
+            remoteConfig: config,
             loading: false,
             lastUpdated: new Date(),
           });
@@ -76,7 +104,7 @@ export const ConfigStore = signalStore(
         });
       },
 
-      setRemoteConfig(config: RemoteConfig) {
+      setRemoteConfig(config: RemoteConfigModel) {
         patchState(store, {
           remoteConfig: config,
           lastUpdated: new Date(),

@@ -1,0 +1,26 @@
+<div class="crud-container">
+  <div class="crud-card">
+    <h1>Edit Team</h1>
+    
+    <form [formGroup]="editForm" (ngSubmit)="onSubmit()">
+      <!-- TODO: Add form fields for Team -->
+
+      <div class="form-actions">
+        <button 
+          type="button" 
+          (click)="onCancel()" 
+          class="btn btn-secondary"
+        >
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          [disabled]="editForm.invalid"
+          class="btn btn-primary"
+        >
+          Edit
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

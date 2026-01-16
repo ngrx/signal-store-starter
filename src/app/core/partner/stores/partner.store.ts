@@ -6,7 +6,7 @@ import {
   withState,
 } from '@ngrx/signals';
 import { computed } from '@angular/core';
-import { initialPartnerState } from './partner.state';
+import { initialPartnerState } from '../state/partner.state';
 
 export const PartnerStore = signalStore(
   { providedIn: 'root' },

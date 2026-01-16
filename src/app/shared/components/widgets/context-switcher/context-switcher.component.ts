@@ -1,6 +1,7 @@
-import { Component, inject, signal, output, computed } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ContextStore, ContextStoreInstance } from '../../../../core/context/stores/context.store';
+import type { AppContext } from '../../../../core/context/models/context.model';
 
 @Component({
   selector: 'app-context-switcher',
@@ -8,75 +9,26 @@ import { ContextStore, ContextStoreInstance } from '../../../../core/context/sto
   imports: [CommonModule],
   template: `
     <div class="context-switcher">
-      @if (hasOrganizations() || currentContextType() !== 'user') {
-        <!-- Back Button (if not in Personal) -->
-        @if (currentContextType() !== 'user') {
-          <button class="context-back-btn" (click)="handleNavigateBack()" 
-            [title]="currentContextType() === 'organization' ? 'Back to Personal' : 'Back to Organization'">
-            <span>◀</span>
-          </button>
-        }
-        
-        <!-- Context Switcher Button -->
-        <button class="context-btn" (click)="toggleDropdown()">
-          <span class="context-icon">{{ contextIcon() }}</span>
-          <span>{{ currentContextName() || 'Personal' }}</span>
-          <span class="dropdown-icon">▼</span>
+      <!-- Back Button (if not in Personal) -->
+      @if (currentContextType() !== 'user') {
+        <button class="context-back-btn" (click)="handleNavigateBack()" 
+          [title]="currentContextType() === 'organization' ? 'Back to Personal' : 'Back to Organization'">
+          <span>◀</span>
         </button>
-        
-        <!-- Unified Dropdown Menu -->
-        @if (dropdownOpen()) {
-          <div class="context-dropdown" (click)="$event.stopPropagation()">
-            <!-- Organizations Section -->
-            @if (availableContexts().organizations.length > 0) {
-              <div class="context-section">
-                <div class="section-title">Switch to Organization</div>
-                @for (org of availableContexts().organizations; track org.organizationId) {
-                  <button 
-                    class="context-item"
-                    [class.active]="currentContextType() === 'organization' && currentContextId() === org.organizationId"
-                    (click)="handleSwitchContext(org)">
-                    <span class="context-icon">🏢</span>
-                    <span>{{ org.name }}</span>
-                  </button>
-                }
-              </div>
-            }
-            
-            <!-- Teams Section -->
-            @if (availableContexts().teams.length > 0) {
-              <div class="context-section">
-                <div class="section-title">Switch to Team</div>
-                @for (team of availableContexts().teams; track team.teamId) {
-                  <button 
-                    class="context-item"
-                    [class.active]="currentContextType() === 'team' && currentContextId() === team.teamId"
-                    (click)="handleSwitchContext(team)">
-                    <span class="context-icon">👥</span>
-                    <span>{{ team.name }}</span>
-                  </button>
-                }
-              </div>
-            }
-            
-            <!-- Partners Section -->
-            @if (availableContexts().partners.length > 0) {
-              <div class="context-section">
-                <div class="section-title">Switch to Partner</div>
-                @for (partner of availableContexts().partners; track partner.partnerId) {
-                  <button 
-                    class="context-item"
-                    [class.active]="currentContextType() === 'partner' && currentContextId() === partner.partnerId"
-                    (click)="handleSwitchContext(partner)">
-                    <span class="context-icon">🤝</span>
-                    <span>{{ partner.name }}</span>
-                  </button>
-                }
-              </div>
-            }
-          </div>
-        }
       }
+      
+      <!-- Context Switcher Button - Cycles through contexts on click -->
+      <button 
+        class="context-btn" 
+        (click)="handleCycleContext()" 
+        [title]="nextContextHint()"
+        [disabled]="!canCycle()">
+        <span class="context-icon">{{ contextIcon() }}</span>
+        <span>{{ currentDisplayName() }}</span>
+        @if (canCycle()) {
+          <span class="cycle-icon">⟳</span>
+        }
+      </button>
     </div>
   `,
   styles: [`
@@ -123,143 +75,185 @@ import { ContextStore, ContextStoreInstance } from '../../../../core/context/sto
       font-weight: 500;
     }
 
-    .context-btn:hover {
+    .context-btn:hover:not(:disabled) {
       transform: translateY(-1px);
       box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .context-btn:disabled {
+      opacity: 0.7;
+      cursor: default;
     }
 
     .context-icon {
       font-size: 16px;
     }
 
-    .dropdown-icon {
-      font-size: 10px;
-    }
-
-    .context-dropdown {
-      position: absolute;
-      top: calc(100% + 8px);
-      left: 0;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-      min-width: 250px;
-      max-height: 400px;
-      overflow-y: auto;
-      z-index: 1000;
-    }
-
-    .context-section {
-      padding: 8px 0;
-      border-bottom: 1px solid #e0e0e0;
-    }
-
-    .context-section:last-child {
-      border-bottom: none;
-    }
-
-    .section-title {
-      padding: 8px 16px 4px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      color: #999;
-      letter-spacing: 0.5px;
-    }
-
-    .context-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      padding: 10px 16px;
-      background: none;
-      border: none;
-      text-align: left;
-      cursor: pointer;
+    .cycle-icon {
       font-size: 14px;
-      color: #333;
-      transition: background-color 0.2s;
+      animation: rotate 2s linear infinite;
+      animation-play-state: paused;
     }
 
-    .context-item:hover {
-      background-color: #f5f5f5;
+    .context-btn:hover .cycle-icon {
+      animation-play-state: running;
     }
 
-    .context-item.active {
-      background-color: #f8f9ff;
-      color: #667eea;
-      font-weight: 600;
+    @keyframes rotate {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
     }
   `],
 })
 export class ContextSwitcherComponent {
   private contextStore = inject<ContextStoreInstance>(ContextStore);
   
-  // Local UI state
-  protected dropdownOpen = signal(false);
-  
-  // Computed signals wrapping store access
-  protected hasOrganizations = computed(() => this.contextStore.hasOrganizations());
+  // Core computed signals
+  protected currentContext = computed(() => this.contextStore.current());
+  protected availableContexts = computed(() => this.contextStore.available());
   protected currentContextType = computed(() => this.contextStore.currentContextType());
   protected currentContextName = computed(() => this.contextStore.currentContextName());
-  protected currentContextId = computed(() => this.contextStore.currentContextId());
-  protected availableContexts = computed(() => this.contextStore.available());
-  protected contextIcon = computed(() => this.getContextIconForType(this.currentContextType()));
   
-  // Output events
-  contextSwitch = output<any>();
-  navigateBack = output<void>();
-
-  constructor() {
-    // Close dropdown when clicking outside
-    if (typeof document !== 'undefined') {
-      document.addEventListener('click', (event) => {
-        const target = event.target as HTMLElement | null;
-        const isContextArea = target?.closest('.context-switcher');
-        
-        if (this.dropdownOpen() && !isContextArea) {
-          this.dropdownOpen.set(false);
-        }
-      });
+  // Display name for current context
+  protected currentDisplayName = computed(() => {
+    return this.currentContextName() || 'Personal';
+  });
+  
+  // Context icon
+  protected contextIcon = computed(() => {
+    const type = this.currentContextType();
+    switch (type) {
+      case 'organization': return '🏢';
+      case 'team': return '👥';
+      case 'partner': return '🤝';
+      case 'user':
+      default: return '👤';
     }
-  }
+  });
+  
+  // Build ordered list of all contexts
+  protected allContexts = computed(() => {
+    const available = this.availableContexts();
+    const contexts: AppContext[] = [];
+    
+    // Always add Personal first (user context)
+    const current = this.currentContext();
+    const userId = current?.type === 'user' ? current.userId : '';
+    const userEmail = current?.type === 'user' ? current.email : '';
+    const userDisplayName = current?.type === 'user' ? current.displayName : null;
+    
+    contexts.push({
+      type: 'user',
+      userId: userId,
+      email: userEmail,
+      displayName: userDisplayName
+    });
+    
+    // Add all organizations
+    available.organizations.forEach(org => contexts.push(org));
+    
+    // Add all teams
+    available.teams.forEach(team => contexts.push(team));
+    
+    // Add all partners
+    available.partners.forEach(partner => contexts.push(partner));
+    
+    return contexts;
+  });
+  
+  // Can we cycle to another context?
+  protected canCycle = computed(() => {
+    return this.allContexts().length > 1;
+  });
+  
+  // What's the next context in the cycle?
+  protected nextContext = computed(() => {
+    const all = this.allContexts();
+    if (all.length <= 1) return null;
+    
+    const currentType = this.currentContextType();
+    const current = this.currentContext();
+    
+    // Find current index
+    let currentIndex = all.findIndex(ctx => {
+      if (ctx.type === 'user' && currentType === 'user') return true;
+      if (ctx.type === 'organization' && currentType === 'organization' && current?.type === 'organization') {
+        return ctx.organizationId === current.organizationId;
+      }
+      if (ctx.type === 'team' && currentType === 'team' && current?.type === 'team') {
+        return ctx.teamId === current.teamId;
+      }
+      if (ctx.type === 'partner' && currentType === 'partner' && current?.type === 'partner') {
+        return ctx.partnerId === current.partnerId;
+      }
+      return false;
+    });
+    
+    // If not found, start from Personal
+    if (currentIndex === -1) currentIndex = 0;
+    
+    // Get next context (wrap around)
+    const nextIndex = (currentIndex + 1) % all.length;
+    return all[nextIndex];
+  });
+  
+  // Hint text for tooltip
+  protected nextContextHint = computed(() => {
+    const next = this.nextContext();
+    if (!next) return 'No other contexts available';
+    
+    const nextName = next.type === 'user' ? 'Personal' : 
+                     next.type === 'organization' ? (next as any).name :
+                     next.type === 'team' ? (next as any).name :
+                     next.type === 'partner' ? (next as any).name : '';
+    
+    return `Click to switch to ${nextName}`;
+  });
 
-  toggleDropdown(): void {
-    this.dropdownOpen.set(!this.dropdownOpen());
-  }
-
-  handleSwitchContext(context: any): void {
-    this.contextStore.switchContext(context);
-    this.dropdownOpen.set(false);
-    this.contextSwitch.emit(context);
+  handleCycleContext(): void {
+    const next = this.nextContext();
+    if (!next) {
+      console.log('[ContextSwitcher] No next context available');
+      return;
+    }
+    
+    console.log('[ContextSwitcher] Cycling to', next.type, next);
+    
+    if (next.type === 'user') {
+      this.contextStore.resetContext();
+    } else {
+      this.contextStore.switchContext(next);
+    }
   }
 
   handleNavigateBack(): void {
     const currentType = this.currentContextType();
+    console.log('[ContextSwitcher] Navigate back from', currentType);
     
     if (currentType === 'team' || currentType === 'partner') {
-      this.contextStore.navigateBack();
+      // Navigate back to parent organization - need to find it
+      const current = this.currentContext();
+      const orgId = current?.type === 'team' ? current.organizationId :
+                    current?.type === 'partner' ? current.organizationId : null;
+      
+      if (orgId) {
+        const available = this.availableContexts();
+        const org = available.organizations.find(o => o.organizationId === orgId);
+        if (org) {
+          this.contextStore.switchContext(org);
+        } else {
+          this.contextStore.resetContext();
+        }
+      } else {
+        this.contextStore.resetContext();
+      }
     } else if (currentType === 'organization') {
+      // Navigate back to Personal
       this.contextStore.resetContext();
-    }
-    
-    this.dropdownOpen.set(false);
-    this.navigateBack.emit();
-  }
-
-  private getContextIconForType(type: string | null): string {
-    switch (type) {
-      case 'organization':
-        return '🏢';
-      case 'team':
-        return '👥';
-      case 'partner':
-        return '🤝';
-      case 'user':
-        return '👤';
-      default:
-        return '👤';
     }
   }
 }

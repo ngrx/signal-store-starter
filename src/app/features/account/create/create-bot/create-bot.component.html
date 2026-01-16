@@ -1,0 +1,26 @@
+<div class="crud-container">
+  <div class="crud-card">
+    <h1>Create Bot</h1>
+    
+    <form [formGroup]="createForm" (ngSubmit)="onSubmit()">
+      <!-- TODO: Add form fields for Bot -->
+
+      <div class="form-actions">
+        <button 
+          type="button" 
+          (click)="onCancel()" 
+          class="btn btn-secondary"
+        >
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          [disabled]="createForm.invalid"
+          class="btn btn-primary"
+        >
+          Create
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

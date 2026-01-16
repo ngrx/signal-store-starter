@@ -6,7 +6,7 @@ import {
   withState,
 } from '@ngrx/signals';
 import { computed } from '@angular/core';
-import { initialTeamState } from './team.state';
+import { initialTeamState } from '../state/team.state';
 
 export const TeamStore = signalStore(
   { providedIn: 'root' },

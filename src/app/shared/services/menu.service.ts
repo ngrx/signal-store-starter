@@ -199,8 +199,8 @@ export class MenuService {
     return {
       sections: [
         {
-          id: 'fallback-user',
-          title: user?.email || 'Account',
+          id: 'fallback-nav',
+          title: 'Navigation',
           items: [
             {
               id: 'fallback-dashboard',
@@ -215,7 +215,33 @@ export class MenuService {
               type: 'link',
               label: 'My Workspace',
               icon: '📂',
-              route: '/workspace/my',
+              route: '/workspace',
+              visible: true,
+            },
+          ],
+          visible: true,
+        },
+        {
+          id: 'fallback-user-section',
+          items: [
+            {
+              id: 'user-divider',
+              type: 'divider',
+            },
+            {
+              id: 'profile',
+              type: 'link',
+              label: 'Profile',
+              icon: '👤',
+              route: '/profile',
+              visible: true,
+            },
+            {
+              id: 'settings',
+              type: 'link',
+              label: 'Settings',
+              icon: '⚙️',
+              route: '/settings',
               visible: true,
             },
             {
