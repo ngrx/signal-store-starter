@@ -11,45 +11,33 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () =>
-      import('./features/account/auth/login/login.component').then(
-        (m) => m.LoginComponent
-      ),
+      import('./features/account/auth').then((m) => m.LoginComponent),
   },
   {
     path: 'register',
     loadComponent: () =>
-      import('./features/account/auth/register/register.component').then(
-        (m) => m.RegisterComponent
-      ),
+      import('./features/account/auth').then((m) => m.RegisterComponent),
   },
   {
     path: 'forgot-password',
     loadComponent: () =>
-      import('./features/account/auth/forgot-password/forgot-password.component').then(
-        (m) => m.ForgotPasswordComponent
-      ),
+      import('./features/account/auth').then((m) => m.ForgotPasswordComponent),
   },
   {
     path: 'reset-password',
     loadComponent: () =>
-      import('./features/account/auth/reset-password/reset-password.component').then(
-        (m) => m.ResetPasswordComponent
-      ),
+      import('./features/account/auth').then((m) => m.ResetPasswordComponent),
   },
   {
     path: 'verify-email',
     loadComponent: () =>
-      import('./features/account/auth/verify-email/verify-email.component').then(
-        (m) => m.VerifyEmailComponent
-      ),
+      import('./features/account/auth').then((m) => m.VerifyEmailComponent),
   },
   {
     path: 'dashboard',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/dashboard/dashboard.component').then(
-        (m) => m.DashboardComponent
-      ),
+      import('./features/dashboard').then((m) => m.DashboardComponent),
   },
   {
     path: 'workspace',
@@ -59,9 +47,7 @@ export const routes: Routes = [
         path: '',
         pathMatch: 'full',
         loadComponent: () =>
-          import('./features/workspace/my/my-workspace.component').then(
-            (m) => m.MyWorkspaceComponent
-          ),
+          import('./features/workspace').then((m) => m.MyWorkspaceComponent),
       },
       {
         path: 'my',
@@ -80,56 +66,52 @@ export const routes: Routes = [
           {
             path: 'overview',
             loadComponent: () =>
-              import('./features/modules/overview/overview.component').then(
+              import('./features/modules/overview').then(
                 (m) => m.OverviewComponent
               ),
           },
           {
             path: 'documents',
             loadComponent: () =>
-              import('./features/modules/documents/documents.component').then(
+              import('./features/modules/documents').then(
                 (m) => m.DocumentsComponent
               ),
           },
           {
             path: 'tasks',
             loadComponent: () =>
-              import('./features/modules/tasks/tasks.component').then(
-                (m) => m.TasksComponent
-              ),
+              import('./features/modules/tasks').then((m) => m.TasksComponent),
           },
           {
             path: 'members',
             loadComponent: () =>
-              import('./features/modules/members/members.component').then(
+              import('./features/modules/members').then(
                 (m) => m.MembersComponent
               ),
           },
           {
             path: 'permissions',
             loadComponent: () =>
-              import('./features/modules/permissions/permissions.component').then(
+              import('./features/modules/permissions').then(
                 (m) => m.PermissionsComponent
               ),
           },
           {
             path: 'audit',
             loadComponent: () =>
-              import('./features/modules/audit/audit.component').then(
-                (m) => m.AuditComponent
-              ),
+              import('./features/modules/audit').then((m) => m.AuditComponent),
           },
           {
             path: 'settings',
             loadComponent: () =>
-              import('./features/modules/settings/settings.component').then(
-                (m) => m.SettingsComponent
+              import('./features/modules/settings').then(
+                (m) => m.WorkspaceSettingsComponent
               ),
           },
           {
             path: 'journal',
             loadComponent: () =>
-              import('./features/modules/journal/journal.component').then(
+              import('./features/modules/journal').then(
                 (m) => m.JournalComponent
               ),
           },
@@ -141,25 +123,19 @@ export const routes: Routes = [
     path: 'profile',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/account/profile/profile.component').then(
-        (m) => m.AccountProfileComponent
-      ),
+      import('./features/account').then((m) => m.AccountProfileComponent),
   },
   {
     path: 'settings',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/account/settings/settings.component').then(
-        (m) => m.SettingsComponent
-      ),
+      import('./features/account').then((m) => m.AccountSettingsComponent),
   },
   {
     path: 'logout',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/account/auth/logout/logout.component').then(
-        (m) => m.LogoutComponent
-      ),
+      import('./features/account/auth').then((m) => m.LogoutComponent),
   },
   {
     path: '**',
