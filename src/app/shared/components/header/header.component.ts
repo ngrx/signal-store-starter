@@ -18,10 +18,7 @@ import { MenuItem } from '../../models/menu.model';
       <div class="header-content">
         <div class="logo">
           <span class="logo-icon">🔥</span>
-          <span class="logo-text">{{ contextStore.currentContextName() || 'Signal Store App' }}</span>
-          @if (contextStore.currentContextType()) {
-            <span class="context-badge">{{ getContextTypeBadge() }}</span>
-          }
+          <span class="logo-text">Signal Store App</span>
         </div>
 
         <nav class="nav">
