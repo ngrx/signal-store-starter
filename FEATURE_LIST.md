@@ -1,15 +1,21 @@
-# Signal Store Starter - 完整專案功能清單與 TODO
+# Signal Store Starter - 專案功能清單與 TODO
 
-> 生成日期: 2026-01-16
+> **文件性質**: 本文件是專案分析報告，列出所有功能與其**實際程式碼狀態**
 > 
-> 本文件列出專案中所有功能、元件、服務、模型與其實作狀態
+> **生成日期**: 2026-01-16
+> 
+> **重要說明**: 
+> - ✅ 完成 = 該功能已在專案中實作完成
+> - ❌ STUB = 該功能僅有基本架構，需補完實作
+> - ⚠️ 需驗證 = 該功能存在，但需檢查實作完整性
 
-## 專案結構總覽
+## 專案實作狀態總覽
 
 - **Core Layer**: 80+ 檔案 (Domain Stores, Models, Services, States, Guards)
 - **Features Layer**: 18 元件 (UI Components)
 - **Shared Layer**: 5+ 檔案 (共用服務、元件、工具)
 - **Routes**: 16 路由定義
+- **整體完成度**: 77% (92/120 功能已完成)
 
 ---
 
@@ -590,7 +596,9 @@ missing:
 
 ---
 
-## 摘要統計
+## 專案實作狀態摘要統計
+
+> **說明**: 以下統計反映專案程式碼的實際實作狀態，不是分析任務完成度
 
 | Category | Total | 完成 | Stub | 需驗證 |
 |----------|-------|------|------|--------|
@@ -607,14 +615,16 @@ missing:
 
 ### 關鍵發現
 
-1. **Stub Stores (3 個)**: OrganizationStore, TeamStore, PartnerStore 需完整實作
-2. **待驗證元件 (10 個)**: 所有 workspace 模組元件需驗證實作與 template 安全性
+1. **專案未完成項目 - Stub Stores (3 個)**: OrganizationStore, TeamStore, PartnerStore 需完整實作
+2. **專案待驗證項目 - 元件 (10 個)**: 所有 workspace 模組元件需驗證實作與 template 安全性
 3. **Template 安全性**: 需確認所有元件 template 使用 `@if` 守衛存取 nullable signals
-4. **整體完成度**: 77% (92/120) 完成，20% (25/120) 需驗證，3% (3/120) 為 stub
+4. **專案整體完成度**: 77% (92/120) 已完成，20% (25/120) 需驗證，3% (3/120) 為 stub
 
 ---
 
-## 下一步行動建議
+## 專案開發建議
+
+> **說明**: 基於分析結果，建議按以下優先順序補完專案功能
 
 1. **立即處理**: 實作 3 個 stub stores (TODO-001 ~ TODO-003)
 2. **次要處理**: 驗證 10 個元件實作 (TODO-004 ~ TODO-014)
@@ -623,6 +633,8 @@ missing:
 
 ---
 
+**分析任務狀態**: ✅ 已完成  
+**專案實作狀態**: ⚠️ 77% 完成 (需補完 3 個 stub stores 與驗證 10 個元件)  
 **生成完成時間**: 2026-01-16T05:30:30.787Z  
 **分析工具**: Sequential Thinking + Software Planning MCP  
 **掃描範圍**: app/core, app/features, app/shared, app.routes.ts
