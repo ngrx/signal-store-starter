@@ -51,7 +51,7 @@ Use this skill when you need to:
 ### Example 1: Basic Navigation Test
 ```javascript
 // Navigate to a page and verify title
-await page.goto('http://localhost:3000');
+await page.goto('http://localhost:4200');
 const title = await page.title();
 console.log('Page title:', title);
 ```
@@ -59,8 +59,8 @@ console.log('Page title:', title);
 ### Example 2: Form Interaction
 ```javascript
 // Fill out and submit a form
-await page.fill('#username', 'testuser');
-await page.fill('#password', 'password123');
+await page.fill('#username', 'demo@test.com');
+await page.fill('#password', '123123');
 await page.click('button[type="submit"]');
 await page.waitForURL('**/dashboard');
 ```
