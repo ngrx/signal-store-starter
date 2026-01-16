@@ -34,7 +34,7 @@ export interface Workspace {
     tasks: number;
     members: number;
   };
-  type?: 'personal' | 'organization' | 'team' | 'partner';
+  type?: 'project' | 'department' | 'client' | 'campaign' | 'product' | 'internal';
 }
 
 export interface WorkspaceSettings {

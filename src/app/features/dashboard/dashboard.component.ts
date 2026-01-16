@@ -4,7 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthStore, AuthStoreInstance } from '../../core/auth/stores/auth.store';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { ContextStore, ContextStoreInstance } from '../../core/context/stores/context.store';
-import { ProjectStore } from '../../core/project/stores/project.store';
+import { WorkspaceListStore, WorkspaceListStoreInstance, WorkspaceListItem } from '../../core';
 
 @Component({
   selector: 'app-dashboard',
@@ -84,9 +84,9 @@ import { ProjectStore } from '../../core/project/stores/project.store';
                 Description
                 <input formControlName="description" placeholder="Optional description" />
               </label>
-              <button class="primary" type="submit" [disabled]="projectForm.invalid || projectStore.isLoading()">Create</button>
-              @if (projectStore.error()) {
-                <p class="error">{{ projectStore.error() }}</p>
+              <button class="primary" type="submit" [disabled]="projectForm.invalid || workspaceListStore.loading()">Create</button>
+              @if (workspaceListStore.error()) {
+                <p class="error">{{ workspaceListStore.error() }}</p>
               }
             </form>
           </article>
@@ -227,7 +227,7 @@ export class DashboardComponent implements OnDestroy {
   protected authStore = inject<AuthStoreInstance>(AuthStore);
   private fb = inject(FormBuilder);
   protected contextStore = inject<ContextStoreInstance>(ContextStore);
-  protected projectStore = inject(ProjectStore);
+  protected workspaceListStore = inject<WorkspaceListStoreInstance>(WorkspaceListStore);
   protected toast = signal('');
   private toastTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly toastDurationMs = 2500;
@@ -281,15 +281,25 @@ export class DashboardComponent implements OnDestroy {
 
   createProject(): void {
     if (this.projectForm.invalid) return;
-    const context = this.contextStore.current();
     const base = this.projectForm.getRawValue();
-    const payload = {
+    const payload: Omit<WorkspaceListItem, 'id'> = {
       name: base.name,
-      ...(base.description ? { description: base.description } : {}),
-      ...(context?.type === 'organization' ? { organizationId: context.organizationId } : {}),
-      ...(context?.type === 'team' ? { teamId: context.teamId } : {}),
+      description: base.description || '',
+      type: 'project' as const, // KEY: Set WorkspaceType per prd-sup.md
+      isFavorite: false,
+      status: 'active',
+      modules: {
+        overview: true,
+        documents: true,
+        tasks: true,
+        members: true,
+        permissions: true,
+        audit: true,
+        settings: true,
+        journal: true,
+      },
     };
-    this.projectStore.createProject(payload);
+    this.workspaceListStore.createWorkspace(payload);
     this.projectForm.reset();
     this.showToast(this.toastMessages.projectCreated);
   }

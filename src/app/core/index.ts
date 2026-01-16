@@ -44,11 +44,6 @@ export * from './partner/stores/partner.state';
 export * from './partner/stores/partner.store';
 export * from './partner/services/partner.service';
 
-// Project
-export * from './project/models/project.model';
-export * from './project/stores/project.store';
-export * from './project/services/project.service';
-
 // Workspace
 export * from './workspace/models/workspace.model';
 export * from './workspace/state/workspace.state';

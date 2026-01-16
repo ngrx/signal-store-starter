@@ -27,7 +27,7 @@ export const workspaceIdFromContext = (context: AppContext): string => {
 
 export const workspaceFromContext = (context: AppContext): Workspace => {
   const id = workspaceIdFromContext(context);
-  const type: 'personal' | 'organization' | 'team' | 'partner' =
+  const contextRefType: 'personal' | 'organization' | 'team' | 'partner' =
     context.type === 'user' ? 'personal' : context.type;
 
   const name =
@@ -39,8 +39,10 @@ export const workspaceFromContext = (context: AppContext): Workspace => {
     id,
     name: name || 'Workspace',
     description: `${context.type} workspace`,
-    type,
-    contextRef: { type, id },
+    // contextRef.type = ownership (personal/organization/team/partner)
+    contextRef: { type: contextRefType, id },
+    // workspace.type = category per prd-sup.md (defaults to 'internal')
+    type: 'internal',
   };
 };
 
@@ -93,7 +95,8 @@ const workspaceStore = signalStore(
         id: 'personal',
         name: 'Personal Workspace',
         description: 'Your private space for tasks and documents',
-        type: 'personal',
+        type: 'internal', // WorkspaceType per prd-sup.md
+        contextRef: { type: 'personal', id: 'personal' },
       };
       this.upsertWorkspace(personal);
       this.setCurrentWorkspace(personal);
