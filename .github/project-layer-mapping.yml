@@ -1,0 +1,53 @@
+# project-layer-mapping.yml
+# 描述：將現有專案結構映射到 MCP 層級 (Domain / Application / Infrastructure / Interface)
+
+description: "專案層級映射: Angular 20+ Pure Reactive × NgRx Signals × Firebase"
+version: "1.0.0"
+
+# Domain 層: 純 TS 模型與規則
+domain:
+  - path: "src/app/core/workspace/models"
+  - path: "src/app/core/global-shell/models"
+  - path: "src/app/core/account/models"
+  - path: "src/app/core/context/models"
+  - path: "src/app/core/event-bus/models"
+  - path: "src/app/core/modules/models"
+
+# Application 層: signalStore + rxMethod
+application:
+  - path: "src/app/core/workspace/stores"
+  - path: "src/app/core/global-shell/stores"
+  - path: "src/app/core/account/stores"
+  - path: "src/app/core/context/stores"
+  - path: "src/app/core/event-bus/stores"
+  - path: "src/app/core/modules/stores"
+
+# Infrastructure 層: 封裝 Firebase / API
+infrastructure:
+  - path: "src/app/core/workspace/services"
+  - path: "src/app/core/global-shell/services"
+  - path: "src/app/core/account/services"
+  - path: "src/app/core/context/services"
+  - path: "src/app/core/event-bus/services"
+  - path: "src/app/core/modules/services"
+
+# Interface 層: 組件 / page / guard
+interface:
+  - path: "src/app/features/workspace"
+  - path: "src/app/features/modules"
+  - path: "src/app/features/account"
+  - path: "src/app/features/dashboard"
+  - path: "src/app/features/shared/components"
+  - path: "src/app/features/shared/pages"
+  - path: "src/app/features/shared/guards"
+
+# EventBus: 全局解耦跨 store
+eventbus:
+  - path: "src/app/core/event-bus/stores/event-bus.store.ts"
+
+# 備註: 所有 Domain 模型僅用於 Application 層，不可被 Interface / Service 直接 import
+notes:
+  - "所有 store 都使用 signalStore + rxMethod"
+  - "所有 template 使用 @if/@for/@switch"
+  - "禁止 @ngrx/store / effects / entity"
+  - "異步操作必須使用 rxMethod + tapResponse"
