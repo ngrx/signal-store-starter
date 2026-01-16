@@ -39,11 +39,16 @@ export interface ContextStoreInstance {
   currentContextType: () => AppContext['type'] | null;
   currentContextId: () => string | null;
   currentContextName: () => string | null;
+  currentOrganizationId: () => string | null;
   hasOrganizations: () => boolean;
   hasTeams: () => boolean;
   hasPartners: () => boolean;
   canSwitchContext: () => boolean;
+  canNavigateBack: () => boolean;
+  teamsInCurrentOrg: () => TeamContext[];
+  partnersInCurrentOrg: () => PartnerContext[];
   switchContext: (context: AppContext) => void;
+  navigateBack: () => void;
   setAvailableOrganizations: (organizations: OrganizationContext[]) => void;
   setAvailableTeams: (teams: TeamContext[]) => void;
   setAvailablePartners: (partners: PartnerContext[]) => void;
@@ -103,6 +108,19 @@ export const ContextStore = signalStore(
           return null;
       }
     }),
+    currentOrganizationId: computed(() => {
+      const ctx = current();
+      if (!ctx) return null;
+      switch (ctx.type) {
+        case 'organization':
+          return ctx.organizationId;
+        case 'team':
+        case 'partner':
+          return ctx.organizationId;
+        default:
+          return null;
+      }
+    }),
     hasOrganizations: computed(() => available().organizations.length > 0),
     hasTeams: computed(() => available().teams.length > 0),
     hasPartners: computed(() => available().partners.length > 0),
@@ -113,6 +131,27 @@ export const ContextStore = signalStore(
         avail.teams.length > 0 ||
         avail.partners.length > 0
       );
+    }),
+    canNavigateBack: computed(() => {
+      const ctx = current();
+      // Can navigate back if in org/team/partner (not in user context)
+      return ctx?.type !== 'user';
+    }),
+    teamsInCurrentOrg: computed(() => {
+      const ctx = current();
+      const orgId = ctx?.type === 'organization' ? ctx.organizationId : 
+                    ctx?.type === 'team' ? ctx.organizationId :
+                    ctx?.type === 'partner' ? ctx.organizationId : null;
+      if (!orgId) return [];
+      return available().teams.filter(t => t.organizationId === orgId);
+    }),
+    partnersInCurrentOrg: computed(() => {
+      const ctx = current();
+      const orgId = ctx?.type === 'organization' ? ctx.organizationId : 
+                    ctx?.type === 'team' ? ctx.organizationId :
+                    ctx?.type === 'partner' ? ctx.organizationId : null;
+      if (!orgId) return [];
+      return available().partners.filter(p => p.organizationId === orgId);
     }),
   })),
   withMethods(
@@ -447,6 +486,51 @@ export const ContextStore = signalStore(
 
       return {
         switchContext: applySwitchContext,
+        navigateBack(): void {
+          const ctx = store.current();
+          if (!ctx) return;
+          
+          // Navigate up the hierarchy
+          switch (ctx.type) {
+            case 'team':
+            case 'partner': {
+              // Navigate to parent organization
+              const orgId = ctx.organizationId;
+              const org = store.available().organizations.find(o => o.organizationId === orgId);
+              if (org) {
+                applySwitchContext(org);
+              } else {
+                // Fallback to user context if org not found - inline reset
+                const user = authStore.user();
+                if (user) {
+                  applySwitchContext({
+                    type: 'user',
+                    userId: user.uid,
+                    email: user.email || '',
+                    displayName: user.displayName ?? null,
+                  });
+                }
+              }
+              break;
+            }
+            case 'organization': {
+              // Navigate to user context - inline reset
+              const user = authStore.user();
+              if (user) {
+                applySwitchContext({
+                  type: 'user',
+                  userId: user.uid,
+                  email: user.email || '',
+                  displayName: user.displayName ?? null,
+                });
+              }
+              break;
+            }
+            case 'user':
+              // Already at top level, do nothing
+              break;
+          }
+        },
         setAvailableOrganizations,
         setAvailableTeams,
         setAvailablePartners,

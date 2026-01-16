@@ -108,21 +108,58 @@ EventBus = SharedContext (CoreBackbone | CrossModuleCommunication | Decoupling |
 - ✅ Cross-module communication
 - ✅ Workspace-scoped events
 
-### Context Management
+## ✅ Context Management
 
-**Location:** `src/app/core/context/`
+### Hierarchical Context Navigation
 
-**Per prd-sup.md:**
+Per prd-sup.md requirements:
 ```
-SharedContext = CrossModuleContext (EventBus | Schema | Contract | Semantic | WorkspaceScoped)
-WorkspaceContext = CurrentWorkspace (ActiveWorkspaceId | WorkspaceMetadata | QuickSwitch)
+Account → WorkspaceList → Workspace → Module → Entity
+Organization = CollectiveAccount
+Team = SubUnit (Internal | Collaborative | Hierarchical)
+Partner = SubUnit (External | Contractual | LimitedAccess)
 ```
 
 **Implementation:**
 - ✅ **ContextStore** - Manages current context (User | Organization | Team | Partner)
+- ✅ **Hierarchical Navigation** - User → Organization → Team/Partner
+- ✅ **navigateBack()** - Navigate up the hierarchy
+- ✅ **Context Switcher UI** - Context-aware, shows only relevant options
 - ✅ Context switching between different account types
 - ✅ Available contexts tracking
 - ✅ Context history
+
+**Context Switcher Behavior:**
+
+1. **Personal (User) View**:
+   - Shows "Personal" button with dropdown
+   - Dropdown contains ONLY organizations to switch to
+   - No teams/partners visible (they belong to organizations)
+
+2. **Organization View**:
+   - Shows organization name + back button (◀ Back to Personal)
+   - Dropdown contains:
+     - Other organizations (if multiple)
+     - Teams in current organization
+     - Partners in current organization
+   - Hierarchical navigation enforced
+
+3. **Team View**:
+   - Shows team name + back button (◀ Back to Organization)
+   - Dropdown contains ONLY other teams in the same organization
+   - Cannot see teams from other organizations
+
+4. **Partner View**:
+   - Shows partner name + back button (◀ Back to Organization)
+   - Dropdown contains ONLY other partners in the same organization
+   - Cannot see partners from other organizations
+
+**Key Design Decisions:**
+
+- **Hierarchical UX**: Follows Account → Organization → SubUnit architecture
+- **Reduced Cognitive Load**: Shows only contextually relevant options
+- **Clear Navigation Path**: Back button provides explicit hierarchy traversal
+- **Scoped Visibility**: Teams/Partners scoped to their parent organization
 
 ### Module Registry
 

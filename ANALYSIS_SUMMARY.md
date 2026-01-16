@@ -2,9 +2,85 @@
 
 ## 🎯 分析任務目標
 
-**任務範圍**: 掃描整個 signal-store-starter 專案，生成功能清單與 TODO，不修改任何程式碼。
+**任務範圍**: 修復多租戶上下文切換的 UX 問題，實現階層式導航架構。
 
-## ✅ 分析任務執行結果
+## ✅ 實作完成項目
+
+### 2025-01-16: 階層式上下文切換實作
+
+#### 修復的 UX 問題
+
+1. **❌ 原問題: Context Switcher UI Crowding**
+   - 在個人視圖中，所有組織、團隊、合作夥伴同時顯示於下拉選單
+   - 違反 UX 最佳實踐與 prd-sup.md 架構定義
+   
+   **✅ 解決方案:**
+   - 實作上下文感知的 UI，僅顯示當前上下文相關選項
+   - 個人視圖：僅顯示"切換到組織"
+   - 組織視圖：顯示組織名稱 + 切換下拉選單（僅限組織）+ "返回個人"按鈕
+   - 團隊視圖：顯示團隊名稱 + 切換下拉選單（當前組織內的團隊）+ "返回組織"按鈕
+   - 合作夥伴視圖：顯示合作夥伴名稱 + 切換下拉選單（當前組織內的合作夥伴）+ "返回組織"按鈕
+
+2. **❌ 原問題: 缺少階層式導航方法**
+   - ContextStore 缺少 `navigateBack()` 方法
+   - 無法正確管理上下文堆疊
+   
+   **✅ 解決方案:**
+   - 新增 `navigateBack()` 方法至 ContextStore
+   - 新增 `canNavigateBack()` computed signal
+   - 新增 `currentOrganizationId()` computed signal
+   - 新增 `teamsInCurrentOrg()` computed signal (僅顯示當前組織的團隊)
+   - 新增 `partnersInCurrentOrg()` computed signal (僅顯示當前組織的合作夥伴)
+
+3. **❌ 原問題: 架構違反 prd-sup.md**
+   - 當前實作將所有上下文平面顯示，違反階層式原則
+   
+   **✅ 解決方案:**
+   - 遵循 prd-sup.md 定義的架構: Account → Organization → SubUnit (Team/Partner)
+   - Team/Partner 為組織的子單位，不是對等實體
+   - 實作階層式導航: User → Organization → Team/Partner
+
+#### 實作的檔案變更
+
+1. **ContextStore** (`src/app/core/context/stores/context.store.ts`)
+   - ✅ 新增 `navigateBack()` 方法
+   - ✅ 新增 `canNavigateBack()` computed signal
+   - ✅ 新增 `currentOrganizationId()` computed signal
+   - ✅ 新增 `teamsInCurrentOrg()` computed signal
+   - ✅ 新增 `partnersInCurrentOrg()` computed signal
+   - ✅ 更新 ContextStoreInstance 介面
+
+2. **HeaderComponent** (`src/app/shared/components/header/header.component.ts`)
+   - ✅ 重新設計上下文切換器為階層式 UI
+   - ✅ 使用 @switch 根據當前上下文類型顯示不同 UI
+   - ✅ 新增返回按鈕樣式 (`.context-back-btn`)
+   - ✅ 新增 `navigateBack()` 方法
+   - ✅ 實作上下文感知的選項過濾
+
+3. **ARCHITECTURE.md**
+   - ✅ 新增階層式上下文導航文檔
+   - ✅ 記錄上下文切換器行為規範
+   - ✅ 說明關鍵設計決策
+
+#### 架構對齊 prd-sup.md
+
+**prd-sup.md 定義 (lines 8-10, 26-30):**
+```
+Account → WorkspaceList → Workspace → Module → Entity
+誰 → 擁有哪些 → 在哪 → 做什麼 → 狀態
+
+Team = SubUnit (Internal | Collaborative | Hierarchical)
+Partner = SubUnit (External | Contractual | LimitedAccess)
+```
+
+**實作對齊:**
+- ✅ User (Account) 是頂層
+- ✅ Organization 是 CollectiveAccount
+- ✅ Team/Partner 是 Organization 的 SubUnit
+- ✅ 階層式導航: User → Organization → (Team | Partner)
+- ✅ 無法從 Team/Partner 跨越到其他 Organization
+
+## 📊 專案實作狀態分析
 
 ### 本次分析已完成項目
 

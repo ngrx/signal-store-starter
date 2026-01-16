@@ -25,62 +25,158 @@ import { MenuItem } from '../../models/menu.model';
         </div>
 
         <nav class="nav">
-          <!-- Context Switcher -->
-          @if (authStore.isAuthenticated() && contextStore.canSwitchContext()) {
+          <!-- Context Switcher - Hierarchical Navigation -->
+          @if (authStore.isAuthenticated()) {
             <div class="context-switcher">
-              <button class="context-btn" (click)="toggleContextSwitcher()">
-                <span class="context-icon">{{ getContextIcon(contextStore.currentContextType()) }}</span>
-                <span>{{ contextStore.currentContextName() || 'Select Context' }}</span>
-                <span class="dropdown-icon">▼</span>
-              </button>
-              
-              @if (contextSwitcherOpen()) {
-                <div class="context-dropdown" (click)="$event.stopPropagation()">
+              @switch (contextStore.currentContextType()) {
+                @case ('user') {
+                  <!-- Personal View: Show "Switch to Organization" button if has orgs -->
                   @if (contextStore.hasOrganizations()) {
-                    <div class="context-section">
-                      <div class="section-title">Organizations</div>
-                      @for (org of contextStore.available().organizations; track org.organizationId) {
-                        <button 
-                          class="context-item"
-                          [class.active]="contextStore.currentContextId() === org.organizationId"
-                          (click)="switchToContext(org)">
-                          <span class="context-icon">🏢</span>
-                          <span>{{ org.name }}</span>
-                        </button>
-                      }
-                    </div>
+                    <button class="context-btn" (click)="toggleContextSwitcher()">
+                      <span class="context-icon">👤</span>
+                      <span>Personal</span>
+                      <span class="dropdown-icon">▼</span>
+                    </button>
+                    
+                    @if (contextSwitcherOpen()) {
+                      <div class="context-dropdown" (click)="$event.stopPropagation()">
+                        <div class="context-section">
+                          <div class="section-title">Switch to Organization</div>
+                          @for (org of contextStore.available().organizations; track org.organizationId) {
+                            <button 
+                              class="context-item"
+                              (click)="switchToContext(org)">
+                              <span class="context-icon">🏢</span>
+                              <span>{{ org.name }}</span>
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    }
                   }
-                  
-                  @if (contextStore.hasTeams()) {
-                    <div class="context-section">
-                      <div class="section-title">Teams</div>
-                      @for (team of contextStore.available().teams; track team.teamId) {
-                        <button 
-                          class="context-item"
-                          [class.active]="contextStore.currentContextId() === team.teamId"
-                          (click)="switchToContext(team)">
-                          <span class="context-icon">👥</span>
-                          <span>{{ team.name }}</span>
-                        </button>
+                }
+                @case ('organization') {
+                  <!-- Organization View: Show org name + switch dropdown + back button -->
+                  <div class="context-nav-group">
+                    <button class="context-back-btn" (click)="navigateBack()" title="Back to Personal">
+                      <span>◀</span>
+                    </button>
+                    <button class="context-btn" (click)="toggleContextSwitcher()">
+                      <span class="context-icon">🏢</span>
+                      <span>{{ contextStore.currentContextName() }}</span>
+                      @if (contextStore.available().organizations.length > 1) {
+                        <span class="dropdown-icon">▼</span>
                       }
-                    </div>
-                  }
-                  
-                  @if (contextStore.hasPartners()) {
-                    <div class="context-section">
-                      <div class="section-title">Partners</div>
-                      @for (partner of contextStore.available().partners; track partner.partnerId) {
-                        <button 
-                          class="context-item"
-                          [class.active]="contextStore.currentContextId() === partner.partnerId"
-                          (click)="switchToContext(partner)">
-                          <span class="context-icon">🤝</span>
-                          <span>{{ partner.name }}</span>
-                        </button>
+                    </button>
+                    
+                    @if (contextSwitcherOpen() && contextStore.available().organizations.length > 1) {
+                      <div class="context-dropdown" (click)="$event.stopPropagation()">
+                        <div class="context-section">
+                          <div class="section-title">Switch Organization</div>
+                          @for (org of contextStore.available().organizations; track org.organizationId) {
+                            <button 
+                              class="context-item"
+                              [class.active]="contextStore.currentContextId() === org.organizationId"
+                              (click)="switchToContext(org)">
+                              <span class="context-icon">🏢</span>
+                              <span>{{ org.name }}</span>
+                            </button>
+                          }
+                        </div>
+                        @if (contextStore.teamsInCurrentOrg().length > 0) {
+                          <div class="context-section">
+                            <div class="section-title">Switch to Team</div>
+                            @for (team of contextStore.teamsInCurrentOrg(); track team.teamId) {
+                              <button 
+                                class="context-item"
+                                (click)="switchToContext(team)">
+                                <span class="context-icon">👥</span>
+                                <span>{{ team.name }}</span>
+                              </button>
+                            }
+                          </div>
+                        }
+                        @if (contextStore.partnersInCurrentOrg().length > 0) {
+                          <div class="context-section">
+                            <div class="section-title">Switch to Partner</div>
+                            @for (partner of contextStore.partnersInCurrentOrg(); track partner.partnerId) {
+                              <button 
+                                class="context-item"
+                                (click)="switchToContext(partner)">
+                                <span class="context-icon">🤝</span>
+                                <span>{{ partner.name }}</span>
+                              </button>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+                @case ('team') {
+                  <!-- Team View: Show team name + switch dropdown (teams in org) + back button -->
+                  <div class="context-nav-group">
+                    <button class="context-back-btn" (click)="navigateBack()" title="Back to Organization">
+                      <span>◀</span>
+                    </button>
+                    <button class="context-btn" (click)="toggleContextSwitcher()">
+                      <span class="context-icon">👥</span>
+                      <span>{{ contextStore.currentContextName() }}</span>
+                      @if (contextStore.teamsInCurrentOrg().length > 1) {
+                        <span class="dropdown-icon">▼</span>
                       }
-                    </div>
-                  }
-                </div>
+                    </button>
+                    
+                    @if (contextSwitcherOpen() && contextStore.teamsInCurrentOrg().length > 1) {
+                      <div class="context-dropdown" (click)="$event.stopPropagation()">
+                        <div class="context-section">
+                          <div class="section-title">Switch Team</div>
+                          @for (team of contextStore.teamsInCurrentOrg(); track team.teamId) {
+                            <button 
+                              class="context-item"
+                              [class.active]="contextStore.currentContextId() === team.teamId"
+                              (click)="switchToContext(team)">
+                              <span class="context-icon">👥</span>
+                              <span>{{ team.name }}</span>
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+                @case ('partner') {
+                  <!-- Partner View: Show partner name + switch dropdown (partners in org) + back button -->
+                  <div class="context-nav-group">
+                    <button class="context-back-btn" (click)="navigateBack()" title="Back to Organization">
+                      <span>◀</span>
+                    </button>
+                    <button class="context-btn" (click)="toggleContextSwitcher()">
+                      <span class="context-icon">🤝</span>
+                      <span>{{ contextStore.currentContextName() }}</span>
+                      @if (contextStore.partnersInCurrentOrg().length > 1) {
+                        <span class="dropdown-icon">▼</span>
+                      }
+                    </button>
+                    
+                    @if (contextSwitcherOpen() && contextStore.partnersInCurrentOrg().length > 1) {
+                      <div class="context-dropdown" (click)="$event.stopPropagation()">
+                        <div class="context-section">
+                          <div class="section-title">Switch Partner</div>
+                          @for (partner of contextStore.partnersInCurrentOrg(); track partner.partnerId) {
+                            <button 
+                              class="context-item"
+                              [class.active]="contextStore.currentContextId() === partner.partnerId"
+                              (click)="switchToContext(partner)">
+                              <span class="context-icon">🤝</span>
+                              <span>{{ partner.name }}</span>
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
               }
             </div>
           }
@@ -432,6 +528,32 @@ import { MenuItem } from '../../models/menu.model';
       margin-right: 1rem;
     }
 
+    .context-nav-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .context-back-btn {
+      padding: 8px 10px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .context-back-btn:hover {
+      border-color: #667eea;
+      background: #f8f9ff;
+      color: #667eea;
+    }
+
     .context-btn {
       display: flex;
       align-items: center;
@@ -695,6 +817,13 @@ export class HeaderComponent {
     this.contextStore.switchContext(context);
     this.contextSwitcherOpen.set(false);
     // Navigate to workspace list in new context
+    this.router.navigate(['/workspace']);
+  }
+
+  navigateBack(): void {
+    this.contextStore.navigateBack();
+    this.contextSwitcherOpen.set(false);
+    // Navigate to workspace list in parent context
     this.router.navigate(['/workspace']);
   }
 
