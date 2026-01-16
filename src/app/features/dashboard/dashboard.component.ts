@@ -3,18 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthStore, AuthStoreInstance } from '../../core/auth/stores/auth.store';
-import { HeaderComponent } from '../../shared/layouts/header/header.component';
 import { ContextStore, ContextStoreInstance } from '../../core/context/stores/context.store';
 import { WorkspaceListStore, WorkspaceListStoreInstance, WorkspaceListItem } from '../../core';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
     <div class="dashboard">
-      <app-header></app-header>
-      
       <main class="dashboard-content">
         <div class="welcome-section">
           <h1>Welcome to Dashboard</h1>

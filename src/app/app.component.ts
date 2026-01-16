@@ -6,11 +6,12 @@ import { LayoutStore } from './core/global-shell/stores/layout.store';
 import { RouterStore } from './core/global-shell/stores/router.store';
 import { WorkspaceListStore } from './core/workspace-list/stores/workspace-list.store';
 import { CommonModule } from '@angular/common';
+import { HeaderComponent } from './shared/layouts/header/header.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule],
+  imports: [RouterOutlet, CommonModule, HeaderComponent],
   template: `
     <div class="app-root" [attr.data-theme]="layoutStore.theme()">
       @if (configStore.isMaintenanceMode()) {
@@ -18,6 +19,7 @@ import { CommonModule } from '@angular/common';
           ⚠️ {{ configStore.remoteConfig()?.maintenanceMessage || 'System under maintenance' }}
         </div>
       }
+      <app-header></app-header>
       <router-outlet></router-outlet>
     </div>
   `,
