@@ -29,9 +29,9 @@ import { OverviewStore } from '../../../core/workspace/stores/overview.store';
               {{ getHealthIcon() }} {{ getHealthLabel() }}
             </div>
             <p class="stat-label">System status</p>
-            @if (overviewStore.healthStatus()?.issues?.length) {
+            @if (getHealthIssuesCount() > 0) {
               <div class="health-issues">
-                {{ overviewStore.healthStatus()!.issues.length }} issue(s)
+                {{ getHealthIssuesCount() }} issue(s)
               </div>
             }
           </div>
@@ -453,5 +453,9 @@ export class OverviewComponent {
       case 'setting_updated': return '⚙️';
       default: return '📌';
     }
+  }
+
+  getHealthIssuesCount(): number {
+    return this.overviewStore.healthStatus()?.issues?.length ?? 0;
   }
 }
