@@ -11,6 +11,7 @@ export interface Workspace {
   name: string;
   displayName?: string;
   description?: string;
+  avatarUrl?: string;
   contextRef?: {
     type: 'personal' | 'organization' | 'team' | 'partner';
     id: string;

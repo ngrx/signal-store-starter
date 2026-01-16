@@ -55,6 +55,7 @@ export class WorkspaceListService {
               description: workspaceData['description'] || '',
               avatarUrl: workspaceData['avatarUrl'],
               membership,
+              isFavorite: membership.isFavorite || false,
               createdAt: workspaceData['createdAt']?.toDate() || new Date(),
               updatedAt: workspaceData['updatedAt']?.toDate() || new Date(),
             });
@@ -80,6 +81,7 @@ export class WorkspaceListService {
     return from(
       getDocs(q).then((snapshot) => {
         if (snapshot.empty) return null;
+        if (!snapshot.docs[0]) return null;
         return snapshot.docs[0].data() as WorkspaceMembership;
       })
     );
@@ -143,7 +145,7 @@ export class WorkspaceListService {
     
     return from(
       getDocs(q).then(async (snapshot) => {
-        if (!snapshot.empty) {
+        if (!snapshot.empty && snapshot.docs[0]) {
           await updateDoc(snapshot.docs[0].ref, {
             status: 'Left',
             updatedAt: new Date(),
@@ -166,7 +168,7 @@ export class WorkspaceListService {
     
     return from(
       getDocs(q).then(async (snapshot) => {
-        if (!snapshot.empty) {
+        if (!snapshot.empty && snapshot.docs[0]) {
           await updateDoc(snapshot.docs[0].ref, {
             isFavorite,
             updatedAt: new Date(),
@@ -189,7 +191,7 @@ export class WorkspaceListService {
     
     return from(
       getDocs(q).then(async (snapshot) => {
-        if (!snapshot.empty) {
+        if (!snapshot.empty && snapshot.docs[0]) {
           await updateDoc(snapshot.docs[0].ref, {
             lastAccessedAt: new Date(),
           });

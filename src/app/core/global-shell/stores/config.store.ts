@@ -53,13 +53,27 @@ export const ConfigStore = signalStore(
         tap(() => {
           // Fetch remote config values
           const maintenanceMode = getValue(remoteConfig, 'maintenanceMode').asBoolean();
+          const minAppVersion = getValue(remoteConfig, 'minAppVersion').asString();
+          const forceUpdate = getValue(remoteConfig, 'forceUpdate').asBoolean();
+          const maxUploadSize = getValue(remoteConfig, 'maxUploadSize').asNumber();
           const maxWorkspaces = getValue(remoteConfig, 'maxWorkspaces').asNumber();
           const maxMembersPerWorkspace = getValue(remoteConfig, 'maxMembersPerWorkspace').asNumber();
+          const apiCallsPerMinute = getValue(remoteConfig, 'apiCallsPerMinute').asNumber();
+          const apiCallsPerHour = getValue(remoteConfig, 'apiCallsPerHour').asNumber();
+          const maxConcurrentRequests = getValue(remoteConfig, 'maxConcurrentRequests').asNumber();
           
           const config: RemoteConfigModel = {
             maintenanceMode,
+            minAppVersion: minAppVersion || '1.0.0',
+            forceUpdate,
+            maxUploadSize: maxUploadSize || 10485760, // 10MB default
             maxWorkspaces: maxWorkspaces || 10,
             maxMembersPerWorkspace: maxMembersPerWorkspace || 50,
+            rateLimits: {
+              apiCallsPerMinute: apiCallsPerMinute || 60,
+              apiCallsPerHour: apiCallsPerHour || 1000,
+              maxConcurrentRequests: maxConcurrentRequests || 10,
+            },
           };
           
           patchState(store, {
