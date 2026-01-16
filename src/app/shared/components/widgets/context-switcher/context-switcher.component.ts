@@ -1,6 +1,7 @@
-import { Component, inject, signal, output, computed } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ContextStore, ContextStoreInstance } from '../../../../core/context/stores/context.store';
+import type { AppContext } from '../../../../core/context/models/context.model';
 
 @Component({
   selector: 'app-context-switcher',
@@ -17,10 +18,14 @@ import { ContextStore, ContextStoreInstance } from '../../../../core/context/sto
       }
       
       <!-- Context Switcher Button - Cycles through contexts on click -->
-      <button class="context-btn" (click)="handleCycleContext()" [title]="getNextContextHint()">
+      <button 
+        class="context-btn" 
+        (click)="handleCycleContext()" 
+        [title]="nextContextHint()"
+        [disabled]="!canCycle()">
         <span class="context-icon">{{ contextIcon() }}</span>
-        <span>{{ currentContextName() || 'Personal' }}</span>
-        @if (hasMultipleContexts()) {
+        <span>{{ currentDisplayName() }}</span>
+        @if (canCycle()) {
           <span class="cycle-icon">⟳</span>
         }
       </button>
@@ -70,9 +75,14 @@ import { ContextStore, ContextStoreInstance } from '../../../../core/context/sto
       font-weight: 500;
     }
 
-    .context-btn:hover {
+    .context-btn:hover:not(:disabled) {
       transform: translateY(-1px);
       box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .context-btn:disabled {
+      opacity: 0.7;
+      cursor: default;
     }
 
     .context-icon {
@@ -102,174 +112,148 @@ import { ContextStore, ContextStoreInstance } from '../../../../core/context/sto
 export class ContextSwitcherComponent {
   private contextStore = inject<ContextStoreInstance>(ContextStore);
   
-  // Computed signals wrapping store access
-  protected hasOrganizations = computed(() => this.contextStore.hasOrganizations());
+  // Core computed signals
+  protected currentContext = computed(() => this.contextStore.current());
+  protected availableContexts = computed(() => this.contextStore.available());
   protected currentContextType = computed(() => this.contextStore.currentContextType());
   protected currentContextName = computed(() => this.contextStore.currentContextName());
-  protected currentContextId = computed(() => this.contextStore.currentContextId());
-  protected availableContexts = computed(() => this.contextStore.available());
-  protected contextIcon = computed(() => this.getContextIconForType(this.currentContextType()));
   
-  // Check if there are multiple contexts to cycle through
-  protected hasMultipleContexts = computed(() => {
-    const contexts = this.availableContexts();
-    return contexts.organizations.length > 0 || 
-           contexts.teams.length > 0 || 
-           contexts.partners.length > 0;
+  // Display name for current context
+  protected currentDisplayName = computed(() => {
+    return this.currentContextName() || 'Personal';
   });
   
-  // Output events
-  contextSwitch = output<any>();
-  navigateBack = output<void>();
-
-  handleCycleContext(): void {
-    const contexts = this.availableContexts();
-    const currentType = this.currentContextType();
-    const currentId = this.currentContextId();
+  // Context icon
+  protected contextIcon = computed(() => {
+    const type = this.currentContextType();
+    switch (type) {
+      case 'organization': return '🏢';
+      case 'team': return '👥';
+      case 'partner': return '🤝';
+      case 'user':
+      default: return '👤';
+    }
+  });
+  
+  // Build ordered list of all contexts
+  protected allContexts = computed(() => {
+    const available = this.availableContexts();
+    const contexts: AppContext[] = [];
     
-    // Build list of all available contexts in order: Personal -> Organizations -> Teams -> Partners
-    const allContexts: any[] = [];
+    // Always add Personal first (user context)
+    const current = this.currentContext();
+    const userId = current?.type === 'user' ? current.userId : '';
+    const userEmail = current?.type === 'user' ? current.email : '';
+    const userDisplayName = current?.type === 'user' ? current.displayName : null;
     
-    // Add Personal context (always first)
-    allContexts.push({ 
-      type: 'user', 
-      name: 'Personal',
-      userId: currentId || '' // Will be populated when switching
+    contexts.push({
+      type: 'user',
+      userId: userId,
+      email: userEmail,
+      displayName: userDisplayName
     });
     
     // Add all organizations
-    contexts.organizations.forEach(org => {
-      allContexts.push(org);
-    });
+    available.organizations.forEach(org => contexts.push(org));
     
     // Add all teams
-    contexts.teams.forEach(team => {
-      allContexts.push(team);
-    });
+    available.teams.forEach(team => contexts.push(team));
     
     // Add all partners
-    contexts.partners.forEach(partner => {
-      allContexts.push(partner);
+    available.partners.forEach(partner => contexts.push(partner));
+    
+    return contexts;
+  });
+  
+  // Can we cycle to another context?
+  protected canCycle = computed(() => {
+    return this.allContexts().length > 1;
+  });
+  
+  // What's the next context in the cycle?
+  protected nextContext = computed(() => {
+    const all = this.allContexts();
+    if (all.length <= 1) return null;
+    
+    const currentType = this.currentContextType();
+    const current = this.currentContext();
+    
+    // Find current index
+    let currentIndex = all.findIndex(ctx => {
+      if (ctx.type === 'user' && currentType === 'user') return true;
+      if (ctx.type === 'organization' && currentType === 'organization' && current?.type === 'organization') {
+        return ctx.organizationId === current.organizationId;
+      }
+      if (ctx.type === 'team' && currentType === 'team' && current?.type === 'team') {
+        return ctx.teamId === current.teamId;
+      }
+      if (ctx.type === 'partner' && currentType === 'partner' && current?.type === 'partner') {
+        return ctx.partnerId === current.partnerId;
+      }
+      return false;
     });
     
-    // If only Personal context exists, do nothing
-    if (allContexts.length <= 1) {
+    // If not found, start from Personal
+    if (currentIndex === -1) currentIndex = 0;
+    
+    // Get next context (wrap around)
+    const nextIndex = (currentIndex + 1) % all.length;
+    return all[nextIndex];
+  });
+  
+  // Hint text for tooltip
+  protected nextContextHint = computed(() => {
+    const next = this.nextContext();
+    if (!next) return 'No other contexts available';
+    
+    const nextName = next.type === 'user' ? 'Personal' : 
+                     next.type === 'organization' ? (next as any).name :
+                     next.type === 'team' ? (next as any).name :
+                     next.type === 'partner' ? (next as any).name : '';
+    
+    return `Click to switch to ${nextName}`;
+  });
+
+  handleCycleContext(): void {
+    const next = this.nextContext();
+    if (!next) {
+      console.log('[ContextSwitcher] No next context available');
       return;
     }
     
-    // Find current context index
-    let currentIndex = -1;
+    console.log('[ContextSwitcher] Cycling to', next.type, next);
     
-    for (let i = 0; i < allContexts.length; i++) {
-      const ctx = allContexts[i];
-      
-      if (ctx.type === 'user' && currentType === 'user') {
-        currentIndex = i;
-        break;
-      } else if (ctx.type === 'organization' && currentType === 'organization' && ctx.organizationId === currentId) {
-        currentIndex = i;
-        break;
-      } else if (ctx.type === 'team' && currentType === 'team' && ctx.teamId === currentId) {
-        currentIndex = i;
-        break;
-      } else if (ctx.type === 'partner' && currentType === 'partner' && ctx.partnerId === currentId) {
-        currentIndex = i;
-        break;
-      }
-    }
-    
-    // If current context not found, default to Personal
-    if (currentIndex === -1) {
-      currentIndex = 0;
-    }
-    
-    // Cycle to next context (wrap around to 0 after last)
-    const nextIndex = (currentIndex + 1) % allContexts.length;
-    const nextContext = allContexts[nextIndex];
-    
-    console.log('[ContextSwitcher] Cycling from', currentType, 'to', nextContext.type, nextContext);
-    
-    // Switch to next context
-    if (nextContext.type === 'user') {
-      this.contextStore.resetContext(); // Switch to Personal
+    if (next.type === 'user') {
+      this.contextStore.resetContext();
     } else {
-      this.contextStore.switchContext(nextContext);
+      this.contextStore.switchContext(next);
     }
-  }
-
-  getNextContextHint(): string {
-    const contexts = this.availableContexts();
-    const currentType = this.currentContextType();
-    const currentId = this.currentContextId();
-    
-    // Build list of all available contexts
-    const allContexts: any[] = [];
-    allContexts.push({ type: 'user', name: 'Personal' });
-    contexts.organizations.forEach(org => allContexts.push(org));
-    contexts.teams.forEach(team => allContexts.push(team));
-    contexts.partners.forEach(partner => allContexts.push(partner));
-    
-    if (allContexts.length <= 1) {
-      return 'Personal Context';
-    }
-    
-    // Find current index
-    let currentIndex = -1;
-    for (let i = 0; i < allContexts.length; i++) {
-      const ctx = allContexts[i];
-      if (ctx.type === 'user' && currentType === 'user') {
-        currentIndex = i;
-        break;
-      } else if (ctx.type === 'organization' && currentType === 'organization' && ctx.organizationId === currentId) {
-        currentIndex = i;
-        break;
-      } else if (ctx.type === 'team' && currentType === 'team' && ctx.teamId === currentId) {
-        currentIndex = i;
-        break;
-      } else if (ctx.type === 'partner' && currentType === 'partner' && ctx.partnerId === currentId) {
-        currentIndex = i;
-        break;
-      }
-    }
-    
-    if (currentIndex === -1) {
-      currentIndex = 0;
-    }
-    
-    const nextIndex = (currentIndex + 1) % allContexts.length;
-    const nextContext = allContexts[nextIndex];
-    
-    return `Click to switch to ${nextContext.name}`;
-  }
-
-  handleSwitchContext(context: any): void {
-    this.contextStore.switchContext(context);
-    this.contextSwitch.emit(context);
   }
 
   handleNavigateBack(): void {
     const currentType = this.currentContextType();
+    console.log('[ContextSwitcher] Navigate back from', currentType);
+    
     if (currentType === 'team' || currentType === 'partner') {
-      // Navigate back to parent organization
-      this.navigateBack.emit();
+      // Navigate back to parent organization - need to find it
+      const current = this.currentContext();
+      const orgId = current?.type === 'team' ? current.organizationId :
+                    current?.type === 'partner' ? current.organizationId : null;
+      
+      if (orgId) {
+        const available = this.availableContexts();
+        const org = available.organizations.find(o => o.organizationId === orgId);
+        if (org) {
+          this.contextStore.switchContext(org);
+        } else {
+          this.contextStore.resetContext();
+        }
+      } else {
+        this.contextStore.resetContext();
+      }
     } else if (currentType === 'organization') {
       // Navigate back to Personal
       this.contextStore.resetContext();
-    }
-  }
-
-  private getContextIconForType(type: string | null): string {
-    switch (type) {
-      case 'organization':
-        return '🏢';
-      case 'team':
-        return '👥';
-      case 'partner':
-        return '🤝';
-      case 'user':
-        return '👤';
-      default:
-        return '👤';
     }
   }
 }
