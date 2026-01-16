@@ -24,6 +24,41 @@ export class AuthService {
    * Observable of the current authentication state
    */
   get authState$(): Observable<User | null> {
+    // In development mode, check for mock user in sessionStorage first
+    if (!environment.production) {
+      const mockUserData = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('mockAuthUser') : null;
+      if (mockUserData) {
+        try {
+          const mockUser = JSON.parse(mockUserData);
+          // Return a combined observable that emits mock user first, then Firebase auth state
+          return new Observable((subscriber) => {
+            // Emit mock user immediately
+            subscriber.next(mockUser as User);
+            
+            // Then subscribe to real auth state (for cleanup when logout happens)
+            const subscription = authState(this.auth).subscribe({
+              next: (user) => {
+                // If Firebase says no user, clear mock user from storage
+                if (!user && mockUserData) {
+                  sessionStorage.removeItem('mockAuthUser');
+                  subscriber.next(null);
+                } else {
+                  subscriber.next(user);
+                }
+              },
+              error: (err) => subscriber.error(err),
+              complete: () => subscriber.complete(),
+            });
+            
+            return () => subscription.unsubscribe();
+          });
+        } catch (e) {
+          // If parsing fails, clear and use Firebase auth
+          sessionStorage.removeItem('mockAuthUser');
+        }
+      }
+    }
+    
     return authState(this.auth);
   }
 
@@ -37,11 +72,18 @@ export class AuthService {
       email === 'ac7x@pm.me' &&
       password === '123123'
     ) {
-      return of({
+      const mockUser = {
         uid: 'dev-mock-user',
         email,
         displayName: 'Mock User',
-      } as User);
+      } as User;
+      
+      // Store mock user in sessionStorage for E2E test persistence
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('mockAuthUser', JSON.stringify(mockUser));
+      }
+      
+      return of(mockUser);
     }
 
     return from(
@@ -86,6 +128,11 @@ export class AuthService {
    * Sign out the current user
    */
   logout(): Observable<void> {
+    // Clear mock user from sessionStorage in development
+    if (!environment.production && typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('mockAuthUser');
+    }
+    
     if (!environment.production) {
       return of(void 0);
     }
