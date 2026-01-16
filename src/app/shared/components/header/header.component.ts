@@ -2,6 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthStore, AuthStoreInstance } from '../../../core/auth/stores/auth.store';
+import { LayoutStore } from '../../../core/global-shell/stores/layout.store';
+import { WorkspaceListStore } from '../../../core/workspace-list/stores/workspace-list.store';
 import { AvatarService } from '../../services/avatar.service';
 import { MenuService } from '../../services/menu.service';
 import { ContextStore, ContextStoreInstance } from '../../../core/context/stores/context.store';
@@ -23,7 +25,53 @@ import { MenuItem } from '../../models/menu.model';
         </div>
 
         <nav class="nav">
-          <!-- Dynamic navigation will be added here -->
+          <!-- Workspace Switcher -->
+          @if (authStore.isAuthenticated() && workspaceListStore.hasWorkspaces()) {
+            <div class="workspace-switcher">
+              <button class="workspace-btn" (click)="toggleWorkspaceSwitcher()">
+                <span>{{ workspaceListStore.currentWorkspace()?.name || 'Select Workspace' }}</span>
+                <span class="dropdown-icon">▼</span>
+              </button>
+              
+              @if (workspaceSwitcherOpen()) {
+                <div class="workspace-dropdown" (click)="$event.stopPropagation()">
+                  <div class="workspace-section">
+                    <div class="section-title">My Workspaces</div>
+                    @for (workspace of workspaceListStore.ownedWorkspaces(); track workspace.id) {
+                      <button 
+                        class="workspace-item"
+                        [class.active]="workspace.id === workspaceListStore.currentWorkspaceId()"
+                        (click)="selectWorkspace(workspace.id)">
+                        <span>{{ workspace.name }}</span>
+                        @if (workspace.isFavorite) {
+                          <span class="favorite-icon">⭐</span>
+                        }
+                      </button>
+                    }
+                  </div>
+                  
+                  @if (workspaceListStore.memberWorkspaces().length > 0) {
+                    <div class="workspace-section">
+                      <div class="section-title">Shared with me</div>
+                      @for (workspace of workspaceListStore.memberWorkspaces(); track workspace.id) {
+                        <button 
+                          class="workspace-item"
+                          [class.active]="workspace.id === workspaceListStore.currentWorkspaceId()"
+                          (click)="selectWorkspace(workspace.id)">
+                          <span>{{ workspace.name }}</span>
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+          
+          <!-- Theme Toggle -->
+          <button class="theme-toggle" (click)="toggleTheme()" title="Toggle theme">
+            {{ layoutStore.isDarkMode() ? '☀️' : '🌙' }}
+          </button>
         </nav>
 
         <div class="user-section">
@@ -319,9 +367,123 @@ import { MenuItem } from '../../models/menu.model';
       text-transform: uppercase;
     }
 
+    .workspace-switcher {
+      position: relative;
+      margin-right: 1rem;
+    }
+
+    .workspace-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #333;
+    }
+
+    .workspace-btn:hover {
+      border-color: #667eea;
+      background: #f8f9ff;
+    }
+
+    .workspace-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      min-width: 250px;
+      max-height: 400px;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+
+    .workspace-section {
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .workspace-section:last-child {
+      border-bottom: none;
+    }
+
+    .section-title {
+      padding: 8px 16px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #999;
+      letter-spacing: 0.5px;
+    }
+
+    .workspace-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 10px 16px;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      color: #333;
+      transition: background-color 0.2s;
+    }
+
+    .workspace-item:hover {
+      background-color: #f5f5f5;
+    }
+
+    .workspace-item.active {
+      background-color: #f8f9ff;
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .favorite-icon {
+      font-size: 12px;
+    }
+
+    .theme-toggle {
+      padding: 8px 12px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .theme-toggle:hover {
+      border-color: #667eea;
+      background: #f8f9ff;
+      transform: scale(1.1);
+    }
+
     @media (max-width: 768px) {
       .nav {
-        display: none;
+        gap: 4px;
+      }
+
+      .workspace-switcher {
+        margin-right: 0.5rem;
+      }
+
+      .workspace-btn span:first-child {
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .user-email-short {
@@ -333,26 +495,56 @@ import { MenuItem } from '../../models/menu.model';
 export class HeaderComponent {
   protected authStore = inject<AuthStoreInstance>(AuthStore);
   protected contextStore = inject<ContextStoreInstance>(ContextStore);
+  protected layoutStore = inject(LayoutStore);
+  protected workspaceListStore = inject(WorkspaceListStore);
   private router = inject(Router);
   private avatarService = inject(AvatarService);
   private menuService = inject(MenuService);
   protected menuOpen = signal(false);
+  protected workspaceSwitcherOpen = signal(false);
   protected dynamicMenu = this.menuService.menu;
 
   constructor() {
-    // Close menu when clicking outside of the user section/dropdown
+    // Close menus when clicking outside
     if (typeof document !== 'undefined') {
       document.addEventListener('click', (event) => {
         const target = event.target as HTMLElement | null;
         const isUserArea = target?.closest('.user-section');
-        if (!this.menuOpen() || isUserArea) return;
-        this.menuOpen.set(false);
+        const isWorkspaceArea = target?.closest('.workspace-switcher');
+        
+        if (this.menuOpen() && !isUserArea) {
+          this.menuOpen.set(false);
+        }
+        if (this.workspaceSwitcherOpen() && !isWorkspaceArea) {
+          this.workspaceSwitcherOpen.set(false);
+        }
       });
     }
   }
 
   toggleMenu(): void {
     this.menuOpen.set(!this.menuOpen());
+    if (this.menuOpen()) {
+      this.workspaceSwitcherOpen.set(false);
+    }
+  }
+
+  toggleWorkspaceSwitcher(): void {
+    this.workspaceSwitcherOpen.set(!this.workspaceSwitcherOpen());
+    if (this.workspaceSwitcherOpen()) {
+      this.menuOpen.set(false);
+    }
+  }
+
+  toggleTheme(): void {
+    this.layoutStore.toggleTheme();
+  }
+
+  selectWorkspace(workspaceId: string): void {
+    this.workspaceListStore.selectWorkspace(workspaceId);
+    this.workspaceSwitcherOpen.set(false);
+    // Navigate to the workspace overview
+    this.router.navigate(['/modules/overview']);
   }
 
   getAvatarUrl(): string {
