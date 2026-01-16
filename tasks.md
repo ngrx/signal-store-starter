@@ -4,3 +4,4 @@
 - [x] Implement dropdown list for Personal, organizations, teams, and partners in `ContextSwitcherComponent`.
 - [x] Emit context switch/back events to keep header navigation in sync.
 - [x] Capture post-fix Playwright screenshot and re-run lint/build.
+- [x] Refresh available contexts on auth state changes to show existing data.

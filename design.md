@@ -18,6 +18,7 @@ The context switcher dropdown lives in the header and reads current and availabl
    - Personal → `ContextStore.resetContext()`
    - Organization/Team/Partner → `ContextStore.switchContext(context)`
 4. Component emits `contextSwitch` output so header can update the route.
+5. `ContextStore` refreshes available contexts whenever auth state changes to ensure existing data appears after login/logout.
 
 ## UI/UX Notes
 

@@ -7,7 +7,7 @@ import {
   withHooks,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { Type, computed, inject } from '@angular/core';
+import { Type, computed, effect, inject } from '@angular/core';
 import { pipe, switchMap, tap, catchError, of, combineLatest } from 'rxjs';
 import { initialContextState } from '../state/context.state';
 import {
@@ -572,10 +572,16 @@ export const ContextStore = signalStore(
     }
   ),
   withHooks({
-    onInit(store) {
-      // Trigger loading immediately (handles already-authenticated sessions)
-      // This will also react to auth state changes
-      store.refreshAvailableContexts();
+    onInit(store, authStore = inject<AuthStoreInstance>(AuthStore)) {
+      // Trigger loading on auth changes (handles login/logout after app init)
+      effect(() => {
+        const initialized = authStore.initialized();
+        authStore.user();
+        if (!initialized) {
+          return;
+        }
+        store.refreshAvailableContexts();
+      });
     },
   })
 ) as unknown as Type<ContextStoreInstance>;
