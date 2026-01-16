@@ -71,10 +71,9 @@ export class MenuService {
         break;
     }
 
-    // Workspace modules section (if in organization/team/partner context)
-    if (context.type !== 'user') {
-      sections.push(this.buildWorkspaceModulesSection(context));
-    }
+    // Workspace modules section is ONLY shown in workspace detail view, not in global sidebar
+    // Per prd-sup.md Lines 74-76: "Modules ONLY appear after selecting a workspace"
+    // Removed from global menu - workspace navigation handled by workspace detail component
 
     // Settings and user menu
     sections.push(this.buildUserSection());
@@ -87,98 +86,265 @@ export class MenuService {
   }
 
   /**
-   * Build context switcher section
+   * Build context switcher section (hierarchical, context-aware)
+   * Follows prd-sup.md architecture: User → Organization → Team/Partner
    */
   private buildContextSwitcherSection(): MenuSection {
-    const orgs = this.contextStore.available().organizations;
-    const teams = this.contextStore.available().teams;
-    const partners = this.contextStore.available().partners;
     const currentContext = this.contextStore.current();
+    const items: MenuItem[] = [];
 
-    const items: MenuItem[] = [
-      {
-        id: 'context-header',
-        type: 'header',
-        label: 'Switch Context',
-      },
-    ];
+    // Switch based on current context type for hierarchical UI
+    switch (currentContext?.type) {
+      case 'user':
+        // Personal view: Show only "Switch to Organization" option
+        items.push(
+          {
+            id: 'context-header',
+            type: 'header',
+            label: 'Switch Context',
+          },
+          {
+            id: 'context-current',
+            type: 'header',
+            label: '👤 Personal',
+          },
+          {
+            id: 'context-divider-1',
+            type: 'divider',
+          }
+        );
 
-    // Add user context
-    const user = this.authStore.user();
-    if (user) {
-      items.push({
-        id: 'context-user',
-        type: 'action',
-        label: 'Personal',
-        icon: '👤',
-        action: () => {
-          this.contextStore.switchContext({
-            type: 'user',
-            userId: user.uid,
-            email: user.email || '',
-            displayName: user.displayName ?? null,
+        // List all available organizations
+        const orgs = this.contextStore.available().organizations;
+        if (orgs.length > 0) {
+          items.push({
+            id: 'switch-to-org-header',
+            type: 'header',
+            label: 'Organizations',
           });
-        },
-        visible: true,
-        disabled: currentContext?.type === 'user',
-      });
-    }
+          orgs.forEach((org: OrganizationContext) => {
+            items.push({
+              id: `context-org-${org.organizationId}`,
+              type: 'action',
+              label: org.name,
+              icon: '🏢',
+              action: () => this.contextStore.switchContext(org),
+              visible: true,
+            });
+          });
+        }
+        break;
 
-    // Add organizations
-    orgs.forEach((org: OrganizationContext) => {
-      items.push({
-        id: `context-org-${org.organizationId}`,
-        type: 'action',
-        label: org.name,
-        icon: '🏢',
-        action: () => this.contextStore.switchContext(org),
-        visible: true,
-        disabled:
-          currentContext?.type === 'organization' &&
-          (currentContext as any).organizationId === org.organizationId,
-      });
-    });
+      case 'organization':
+        // Organization view: Show current org + back button + switch org dropdown + teams/partners in current org
+        items.push(
+          {
+            id: 'context-header',
+            type: 'header',
+            label: 'Current Context',
+          },
+          {
+            id: 'context-current',
+            type: 'header',
+            label: `🏢 ${(currentContext as any).name}`,
+          },
+          {
+            id: 'context-back',
+            type: 'action',
+            label: '← Back to Personal',
+            action: () => this.contextStore.navigateBack(),
+            visible: true,
+          },
+          {
+            id: 'context-divider-1',
+            type: 'divider',
+          }
+        );
 
-    // Add teams
-    if (teams.length > 0) {
-      items.push({
-        id: 'context-teams-divider',
-        type: 'divider',
-      });
-      teams.forEach((team: TeamContext) => {
+        // Show teams in current organization
+        const teamsInOrg = this.contextStore.teamsInCurrentOrg();
+        if (teamsInOrg.length > 0) {
+          items.push({
+            id: 'switch-to-team-header',
+            type: 'header',
+            label: 'Teams',
+          });
+          teamsInOrg.forEach((team: TeamContext) => {
+            items.push({
+              id: `context-team-${team.teamId}`,
+              type: 'action',
+              label: team.name,
+              icon: '👥',
+              action: () => this.contextStore.switchContext(team),
+              visible: true,
+            });
+          });
+        }
+
+        // Show partners in current organization
+        const partnersInOrg = this.contextStore.partnersInCurrentOrg();
+        if (partnersInOrg.length > 0) {
+          if (teamsInOrg.length > 0) {
+            items.push({
+              id: 'context-divider-partners',
+              type: 'divider',
+            });
+          }
+          items.push({
+            id: 'switch-to-partner-header',
+            type: 'header',
+            label: 'Partners',
+          });
+          partnersInOrg.forEach((partner: PartnerContext) => {
+            items.push({
+              id: `context-partner-${partner.partnerId}`,
+              type: 'action',
+              label: partner.name,
+              icon: '🤝',
+              action: () => this.contextStore.switchContext(partner),
+              visible: true,
+            });
+          });
+        }
+
+        // Show other organizations (switch org)
+        const allOrgs = this.contextStore.available().organizations;
+        const otherOrgs = allOrgs.filter(
+          (org: OrganizationContext) => org.organizationId !== (currentContext as any).organizationId
+        );
+        if (otherOrgs.length > 0) {
+          items.push(
+            {
+              id: 'context-divider-other-orgs',
+              type: 'divider',
+            },
+            {
+              id: 'other-orgs-header',
+              type: 'header',
+              label: 'Switch Organization',
+            }
+          );
+          otherOrgs.forEach((org: OrganizationContext) => {
+            items.push({
+              id: `context-org-${org.organizationId}`,
+              type: 'action',
+              label: org.name,
+              icon: '🏢',
+              action: () => this.contextStore.switchContext(org),
+              visible: true,
+            });
+          });
+        }
+        break;
+
+      case 'team':
+        // Team view: Show current team + back button + teams in current org only
+        items.push(
+          {
+            id: 'context-header',
+            type: 'header',
+            label: 'Current Context',
+          },
+          {
+            id: 'context-current',
+            type: 'header',
+            label: `👥 ${(currentContext as any).name}`,
+          },
+          {
+            id: 'context-back',
+            type: 'action',
+            label: '← Back to Organization',
+            action: () => this.contextStore.navigateBack(),
+            visible: true,
+          },
+          {
+            id: 'context-divider-1',
+            type: 'divider',
+          }
+        );
+
+        // Show other teams in same organization
+        const teamsInSameOrg = this.contextStore.teamsInCurrentOrg();
+        const otherTeams = teamsInSameOrg.filter(
+          (team: TeamContext) => team.teamId !== (currentContext as any).teamId
+        );
+        if (otherTeams.length > 0) {
+          items.push({
+            id: 'switch-team-header',
+            type: 'header',
+            label: 'Switch Team',
+          });
+          otherTeams.forEach((team: TeamContext) => {
+            items.push({
+              id: `context-team-${team.teamId}`,
+              type: 'action',
+              label: team.name,
+              icon: '👥',
+              action: () => this.contextStore.switchContext(team),
+              visible: true,
+            });
+          });
+        }
+        break;
+
+      case 'partner':
+        // Partner view: Show current partner + back button + partners in current org only
+        items.push(
+          {
+            id: 'context-header',
+            type: 'header',
+            label: 'Current Context',
+          },
+          {
+            id: 'context-current',
+            type: 'header',
+            label: `🤝 ${(currentContext as any).name}`,
+          },
+          {
+            id: 'context-back',
+            type: 'action',
+            label: '← Back to Organization',
+            action: () => this.contextStore.navigateBack(),
+            visible: true,
+          },
+          {
+            id: 'context-divider-1',
+            type: 'divider',
+          }
+        );
+
+        // Show other partners in same organization
+        const partnersInSameOrg = this.contextStore.partnersInCurrentOrg();
+        const otherPartners = partnersInSameOrg.filter(
+          (partner: PartnerContext) => partner.partnerId !== (currentContext as any).partnerId
+        );
+        if (otherPartners.length > 0) {
+          items.push({
+            id: 'switch-partner-header',
+            type: 'header',
+            label: 'Switch Partner',
+          });
+          otherPartners.forEach((partner: PartnerContext) => {
+            items.push({
+              id: `context-partner-${partner.partnerId}`,
+              type: 'action',
+              label: partner.name,
+              icon: '🤝',
+              action: () => this.contextStore.switchContext(partner),
+              visible: true,
+            });
+          });
+        }
+        break;
+
+      default:
+        // Fallback: Show basic context switcher
         items.push({
-          id: `context-team-${team.teamId}`,
-          type: 'action',
-          label: team.name,
-          icon: '👥',
-          action: () => this.contextStore.switchContext(team),
-          visible: true,
-          disabled:
-            currentContext?.type === 'team' &&
-            (currentContext as any).teamId === team.teamId,
+          id: 'context-header',
+          type: 'header',
+          label: 'Switch Context',
         });
-      });
-    }
-
-    // Add partners
-    if (partners.length > 0) {
-      items.push({
-        id: 'context-partners-divider',
-        type: 'divider',
-      });
-      partners.forEach((partner: PartnerContext) => {
-        items.push({
-          id: `context-partner-${partner.partnerId}`,
-          type: 'action',
-          label: partner.name,
-          icon: '🤝',
-          action: () => this.contextStore.switchContext(partner),
-          visible: true,
-          disabled:
-            currentContext?.type === 'partner' &&
-            (currentContext as any).partnerId === partner.partnerId,
-        });
-      });
+        break;
     }
 
     return {
