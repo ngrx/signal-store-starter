@@ -49,9 +49,9 @@ import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.
             </button>
           </div>
 
-          @if (organizationContexts().length > 0) {
-            <div class="context-section">
-              <div class="section-title">Organizations</div>
+          <div class="context-section">
+            <div class="section-title">Organizations</div>
+            @if (organizationContexts().length > 0) {
               @for (org of organizationContexts(); track org.organizationId) {
                 <button
                   class="context-item"
@@ -64,12 +64,14 @@ import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.
                   <span class="context-meta">{{ org.role }}</span>
                 </button>
               }
-            </div>
-          }
+            } @else {
+              <div class="context-empty">No organizations yet</div>
+            }
+          </div>
 
-          @if (teamContexts().length > 0) {
-            <div class="context-section">
-              <div class="section-title">Teams</div>
+          <div class="context-section">
+            <div class="section-title">Teams</div>
+            @if (teamContexts().length > 0) {
               @for (team of teamContexts(); track team.teamId) {
                 <button
                   class="context-item"
@@ -82,12 +84,14 @@ import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.
                   <span class="context-meta">{{ team.role }}</span>
                 </button>
               }
-            </div>
-          }
+            } @else {
+              <div class="context-empty">No teams yet</div>
+            }
+          </div>
 
-          @if (partnerContexts().length > 0) {
-            <div class="context-section">
-              <div class="section-title">Partners</div>
+          <div class="context-section">
+            <div class="section-title">Partners</div>
+            @if (partnerContexts().length > 0) {
               @for (partner of partnerContexts(); track partner.partnerId) {
                 <button
                   class="context-item"
@@ -100,8 +104,10 @@ import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.
                   <span class="context-meta">{{ partner.accessLevel }}</span>
                 </button>
               }
-            </div>
-          }
+            } @else {
+              <div class="context-empty">No partners yet</div>
+            }
+          </div>
         </div>
       }
     </div>
@@ -228,6 +234,12 @@ import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.
       font-size: 12px;
       color: #666;
       text-transform: capitalize;
+    }
+
+    .context-empty {
+      padding: 8px 16px 12px;
+      font-size: 12px;
+      color: #999;
     }
   `],
 })
