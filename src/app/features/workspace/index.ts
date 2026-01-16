@@ -19,3 +19,4 @@ export { DeleteProductComponent } from './delete-product/delete-product.componen
 export { CreateInternalComponent } from './create-internal/create-internal.component';
 export { EditInternalComponent } from './edit-internal/edit-internal.component';
 export { DeleteInternalComponent } from './delete-internal/delete-internal.component';
+export { MyWorkspaceComponent } from './my/my-workspace.component';
