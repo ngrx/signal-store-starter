@@ -1,3 +1,7 @@
+// Workspace feature barrel - Original exports
+export * from './components';
+
+// Workspace CRUD component exports
 export { CreateProjectComponent } from './create-project/create-project.component';
 export { EditProjectComponent } from './edit-project/edit-project.component';
 export { DeleteProjectComponent } from './delete-project/delete-project.component';
