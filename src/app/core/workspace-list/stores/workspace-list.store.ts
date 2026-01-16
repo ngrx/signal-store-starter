@@ -11,7 +11,7 @@ import { pipe, switchMap, tap, catchError, of } from 'rxjs';
 import { initialWorkspaceListState } from '../state/workspace-list.state';
 import { WorkspaceListItem, RecentWorkspace, FavoriteWorkspace } from '../models/workspace-list.model';
 import { WorkspaceListService } from '../services/workspace-list.service';
-import { AuthStore, AuthStoreInstance } from '../../auth/stores/auth.store';
+import { AuthStore } from '../../auth/stores/auth.store';
 
 export const WorkspaceListStore = signalStore(
   { providedIn: 'root' },
@@ -77,7 +77,10 @@ export const WorkspaceListStore = signalStore(
     // Loading state
     isLoading: computed(() => loading()),
   })),
-  withMethods((store, workspaceListService = inject(WorkspaceListService), authStore = inject<AuthStoreInstance>(AuthStore)) => {
+  withMethods((store, workspaceListService = inject(WorkspaceListService)) => {
+    // We'll inject AuthStore in the methods that need it to avoid circular dependency
+    const getAuthStore = () => inject(AuthStore);
+    
     /**
      * Load workspaces for current user
      */
@@ -85,6 +88,7 @@ export const WorkspaceListStore = signalStore(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
         switchMap(() => {
+          const authStore = getAuthStore();
           const user = authStore.user();
           if (!user) {
             patchState(store, { loading: false, error: 'No authenticated user' });
@@ -173,6 +177,7 @@ export const WorkspaceListStore = signalStore(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
         switchMap((workspaceId) => {
+          const authStore = getAuthStore();
           const user = authStore.user();
           if (!user) {
             patchState(store, { loading: false, error: 'No authenticated user' });
@@ -203,6 +208,7 @@ export const WorkspaceListStore = signalStore(
     const toggleFavorite = rxMethod<{ workspaceId: string; isFavorite: boolean }>(
       pipe(
         switchMap(({ workspaceId, isFavorite }) => {
+          const authStore = getAuthStore();
           const user = authStore.user();
           if (!user) return of(null);
 
@@ -241,6 +247,7 @@ export const WorkspaceListStore = signalStore(
         
         // Update last accessed time
         if (workspaceId) {
+          const authStore = getAuthStore();
           const user = authStore.user();
           if (user) {
             workspaceListService.updateLastAccessed(workspaceId, user.uid).subscribe();
@@ -309,11 +316,9 @@ export const WorkspaceListStore = signalStore(
     };
   }),
   withHooks({
-    onInit(store, authStore = inject<AuthStoreInstance>(AuthStore)) {
+    onInit(store) {
       // Auto-load workspaces when user is authenticated
-      if (authStore.isAuthenticated()) {
-        store.loadWorkspaces();
-      }
+      // We check in the AppComponent with an effect instead to avoid circular dependency
     },
   })
 );
