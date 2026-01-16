@@ -80,7 +80,15 @@ export * from './workspace/state/overview.state';
 export * from './workspace/stores/overview.store';
 export * from './workspace/services/overview.service';
 
-export * from './workspace/models/members.model';
+// Members models - explicit exports to avoid WorkspaceMember conflict with workspace.model
+export {
+  WorkspaceMember as DetailedWorkspaceMember,
+  MembershipRole,
+  MembershipStatus,
+  WorkspaceInvitation,
+  MemberOnboarding,
+  OnboardingStep
+} from './workspace/models/members.model';
 export * from './workspace/state/members.state';
 export * from './workspace/stores/members.store';
 export * from './workspace/services/members.service';
@@ -95,7 +103,8 @@ export * from './workspace/state/audit.state';
 export * from './workspace/stores/audit.store';
 export * from './workspace/services/audit-log.service';
 
-export * from './workspace/models/journal.model';
+// Journal - explicit exports to avoid JournalEntry conflict
+export { JournalEntry as JournalEntryModel, JournalFilter } from './workspace/models/journal.model';
 export * from './workspace/state/journal.state';
 export * from './workspace/stores/journal.store';
 
@@ -103,6 +112,13 @@ export * from './workspace/models/permission.model';
 export * from './workspace/state/permission.state';
 export * from './workspace/stores/permission.store';
 
-export * from './workspace/models/settings.model';
+// Settings - explicit exports to avoid WorkspaceSettings conflict
+export {
+  WorkspaceSettings as WorkspaceSettingsModel,
+  GeneralSettings,
+  NotificationSettings,
+  SecuritySettings,
+  IntegrationSettings
+} from './workspace/models/settings.model';
 export * from './workspace/state/settings.state';
 export * from './workspace/stores/settings.store';

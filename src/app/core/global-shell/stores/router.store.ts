@@ -54,7 +54,7 @@ export const RouterStore = signalStore(
               patchState(store, { isNavigating: true });
             } else if (event instanceof NavigationEnd) {
               const route: RouteInfo = {
-                path: router.url.split('?')[0],
+                path: router.url.split('?')[0] ?? '',
                 url: router.url,
                 params: {}, // Would need ActivatedRoute to get actual params
                 queryParams: {}, // Parse from URL
@@ -97,7 +97,9 @@ export const RouterStore = signalStore(
         const history = store.navigationHistory();
         if (history.length > 1) {
           const previous = history[history.length - 2];
-          await this.navigateByUrl(previous.url);
+          if (previous) {
+            await this.navigateByUrl(previous.url);
+          }
         }
       },
 

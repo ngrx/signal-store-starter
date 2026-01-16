@@ -416,8 +416,12 @@ export class MembersComponent {
   getInitials(name: string): string {
     if (!name) return '?';
     const parts = name.split(' ');
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
+    if (parts.length >= 2 && parts[0] && parts[1]) {
+      const first = parts[0][0];
+      const second = parts[1][0];
+      if (first && second) {
+        return (first + second).toUpperCase();
+      }
     }
     return name.substring(0, 2).toUpperCase();
   }

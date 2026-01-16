@@ -123,7 +123,7 @@ import { OverviewStore } from '../../../core/workspace/stores/overview.store';
 
       <div class="recent-activity">
         <h2>Recent Activity</h2>
-        @if (overviewStore.recentActivity()?.length) {
+        @if (overviewStore.recentActivity() && overviewStore.recentActivity().length > 0) {
           <div class="activity-list">
             @for (activity of overviewStore.recentActivity(); track activity.id) {
               <div class="activity-item">
