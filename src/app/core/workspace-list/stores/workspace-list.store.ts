@@ -37,6 +37,31 @@ export const WorkspaceListStore = signalStore(
       store.workspaces().filter(w => w.membership?.status === 'Active')
     ),
 
+    // Workspaces by type (per prd-sup.md WorkspaceType enum)
+    projectWorkspaces: computed(() => 
+      store.workspaces().filter(w => w.type === 'project')
+    ),
+
+    departmentWorkspaces: computed(() => 
+      store.workspaces().filter(w => w.type === 'department')
+    ),
+
+    clientWorkspaces: computed(() => 
+      store.workspaces().filter(w => w.type === 'client')
+    ),
+
+    campaignWorkspaces: computed(() => 
+      store.workspaces().filter(w => w.type === 'campaign')
+    ),
+
+    productWorkspaces: computed(() => 
+      store.workspaces().filter(w => w.type === 'product')
+    ),
+
+    internalWorkspaces: computed(() => 
+      store.workspaces().filter(w => w.type === 'internal')
+    ),
+
     // Current workspace
     currentWorkspace: computed(() => {
       const id = store.currentWorkspaceId();
@@ -322,3 +347,5 @@ export const WorkspaceListStore = signalStore(
     },
   })
 );
+
+export type WorkspaceListStoreInstance = InstanceType<typeof WorkspaceListStore>;
