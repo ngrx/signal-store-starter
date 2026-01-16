@@ -16,66 +16,66 @@ import { AuthStore } from '../../auth/stores/auth.store';
 export const WorkspaceListStore = signalStore(
   { providedIn: 'root' },
   withState(initialWorkspaceListState),
-  withComputed(({ workspaces, workspaceById, currentWorkspaceId, recentWorkspaces, favoriteWorkspaces, loading }) => ({
+  withComputed((store) => ({
     // Filtered workspace lists per prd-sup.md
     ownedWorkspaces: computed(() => 
-      workspaces().filter(w => w.membership?.role === 'Owner')
+      store.workspaces().filter(w => w.membership?.role === 'Owner')
     ),
 
     memberWorkspaces: computed(() => 
-      workspaces().filter(w => 
+      store.workspaces().filter(w => 
         w.membership?.role && 
         ['Admin', 'Member', 'Guest'].includes(w.membership.role)
       )
     ),
 
     archivedWorkspaces: computed(() => 
-      workspaces().filter(w => w.membership?.status === 'Archived')
+      store.workspaces().filter(w => w.membership?.status === 'Archived')
     ),
 
     activeWorkspaces: computed(() => 
-      workspaces().filter(w => w.membership?.status === 'Active')
+      store.workspaces().filter(w => w.membership?.status === 'Active')
     ),
 
     // Current workspace
     currentWorkspace: computed(() => {
-      const id = currentWorkspaceId();
-      return id ? workspaceById()[id] ?? null : null;
+      const id = store.currentWorkspaceId();
+      return id ? store.workspaceById()[id] ?? null : null;
     }),
 
     // Recent workspaces (last 5)
     recentWorkspacesList: computed(() => 
-      recentWorkspaces()
+      store.recentWorkspaces()
         .sort((a, b) => b.lastAccessedAt.getTime() - a.lastAccessedAt.getTime())
         .slice(0, 5)
     ),
 
     // Favorite workspaces (sorted by order)
     favoriteWorkspacesList: computed(() => 
-      favoriteWorkspaces().sort((a, b) => a.order - b.order)
+      store.favoriteWorkspaces().sort((a, b) => a.order - b.order)
     ),
 
     // Statistics
-    totalWorkspaces: computed(() => workspaces().length),
+    totalWorkspaces: computed(() => store.workspaces().length),
     ownedWorkspacesCount: computed(() => 
-      workspaces().filter(w => w.membership?.role === 'Owner').length
+      store.workspaces().filter(w => w.membership?.role === 'Owner').length
     ),
     memberWorkspacesCount: computed(() => 
-      workspaces().filter(w => 
+      store.workspaces().filter(w => 
         w.membership?.role && 
         ['Admin', 'Member', 'Guest'].includes(w.membership.role)
       ).length
     ),
 
     // Checks
-    hasWorkspaces: computed(() => workspaces().length > 0),
+    hasWorkspaces: computed(() => store.workspaces().length > 0),
     hasOwnedWorkspaces: computed(() => 
-      workspaces().some(w => w.membership?.role === 'Owner')
+      store.workspaces().some(w => w.membership?.role === 'Owner')
     ),
     canCreateWorkspace: computed(() => true), // Could check quota here
 
     // Loading state
-    isLoading: computed(() => loading()),
+    isLoading: computed(() => store.loading()),
   })),
   withMethods((store, workspaceListService = inject(WorkspaceListService)) => {
     // We'll inject AuthStore in the methods that need it to avoid circular dependency
@@ -96,7 +96,7 @@ export const WorkspaceListStore = signalStore(
           }
 
           return workspaceListService.getWorkspaces(user.uid).pipe(
-            tap((workspaces) => {
+            tap((workspaces: WorkspaceListItem[]) => {
               const workspaceMap = workspaces.reduce<Record<string, WorkspaceListItem>>((acc, ws) => {
                 acc[ws.id] = ws;
                 return acc;
@@ -108,7 +108,7 @@ export const WorkspaceListStore = signalStore(
                 loading: false,
               });
             }),
-            catchError((err) => {
+            catchError((err: Error) => {
               patchState(store, {
                 error: err.message || 'Failed to load workspaces',
                 loading: false,
@@ -126,14 +126,14 @@ export const WorkspaceListStore = signalStore(
     const createWorkspace = rxMethod<Omit<WorkspaceListItem, 'id'>>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap((workspace) =>
+        switchMap((workspace: Omit<WorkspaceListItem, 'id'>) =>
           workspaceListService.createWorkspace(workspace).pipe(
-            tap((workspaceId) => {
+            tap((workspaceId: string) => {
               patchState(store, { loading: false });
               // Reload workspaces to get the updated list
               loadWorkspaces();
             }),
-            catchError((err) => {
+            catchError((err: Error) => {
               patchState(store, {
                 error: err.message || 'Failed to create workspace',
                 loading: false,
@@ -151,14 +151,14 @@ export const WorkspaceListStore = signalStore(
     const archiveWorkspace = rxMethod<string>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap((workspaceId) =>
+        switchMap((workspaceId: string) =>
           workspaceListService.archiveWorkspace(workspaceId).pipe(
             tap(() => {
               patchState(store, { loading: false });
               // Reload workspaces
               loadWorkspaces();
             }),
-            catchError((err) => {
+            catchError((err: Error) => {
               patchState(store, {
                 error: err.message || 'Failed to archive workspace',
                 loading: false,
@@ -176,7 +176,7 @@ export const WorkspaceListStore = signalStore(
     const leaveWorkspace = rxMethod<string>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap((workspaceId) => {
+        switchMap((workspaceId: string) => {
           const authStore = getAuthStore();
           const user = authStore.user();
           if (!user) {
@@ -190,7 +190,7 @@ export const WorkspaceListStore = signalStore(
               // Reload workspaces
               loadWorkspaces();
             }),
-            catchError((err) => {
+            catchError((err: Error) => {
               patchState(store, {
                 error: err.message || 'Failed to leave workspace',
                 loading: false,
@@ -207,7 +207,7 @@ export const WorkspaceListStore = signalStore(
      */
     const toggleFavorite = rxMethod<{ workspaceId: string; isFavorite: boolean }>(
       pipe(
-        switchMap(({ workspaceId, isFavorite }) => {
+        switchMap(({ workspaceId, isFavorite }: { workspaceId: string; isFavorite: boolean }) => {
           const authStore = getAuthStore();
           const user = authStore.user();
           if (!user) return of(null);

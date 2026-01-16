@@ -14,30 +14,30 @@ import { AppConfig, RemoteConfig, FeatureFlags } from '../models/config.model';
 export const ConfigStore = signalStore(
   { providedIn: 'root' },
   withState(initialConfigState),
-  withComputed(({ appConfig, remoteConfig, loading }) => ({
+  withComputed((store) => ({
     // Feature flags from app config
-    featureFlags: computed(() => appConfig()?.features ?? null),
+    featureFlags: computed(() => store.appConfig()?.features ?? null),
     
     // Individual feature checks
-    isAuditEnabled: computed(() => appConfig()?.features.enableAudit ?? false),
-    isDocumentsEnabled: computed(() => appConfig()?.features.enableDocuments ?? false),
-    isJournalEnabled: computed(() => appConfig()?.features.enableJournal ?? false),
-    isTasksEnabled: computed(() => appConfig()?.features.enableTasks ?? false),
-    isTeamsEnabled: computed(() => appConfig()?.features.enableTeams ?? false),
-    isPartnersEnabled: computed(() => appConfig()?.features.enablePartners ?? false),
-    isOrganizationsEnabled: computed(() => appConfig()?.features.enableOrganizations ?? false),
+    isAuditEnabled: computed(() => store.appConfig()?.features.enableAudit ?? false),
+    isDocumentsEnabled: computed(() => store.appConfig()?.features.enableDocuments ?? false),
+    isJournalEnabled: computed(() => store.appConfig()?.features.enableJournal ?? false),
+    isTasksEnabled: computed(() => store.appConfig()?.features.enableTasks ?? false),
+    isTeamsEnabled: computed(() => store.appConfig()?.features.enableTeams ?? false),
+    isPartnersEnabled: computed(() => store.appConfig()?.features.enablePartners ?? false),
+    isOrganizationsEnabled: computed(() => store.appConfig()?.features.enableOrganizations ?? false),
     
     // Remote config checks
-    isMaintenanceMode: computed(() => remoteConfig()?.maintenanceMode ?? false),
-    maxWorkspaces: computed(() => remoteConfig()?.maxWorkspaces ?? 10),
-    maxMembersPerWorkspace: computed(() => remoteConfig()?.maxMembersPerWorkspace ?? 50),
+    isMaintenanceMode: computed(() => store.remoteConfig()?.maintenanceMode ?? false),
+    maxWorkspaces: computed(() => store.remoteConfig()?.maxWorkspaces ?? 10),
+    maxMembersPerWorkspace: computed(() => store.remoteConfig()?.maxMembersPerWorkspace ?? 50),
     
     // Loading state
-    isLoading: computed(() => loading()),
+    isLoading: computed(() => store.loading()),
     
     // Environment info
-    environment: computed(() => appConfig()?.environment ?? 'development'),
-    appVersion: computed(() => appConfig()?.appVersion ?? '0.0.0'),
+    environment: computed(() => store.appConfig()?.environment ?? 'development'),
+    appVersion: computed(() => store.appConfig()?.appVersion ?? '0.0.0'),
   })),
   withMethods((store) => {
     /**
@@ -54,7 +54,7 @@ export const ConfigStore = signalStore(
             lastUpdated: new Date(),
           });
         }),
-        catchError((err) => {
+        catchError((err: Error) => {
           patchState(store, {
             error: err.message || 'Failed to load remote config',
             loading: false,

@@ -12,29 +12,29 @@ import { LayoutMode, Theme, SidebarState, LayoutConfig } from '../models/layout.
 export const LayoutStore = signalStore(
   { providedIn: 'root' },
   withState(initialLayoutState),
-  withComputed(({ config, preferences }) => ({
+  withComputed((store) => ({
     // Current settings
-    layoutMode: computed(() => config().mode),
-    theme: computed(() => config().theme),
-    sidebarState: computed(() => config().sidebarState),
-    sidebarWidth: computed(() => config().sidebarWidth),
+    layoutMode: computed(() => store.config().mode),
+    theme: computed(() => store.config().theme),
+    sidebarState: computed(() => store.config().sidebarState),
+    sidebarWidth: computed(() => store.config().sidebarWidth),
     
     // Convenience flags
-    isSidebarExpanded: computed(() => config().sidebarState === 'expanded'),
-    isSidebarCollapsed: computed(() => config().sidebarState === 'collapsed'),
-    isSidebarHidden: computed(() => config().sidebarState === 'hidden'),
-    isDarkMode: computed(() => config().theme === 'dark'),
-    isLightMode: computed(() => config().theme === 'light'),
-    isAutoTheme: computed(() => config().theme === 'auto'),
+    isSidebarExpanded: computed(() => store.config().sidebarState === 'expanded'),
+    isSidebarCollapsed: computed(() => store.config().sidebarState === 'collapsed'),
+    isSidebarHidden: computed(() => store.config().sidebarState === 'hidden'),
+    isDarkMode: computed(() => store.config().theme === 'dark'),
+    isLightMode: computed(() => store.config().theme === 'light'),
+    isAutoTheme: computed(() => store.config().theme === 'auto'),
     
     // Layout info
-    showHeader: computed(() => config().showHeader),
-    showFooter: computed(() => config().showFooter),
-    contentPadding: computed(() => config().contentPadding),
+    showHeader: computed(() => store.config().showHeader),
+    showFooter: computed(() => store.config().showFooter),
+    contentPadding: computed(() => store.config().contentPadding),
     
     // Preferences
-    persistLayout: computed(() => preferences().persistLayout),
-    autoCollapseSidebar: computed(() => preferences().autoCollapseSidebar),
+    persistLayout: computed(() => store.preferences().persistLayout),
+    autoCollapseSidebar: computed(() => store.preferences().autoCollapseSidebar),
   })),
   withMethods((store) => ({
     // Theme controls
@@ -56,13 +56,13 @@ export const LayoutStore = signalStore(
     },
 
     // Sidebar controls
-    setSidebarState(state: SidebarState) {
-      patchState(store, (currentState) => ({
-        config: { ...currentState.config, sidebarState: state },
+    setSidebarState(sidebarState: SidebarState) {
+      patchState(store, (state) => ({
+        config: { ...state.config, sidebarState },
       }));
       
       if (store.persistLayout()) {
-        localStorage.setItem('app-sidebar-state', state);
+        localStorage.setItem('app-sidebar-state', sidebarState);
       }
     },
 

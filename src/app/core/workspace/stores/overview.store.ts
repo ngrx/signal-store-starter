@@ -15,127 +15,84 @@ import { OverviewService } from '../services/overview.service';
 export const OverviewStore = signalStore(
   { providedIn: 'root' },
   withState(initialOverviewState),
-  withComputed(({ byWorkspace, currentWorkspaceId, loading }) => ({
-    // Current workspace overview
-    currentOverview: computed(() => {
-      const id = currentWorkspaceId();
+  withComputed((store) => {
+    // Create a base computed for current overview to avoid repetition
+    const currentOverview = computed(() => {
+      const id = store.currentWorkspaceId();
       if (!id) return null;
-      return byWorkspace()[id] ?? null;
-    }),
+      return store.byWorkspace()[id] ?? null;
+    });
 
-    // Dashboard metrics for current workspace
-    dashboardMetrics: computed(() => {
-      const overview = computed(() => {
-        const id = currentWorkspaceId();
-        return id ? byWorkspace()[id] : null;
-      })();
-      return overview?.dashboard ?? null;
-    }),
+    return {
+      // Current workspace overview
+      currentOverview,
 
-    // Health status for current workspace
-    healthStatus: computed(() => {
-      const overview = computed(() => {
-        const id = currentWorkspaceId();
-        return id ? byWorkspace()[id] : null;
-      })();
-      return overview?.health ?? null;
-    }),
+      // Dashboard metrics for current workspace
+      dashboardMetrics: computed(() => currentOverview()?.dashboard ?? null),
 
-    // Usage stats for current workspace
-    usageStats: computed(() => {
-      const overview = computed(() => {
-        const id = currentWorkspaceId();
-        return id ? byWorkspace()[id] : null;
-      })();
-      return overview?.usage ?? null;
-    }),
+      // Health status for current workspace
+      healthStatus: computed(() => currentOverview()?.health ?? null),
 
-    // Recent activity for current workspace
-    recentActivity: computed(() => {
-      const overview = computed(() => {
-        const id = currentWorkspaceId();
-        return id ? byWorkspace()[id] : null;
-      })();
-      return overview?.recentActivity ?? [];
-    }),
+      // Usage stats for current workspace
+      usageStats: computed(() => currentOverview()?.usage ?? null),
 
-    // Storage usage percentage
-    storageUsagePercent: computed(() => {
-      const usage = computed(() => {
-        const overview = computed(() => {
-          const id = currentWorkspaceId();
-          return id ? byWorkspace()[id] : null;
-        })();
-        return overview?.usage;
-      })();
-      if (!usage) return 0;
-      return (usage.storageUsed / usage.storageQuota) * 100;
-    }),
+      // Recent activity for current workspace
+      recentActivity: computed(() => currentOverview()?.recentActivity ?? []),
 
-    // API calls usage percentage
-    apiCallsUsagePercent: computed(() => {
-      const usage = computed(() => {
-        const overview = computed(() => {
-          const id = currentWorkspaceId();
-          return id ? byWorkspace()[id] : null;
-        })();
-        return overview?.usage;
-      })();
-      if (!usage) return 0;
-      return (usage.apiCalls / usage.apiCallsQuota) * 100;
-    }),
+      // Storage usage percentage
+      storageUsagePercent: computed(() => {
+        const usage = currentOverview()?.usage;
+        if (!usage) return 0;
+        return (usage.storageUsed / usage.storageQuota) * 100;
+      }),
 
-    // Members usage percentage
-    membersUsagePercent: computed(() => {
-      const usage = computed(() => {
-        const overview = computed(() => {
-          const id = currentWorkspaceId();
-          return id ? byWorkspace()[id] : null;
-        })();
-        return overview?.usage;
-      })();
-      if (!usage) return 0;
-      return (usage.membersCount / usage.membersQuota) * 100;
-    }),
+      // API calls usage percentage
+      apiCallsUsagePercent: computed(() => {
+        const usage = currentOverview()?.usage;
+        if (!usage) return 0;
+        return (usage.apiCalls / usage.apiCallsQuota) * 100;
+      }),
 
-    // Loading state
-    isLoading: computed(() => loading()),
+      // Members usage percentage
+      membersUsagePercent: computed(() => {
+        const usage = currentOverview()?.usage;
+        if (!usage) return 0;
+        return (usage.membersCount / usage.membersQuota) * 100;
+      }),
 
-    // Has critical health issues
-    hasCriticalIssues: computed(() => {
-      const health = computed(() => {
-        const overview = computed(() => {
-          const id = currentWorkspaceId();
-          return id ? byWorkspace()[id] : null;
-        })();
-        return overview?.health;
-      })();
-      return health?.overall === 'critical';
-    }),
-  })),
+      // Loading state
+      isLoading: computed(() => store.loading()),
+
+      // Has critical health issues
+      hasCriticalIssues: computed(() => {
+        const health = currentOverview()?.health;
+        return health?.overall === 'critical';
+      }),
+    };
+  }),
   withMethods((store, overviewService = inject(OverviewService)) => {
     /**
      * Load overview data using rxMethod
      */
     const loadOverview = rxMethod<string>(
       pipe(
-        tap((workspaceId) =>
+        tap((workspaceId: string) =>
           patchState(store, {
             currentWorkspaceId: workspaceId,
             loading: true,
             error: null,
           })
         ),
-        switchMap((workspaceId) =>
+        switchMap((workspaceId: string) =>
           overviewService.getOverview(workspaceId).pipe(
-            tap((overview) => {
+            tap((overview: WorkspaceOverview) => {
               const next = { ...store.byWorkspace(), [workspaceId]: overview };
               patchState(store, {
                 byWorkspace: next,
                 loading: false,
               });
             }),
-            catchError((err) => {
+            catchError((err: Error) => {
               patchState(store, {
                 error: err.message || 'Failed to load overview',
                 loading: false,
@@ -153,16 +110,16 @@ export const OverviewStore = signalStore(
     const refreshOverview = rxMethod<string>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap((workspaceId) =>
+        switchMap((workspaceId: string) =>
           overviewService.refreshOverview(workspaceId).pipe(
-            tap((overview) => {
+            tap((overview: WorkspaceOverview) => {
               const next = { ...store.byWorkspace(), [workspaceId]: overview };
               patchState(store, {
                 byWorkspace: next,
                 loading: false,
               });
             }),
-            catchError((err) => {
+            catchError((err: Error) => {
               patchState(store, {
                 error: err.message || 'Failed to refresh overview',
                 loading: false,
