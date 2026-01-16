@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthStore, AuthStoreInstance } from '../../../core/auth/stores/auth.store';
@@ -35,7 +35,7 @@ import { ThemeToggleComponent } from '../../components/widgets/theme-toggle/them
         </div>
 
         <!-- Navigation Controls -->
-        @if (authStore.isAuthenticated()) {
+        @if (isAuthenticated()) {
           <nav class="nav">
             <app-context-switcher 
               (contextSwitch)="onContextSwitch()"
@@ -47,7 +47,7 @@ import { ThemeToggleComponent } from '../../components/widgets/theme-toggle/them
             <app-theme-toggle />
             
             <!-- Context-Aware Avatar -->
-            @switch (contextStore.currentContextType()) {
+            @switch (currentContextType()) {
               @case ('organization') {
                 <app-organization-avatar (menuItemClick)="onMenuItemClick($event)" />
               }
@@ -115,9 +115,13 @@ import { ThemeToggleComponent } from '../../components/widgets/theme-toggle/them
   `],
 })
 export class HeaderComponent {
-  protected authStore = inject<AuthStoreInstance>(AuthStore);
-  protected contextStore = inject<ContextStoreInstance>(ContextStore);
+  private authStore = inject<AuthStoreInstance>(AuthStore);
+  private contextStore = inject<ContextStoreInstance>(ContextStore);
   private router = inject(Router);
+  
+  // Computed signals wrapping store access
+  protected isAuthenticated = computed(() => this.authStore.isAuthenticated());
+  protected currentContextType = computed(() => this.contextStore.currentContextType());
 
   onContextSwitch(): void {
     // Navigate to workspace list in new context

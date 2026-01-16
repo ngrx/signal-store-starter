@@ -236,11 +236,12 @@ import { MenuItem } from '../../../models/menu.model';
   `],
 })
 export class TeamAvatarComponent {
-  protected authStore = inject<AuthStoreInstance>(AuthStore);
-  protected contextStore = inject<ContextStoreInstance>(ContextStore);
+  private authStore = inject<AuthStoreInstance>(AuthStore);
+  private contextStore = inject<ContextStoreInstance>(ContextStore);
   private avatarService = inject(AvatarService);
   private menuService = inject(MenuService);
   
+  // Local UI state
   protected menuOpen = signal(false);
   
   // Computed signals

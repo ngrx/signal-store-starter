@@ -1,4 +1,4 @@
-import { Component, inject, signal, output } from '@angular/core';
+import { Component, inject, signal, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.store';
 import { WorkspaceListStore } from '../../../../core/workspace-list/stores/workspace-list.store';
@@ -8,10 +8,10 @@ import { WorkspaceListStore } from '../../../../core/workspace-list/stores/works
   standalone: true,
   imports: [CommonModule],
   template: `
-    @if (authStore.isAuthenticated() && workspaceListStore.hasWorkspaces()) {
+    @if (isAuthenticated() && hasWorkspaces()) {
       <div class="workspace-switcher">
         <button class="workspace-btn" (click)="toggleDropdown()">
-          <span>{{ workspaceListStore.currentWorkspace()?.name || 'Select Workspace' }}</span>
+          <span>{{ currentWorkspace()?.name || 'Select Workspace' }}</span>
           <span class="dropdown-icon">▼</span>
         </button>
         
@@ -19,10 +19,10 @@ import { WorkspaceListStore } from '../../../../core/workspace-list/stores/works
           <div class="workspace-dropdown" (click)="$event.stopPropagation()">
             <div class="workspace-section">
               <div class="section-title">My Workspaces</div>
-              @for (workspace of workspaceListStore.ownedWorkspaces(); track workspace.id) {
+              @for (workspace of ownedWorkspaces(); track workspace.id) {
                 <button 
                   class="workspace-item"
-                  [class.active]="workspace.id === workspaceListStore.currentWorkspaceId()"
+                  [class.active]="workspace.id === currentWorkspaceId()"
                   (click)="handleSelectWorkspace(workspace.id)">
                   <span>{{ workspace.name }}</span>
                   @if (workspace.isFavorite) {
@@ -32,13 +32,13 @@ import { WorkspaceListStore } from '../../../../core/workspace-list/stores/works
               }
             </div>
             
-            @if (workspaceListStore.memberWorkspaces().length > 0) {
+            @if (memberWorkspaces().length > 0) {
               <div class="workspace-section">
                 <div class="section-title">Shared with me</div>
-                @for (workspace of workspaceListStore.memberWorkspaces(); track workspace.id) {
+                @for (workspace of memberWorkspaces(); track workspace.id) {
                   <button 
                     class="workspace-item"
-                    [class.active]="workspace.id === workspaceListStore.currentWorkspaceId()"
+                    [class.active]="workspace.id === currentWorkspaceId()"
                     (click)="handleSelectWorkspace(workspace.id)">
                     <span>{{ workspace.name }}</span>
                   </button>
@@ -155,9 +155,19 @@ import { WorkspaceListStore } from '../../../../core/workspace-list/stores/works
   `],
 })
 export class WorkspaceSwitcherComponent {
-  protected authStore = inject<AuthStoreInstance>(AuthStore);
-  protected workspaceListStore = inject(WorkspaceListStore);
+  private authStore = inject<AuthStoreInstance>(AuthStore);
+  private workspaceListStore = inject(WorkspaceListStore);
+  
+  // Local UI state
   protected dropdownOpen = signal(false);
+  
+  // Computed signals wrapping store access
+  protected isAuthenticated = computed(() => this.authStore.isAuthenticated());
+  protected hasWorkspaces = computed(() => this.workspaceListStore.hasWorkspaces());
+  protected currentWorkspace = computed(() => this.workspaceListStore.currentWorkspace());
+  protected ownedWorkspaces = computed(() => this.workspaceListStore.ownedWorkspaces());
+  protected memberWorkspaces = computed(() => this.workspaceListStore.memberWorkspaces());
+  protected currentWorkspaceId = computed(() => this.workspaceListStore.currentWorkspaceId());
   
   // Output event
   workspaceSelect = output<string>();

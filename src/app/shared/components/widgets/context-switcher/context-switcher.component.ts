@@ -1,4 +1,4 @@
-import { Component, inject, signal, output } from '@angular/core';
+import { Component, inject, signal, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ContextStore, ContextStoreInstance } from '../../../../core/context/stores/context.store';
 
@@ -8,19 +8,19 @@ import { ContextStore, ContextStoreInstance } from '../../../../core/context/sto
   imports: [CommonModule],
   template: `
     <div class="context-switcher">
-      @if (contextStore.hasOrganizations() || contextStore.currentContextType() !== 'user') {
+      @if (hasOrganizations() || currentContextType() !== 'user') {
         <!-- Back Button (if not in Personal) -->
-        @if (contextStore.currentContextType() !== 'user') {
+        @if (currentContextType() !== 'user') {
           <button class="context-back-btn" (click)="handleNavigateBack()" 
-            [title]="contextStore.currentContextType() === 'organization' ? 'Back to Personal' : 'Back to Organization'">
+            [title]="currentContextType() === 'organization' ? 'Back to Personal' : 'Back to Organization'">
             <span>◀</span>
           </button>
         }
         
         <!-- Context Switcher Button -->
         <button class="context-btn" (click)="toggleDropdown()">
-          <span class="context-icon">{{ getContextIcon(contextStore.currentContextType()) }}</span>
-          <span>{{ contextStore.currentContextName() || 'Personal' }}</span>
+          <span class="context-icon">{{ contextIcon() }}</span>
+          <span>{{ currentContextName() || 'Personal' }}</span>
           <span class="dropdown-icon">▼</span>
         </button>
         
@@ -28,13 +28,13 @@ import { ContextStore, ContextStoreInstance } from '../../../../core/context/sto
         @if (dropdownOpen()) {
           <div class="context-dropdown" (click)="$event.stopPropagation()">
             <!-- Organizations Section -->
-            @if (contextStore.available().organizations.length > 0) {
+            @if (availableContexts().organizations.length > 0) {
               <div class="context-section">
                 <div class="section-title">Switch to Organization</div>
-                @for (org of contextStore.available().organizations; track org.organizationId) {
+                @for (org of availableContexts().organizations; track org.organizationId) {
                   <button 
                     class="context-item"
-                    [class.active]="contextStore.currentContextType() === 'organization' && contextStore.currentContextId() === org.organizationId"
+                    [class.active]="currentContextType() === 'organization' && currentContextId() === org.organizationId"
                     (click)="handleSwitchContext(org)">
                     <span class="context-icon">🏢</span>
                     <span>{{ org.name }}</span>
@@ -44,13 +44,13 @@ import { ContextStore, ContextStoreInstance } from '../../../../core/context/sto
             }
             
             <!-- Teams Section -->
-            @if (contextStore.available().teams.length > 0) {
+            @if (availableContexts().teams.length > 0) {
               <div class="context-section">
                 <div class="section-title">Switch to Team</div>
-                @for (team of contextStore.available().teams; track team.teamId) {
+                @for (team of availableContexts().teams; track team.teamId) {
                   <button 
                     class="context-item"
-                    [class.active]="contextStore.currentContextType() === 'team' && contextStore.currentContextId() === team.teamId"
+                    [class.active]="currentContextType() === 'team' && currentContextId() === team.teamId"
                     (click)="handleSwitchContext(team)">
                     <span class="context-icon">👥</span>
                     <span>{{ team.name }}</span>
@@ -60,13 +60,13 @@ import { ContextStore, ContextStoreInstance } from '../../../../core/context/sto
             }
             
             <!-- Partners Section -->
-            @if (contextStore.available().partners.length > 0) {
+            @if (availableContexts().partners.length > 0) {
               <div class="context-section">
                 <div class="section-title">Switch to Partner</div>
-                @for (partner of contextStore.available().partners; track partner.partnerId) {
+                @for (partner of availableContexts().partners; track partner.partnerId) {
                   <button 
                     class="context-item"
-                    [class.active]="contextStore.currentContextType() === 'partner' && contextStore.currentContextId() === partner.partnerId"
+                    [class.active]="currentContextType() === 'partner' && currentContextId() === partner.partnerId"
                     (click)="handleSwitchContext(partner)">
                     <span class="context-icon">🤝</span>
                     <span>{{ partner.name }}</span>
@@ -194,8 +194,18 @@ import { ContextStore, ContextStoreInstance } from '../../../../core/context/sto
   `],
 })
 export class ContextSwitcherComponent {
-  protected contextStore = inject<ContextStoreInstance>(ContextStore);
+  private contextStore = inject<ContextStoreInstance>(ContextStore);
+  
+  // Local UI state
   protected dropdownOpen = signal(false);
+  
+  // Computed signals wrapping store access
+  protected hasOrganizations = computed(() => this.contextStore.hasOrganizations());
+  protected currentContextType = computed(() => this.contextStore.currentContextType());
+  protected currentContextName = computed(() => this.contextStore.currentContextName());
+  protected currentContextId = computed(() => this.contextStore.currentContextId());
+  protected availableContexts = computed(() => this.contextStore.available());
+  protected contextIcon = computed(() => this.getContextIconForType(this.currentContextType()));
   
   // Output events
   contextSwitch = output<any>();
@@ -226,7 +236,7 @@ export class ContextSwitcherComponent {
   }
 
   handleNavigateBack(): void {
-    const currentType = this.contextStore.currentContextType();
+    const currentType = this.currentContextType();
     
     if (currentType === 'team' || currentType === 'partner') {
       this.contextStore.navigateBack();
@@ -238,7 +248,7 @@ export class ContextSwitcherComponent {
     this.navigateBack.emit();
   }
 
-  getContextIcon(type: string | null): string {
+  private getContextIconForType(type: string | null): string {
     switch (type) {
       case 'organization':
         return '🏢';

@@ -1,4 +1,4 @@
-import { Component, inject, signal, input, output } from '@angular/core';
+import { Component, inject, signal, input, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthStore, AuthStoreInstance } from '../../../../core/auth/stores/auth.store';
 import { ContextStore, ContextStoreInstance } from '../../../../core/context/stores/context.store';
@@ -14,11 +14,11 @@ import { MenuItem } from '../../../models/menu.model';
     <div class="user-section">
       <div class="avatar-container" (click)="toggleMenu()">
         <img 
-          [src]="getAvatarUrl()" 
-          [alt]="authStore.user()?.email || 'User avatar'"
+          [src]="avatarUrl()" 
+          [alt]="currentUser()?.email || 'User avatar'"
           class="avatar-img"
         />
-        <span class="user-email-short">{{ getShortEmail() }}</span>
+        <span class="user-email-short">{{ shortEmail() }}</span>
         <span class="dropdown-icon">▼</span>
       </div>
 
@@ -26,13 +26,13 @@ import { MenuItem } from '../../../models/menu.model';
         <div class="dropdown-menu" (click)="$event.stopPropagation()">
           <div class="menu-header">
             <img 
-              [src]="getAvatarUrl()" 
-              [alt]="authStore.user()?.email || 'User avatar'"
+              [src]="avatarUrl()" 
+              [alt]="currentUser()?.email || 'User avatar'"
               class="menu-avatar-img"
             />
             <div class="menu-user-info">
-              <div class="menu-email">{{ authStore.user()?.email }}</div>
-              <div class="menu-status">{{ contextStore.currentContextName() || 'Authenticated' }}</div>
+              <div class="menu-email">{{ currentUser()?.email }}</div>
+              <div class="menu-status">{{ currentContextName() || 'Authenticated' }}</div>
             </div>
           </div>
 
@@ -247,13 +247,27 @@ import { MenuItem } from '../../../models/menu.model';
   `],
 })
 export class UserAvatarComponent {
-  protected authStore = inject<AuthStoreInstance>(AuthStore);
-  protected contextStore = inject<ContextStoreInstance>(ContextStore);
+  private authStore = inject<AuthStoreInstance>(AuthStore);
+  private contextStore = inject<ContextStoreInstance>(ContextStore);
   private avatarService = inject(AvatarService);
   private menuService = inject(MenuService);
   
+  // Local UI state
   protected menuOpen = signal(false);
-  protected dynamicMenu = this.menuService.menu;
+  
+  // Computed signals wrapping store access
+  protected currentUser = computed(() => this.authStore.user());
+  protected currentContextName = computed(() => this.contextStore.currentContextName());
+  protected dynamicMenu = computed(() => this.menuService.menu());
+  protected avatarUrl = computed(() => {
+    const email = this.currentUser()?.email || '';
+    return this.avatarService.getAvatarUrl(email, 80);
+  });
+  protected shortEmail = computed(() => {
+    const email = this.currentUser()?.email || '';
+    const maxLength = 20;
+    return email.length > maxLength ? email.substring(0, maxLength) + '...' : email;
+  });
   
   // Output event for menu item clicks
   menuItemClick = output<MenuItem>();
@@ -274,17 +288,6 @@ export class UserAvatarComponent {
 
   toggleMenu(): void {
     this.menuOpen.set(!this.menuOpen());
-  }
-
-  getAvatarUrl(): string {
-    const email = this.authStore.user()?.email || '';
-    return this.avatarService.getAvatarUrl(email, 80);
-  }
-
-  getShortEmail(): string {
-    const email = this.authStore.user()?.email || '';
-    const maxLength = 20;
-    return email.length > maxLength ? email.substring(0, maxLength) + '...' : email;
   }
 
   handleMenuItem(item: MenuItem): void {

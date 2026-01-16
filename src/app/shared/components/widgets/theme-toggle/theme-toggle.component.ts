@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LayoutStore } from '../../../../core/global-shell/stores/layout.store';
 
@@ -8,7 +8,7 @@ import { LayoutStore } from '../../../../core/global-shell/stores/layout.store';
   imports: [CommonModule],
   template: `
     <button class="theme-toggle" (click)="toggleTheme()" title="Toggle theme">
-      {{ layoutStore.isDarkMode() ? '☀️' : '🌙' }}
+      {{ isDarkMode() ? '☀️' : '🌙' }}
     </button>
   `,
   styles: [`
@@ -33,7 +33,10 @@ import { LayoutStore } from '../../../../core/global-shell/stores/layout.store';
   `],
 })
 export class ThemeToggleComponent {
-  protected layoutStore = inject(LayoutStore);
+  private layoutStore = inject(LayoutStore);
+  
+  // Computed signal wrapping store access
+  protected isDarkMode = computed(() => this.layoutStore.isDarkMode());
 
   toggleTheme(): void {
     this.layoutStore.toggleTheme();
