@@ -270,12 +270,21 @@ export const WorkspaceListStore = signalStore(
       selectWorkspace(workspaceId: string | null) {
         patchState(store, { currentWorkspaceId: workspaceId });
         
-        // Update last accessed time
+        // Update last accessed time using rxMethod
         if (workspaceId) {
+          const updateLastAccessedEffect = rxMethod<{ workspaceId: string; userId: string }>(
+            pipe(
+              switchMap(({ workspaceId, userId }) => 
+                workspaceListService.updateLastAccessed(workspaceId, userId)
+              ),
+              catchError(() => of(null))
+            )
+          );
+          
           const authStore = getAuthStore();
           const user = authStore.user();
           if (user) {
-            workspaceListService.updateLastAccessed(workspaceId, user.uid).subscribe();
+            updateLastAccessedEffect({ workspaceId, userId: user.uid });
           }
         }
       },
