@@ -265,6 +265,11 @@ export class DashboardComponent implements OnDestroy {
     this.contextStore.createOrganization(this.orgForm.getRawValue());
     this.orgForm.reset();
     this.showToast(this.toastMessages.orgCreated);
+    
+    // Navigate to workspace list to see workspaces in org context
+    setTimeout(() => {
+      this.router.navigate(['/workspace']);
+    }, 1000);
   }
 
   createTeam(): void {
@@ -272,6 +277,11 @@ export class DashboardComponent implements OnDestroy {
     this.contextStore.createTeam(this.teamForm.getRawValue());
     this.teamForm.reset();
     this.showToast(this.toastMessages.teamCreated);
+    
+    // Navigate to workspace list to see workspaces in team context
+    setTimeout(() => {
+      this.router.navigate(['/workspace']);
+    }, 1000);
   }
 
   createPartner(): void {
@@ -279,17 +289,32 @@ export class DashboardComponent implements OnDestroy {
     this.contextStore.createPartner(this.partnerForm.getRawValue());
     this.partnerForm.reset();
     this.showToast(this.toastMessages.partnerCreated);
+    
+    // Navigate to workspace list to see workspaces in partner context
+    setTimeout(() => {
+      this.router.navigate(['/workspace']);
+    }, 1000);
   }
 
   createProject(): void {
     if (this.projectForm.invalid) return;
     const base = this.projectForm.getRawValue();
+    const ctx = this.contextStore.current();
+    
+    // Build payload with proper typing for optional fields
+    const organizationId = ctx?.type === 'organization' ? ctx.organizationId : undefined;
+    const teamId = ctx?.type === 'team' ? ctx.teamId : undefined;
+    const partnerId = ctx?.type === 'partner' ? ctx.partnerId : undefined;
+    
     const payload: Omit<WorkspaceListItem, 'id'> = {
       name: base.name,
       description: base.description || '',
       type: 'project' as const, // KEY: Set WorkspaceType per prd-sup.md
       isFavorite: false,
       status: 'active',
+      ...(organizationId && { organizationId }),
+      ...(teamId && { teamId }),
+      ...(partnerId && { partnerId }),
       modules: {
         overview: true,
         documents: true,

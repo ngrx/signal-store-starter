@@ -25,6 +25,66 @@ import { MenuItem } from '../../models/menu.model';
         </div>
 
         <nav class="nav">
+          <!-- Context Switcher -->
+          @if (authStore.isAuthenticated() && contextStore.canSwitchContext()) {
+            <div class="context-switcher">
+              <button class="context-btn" (click)="toggleContextSwitcher()">
+                <span class="context-icon">{{ getContextIcon(contextStore.currentContextType()) }}</span>
+                <span>{{ contextStore.currentContextName() || 'Select Context' }}</span>
+                <span class="dropdown-icon">▼</span>
+              </button>
+              
+              @if (contextSwitcherOpen()) {
+                <div class="context-dropdown" (click)="$event.stopPropagation()">
+                  @if (contextStore.hasOrganizations()) {
+                    <div class="context-section">
+                      <div class="section-title">Organizations</div>
+                      @for (org of contextStore.available().organizations; track org.organizationId) {
+                        <button 
+                          class="context-item"
+                          [class.active]="contextStore.currentContextId() === org.organizationId"
+                          (click)="switchToContext(org)">
+                          <span class="context-icon">🏢</span>
+                          <span>{{ org.name }}</span>
+                        </button>
+                      }
+                    </div>
+                  }
+                  
+                  @if (contextStore.hasTeams()) {
+                    <div class="context-section">
+                      <div class="section-title">Teams</div>
+                      @for (team of contextStore.available().teams; track team.teamId) {
+                        <button 
+                          class="context-item"
+                          [class.active]="contextStore.currentContextId() === team.teamId"
+                          (click)="switchToContext(team)">
+                          <span class="context-icon">👥</span>
+                          <span>{{ team.name }}</span>
+                        </button>
+                      }
+                    </div>
+                  }
+                  
+                  @if (contextStore.hasPartners()) {
+                    <div class="context-section">
+                      <div class="section-title">Partners</div>
+                      @for (partner of contextStore.available().partners; track partner.partnerId) {
+                        <button 
+                          class="context-item"
+                          [class.active]="contextStore.currentContextId() === partner.partnerId"
+                          (click)="switchToContext(partner)">
+                          <span class="context-icon">🤝</span>
+                          <span>{{ partner.name }}</span>
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+          
           <!-- Workspace Switcher -->
           @if (authStore.isAuthenticated() && workspaceListStore.hasWorkspaces()) {
             <div class="workspace-switcher">
@@ -367,6 +427,82 @@ import { MenuItem } from '../../models/menu.model';
       text-transform: uppercase;
     }
 
+    .context-switcher {
+      position: relative;
+      margin-right: 1rem;
+    }
+
+    .context-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: white;
+      font-weight: 500;
+    }
+
+    .context-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .context-icon {
+      font-size: 16px;
+    }
+
+    .context-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      min-width: 250px;
+      max-height: 400px;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+
+    .context-section {
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .context-section:last-child {
+      border-bottom: none;
+    }
+
+    .context-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 16px;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      color: #333;
+      transition: background-color 0.2s;
+    }
+
+    .context-item:hover {
+      background-color: #f5f5f5;
+    }
+
+    .context-item.active {
+      background-color: #f8f9ff;
+      color: #667eea;
+      font-weight: 600;
+    }
+
     .workspace-switcher {
       position: relative;
       margin-right: 1rem;
@@ -502,6 +638,7 @@ export class HeaderComponent {
   private menuService = inject(MenuService);
   protected menuOpen = signal(false);
   protected workspaceSwitcherOpen = signal(false);
+  protected contextSwitcherOpen = signal(false);
   protected dynamicMenu = this.menuService.menu;
 
   constructor() {
@@ -511,12 +648,16 @@ export class HeaderComponent {
         const target = event.target as HTMLElement | null;
         const isUserArea = target?.closest('.user-section');
         const isWorkspaceArea = target?.closest('.workspace-switcher');
+        const isContextArea = target?.closest('.context-switcher');
         
         if (this.menuOpen() && !isUserArea) {
           this.menuOpen.set(false);
         }
         if (this.workspaceSwitcherOpen() && !isWorkspaceArea) {
           this.workspaceSwitcherOpen.set(false);
+        }
+        if (this.contextSwitcherOpen() && !isContextArea) {
+          this.contextSwitcherOpen.set(false);
         }
       });
     }
@@ -526,6 +667,7 @@ export class HeaderComponent {
     this.menuOpen.set(!this.menuOpen());
     if (this.menuOpen()) {
       this.workspaceSwitcherOpen.set(false);
+      this.contextSwitcherOpen.set(false);
     }
   }
 
@@ -533,6 +675,15 @@ export class HeaderComponent {
     this.workspaceSwitcherOpen.set(!this.workspaceSwitcherOpen());
     if (this.workspaceSwitcherOpen()) {
       this.menuOpen.set(false);
+      this.contextSwitcherOpen.set(false);
+    }
+  }
+
+  toggleContextSwitcher(): void {
+    this.contextSwitcherOpen.set(!this.contextSwitcherOpen());
+    if (this.contextSwitcherOpen()) {
+      this.menuOpen.set(false);
+      this.workspaceSwitcherOpen.set(false);
     }
   }
 
@@ -540,11 +691,33 @@ export class HeaderComponent {
     this.layoutStore.toggleTheme();
   }
 
+  switchToContext(context: any): void {
+    this.contextStore.switchContext(context);
+    this.contextSwitcherOpen.set(false);
+    // Navigate to workspace list in new context
+    this.router.navigate(['/workspace']);
+  }
+
   selectWorkspace(workspaceId: string): void {
     this.workspaceListStore.selectWorkspace(workspaceId);
     this.workspaceSwitcherOpen.set(false);
-    // Navigate to the workspace overview
-    this.router.navigate(['/modules/overview']);
+    // Navigate to the workspace overview - FIXED: correct path
+    this.router.navigate(['/workspace', workspaceId, 'overview']);
+  }
+
+  getContextIcon(type: string | null): string {
+    switch (type) {
+      case 'organization':
+        return '🏢';
+      case 'team':
+        return '👥';
+      case 'partner':
+        return '🤝';
+      case 'user':
+        return '👤';
+      default:
+        return '👤';
+    }
   }
 
   getAvatarUrl(): string {

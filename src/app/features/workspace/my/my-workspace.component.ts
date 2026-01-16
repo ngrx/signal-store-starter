@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { WorkspaceListStore, WorkspaceListStoreInstance } from '../../../core/workspace-list/stores/workspace-list.store';
 import { WorkspaceListItem } from '../../../core/workspace-list/models/workspace-list.model';
+import { ContextStore, ContextStoreInstance } from '../../../core/context/stores/context.store';
 
 type WorkspaceTypeFilter = 'all' | 'project' | 'department' | 'client' | 'campaign' | 'product' | 'internal';
 
@@ -41,10 +42,22 @@ interface TypeFilterTab {
 
       @if (filteredWorkspaces().length === 0) {
         <div class="empty">
-          @if (selectedTypeFilter() === 'all') {
-            No workspaces available yet.
+          @if (contextStore.current(); as ctx) {
+            @if (ctx.type !== 'user') {
+              No workspaces in this {{ ctx.type }}.
+            } @else {
+              @if (selectedTypeFilter() === 'all') {
+                No workspaces available yet.
+              } @else {
+                No {{ selectedTypeFilter() }} workspaces found.
+              }
+            }
           } @else {
-            No {{ selectedTypeFilter() }} workspaces found.
+            @if (selectedTypeFilter() === 'all') {
+              No workspaces available yet.
+            } @else {
+              No {{ selectedTypeFilter() }} workspaces found.
+            }
           }
         </div>
       } @else {
@@ -317,6 +330,7 @@ interface TypeFilterTab {
 })
 export class MyWorkspaceComponent {
   private workspaceListStore = inject<WorkspaceListStoreInstance>(WorkspaceListStore);
+  protected contextStore = inject<ContextStoreInstance>(ContextStore);
   
   protected selectedTypeFilter = signal<WorkspaceTypeFilter>('all');
 
@@ -367,24 +381,58 @@ export class MyWorkspaceComponent {
 
   protected filteredWorkspaces = computed(() => {
     const filter = this.selectedTypeFilter();
+    const ctx = this.contextStore.current();
+    
+    // First, filter by type
+    let workspaces: WorkspaceListItem[];
     switch (filter) {
       case 'all':
-        return this.workspaceListStore.workspaces();
+        workspaces = this.workspaceListStore.workspaces();
+        break;
       case 'project':
-        return this.workspaceListStore.projectWorkspaces();
+        workspaces = this.workspaceListStore.projectWorkspaces();
+        break;
       case 'department':
-        return this.workspaceListStore.departmentWorkspaces();
+        workspaces = this.workspaceListStore.departmentWorkspaces();
+        break;
       case 'client':
-        return this.workspaceListStore.clientWorkspaces();
+        workspaces = this.workspaceListStore.clientWorkspaces();
+        break;
       case 'campaign':
-        return this.workspaceListStore.campaignWorkspaces();
+        workspaces = this.workspaceListStore.campaignWorkspaces();
+        break;
       case 'product':
-        return this.workspaceListStore.productWorkspaces();
+        workspaces = this.workspaceListStore.productWorkspaces();
+        break;
       case 'internal':
-        return this.workspaceListStore.internalWorkspaces();
+        workspaces = this.workspaceListStore.internalWorkspaces();
+        break;
       default:
-        return this.workspaceListStore.workspaces();
+        workspaces = this.workspaceListStore.workspaces();
     }
+    
+    // Then, filter by current context
+    if (!ctx || ctx.type === 'user') {
+      // User context: show all user's workspaces
+      return workspaces;
+    }
+    
+    if (ctx.type === 'organization') {
+      // Organization context: only show org's workspaces
+      return workspaces.filter(w => w.organizationId === ctx.organizationId);
+    }
+    
+    if (ctx.type === 'team') {
+      // Team context: only show team's workspaces
+      return workspaces.filter(w => w.teamId === ctx.teamId);
+    }
+    
+    if (ctx.type === 'partner') {
+      // Partner context: only show partner's workspaces
+      return workspaces.filter(w => w.partnerId === ctx.partnerId);
+    }
+    
+    return workspaces;
   });
 
   protected getTypeIcon(type?: string): string {

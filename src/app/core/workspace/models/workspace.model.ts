@@ -6,6 +6,8 @@
 export interface Workspace {
   id: string;
   organizationId?: string;
+  teamId?: string;
+  partnerId?: string;
   name: string;
   displayName?: string;
   description?: string;
