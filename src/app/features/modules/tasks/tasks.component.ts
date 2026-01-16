@@ -32,15 +32,16 @@ import { ContextStore, ContextStoreInstance } from '../../../core/context/stores
         <div class="header-right">
           <!-- View Mode Selector -->
           <div class="view-selector">
-            <button
-              *ngFor="let mode of viewModes"
-              [class.active]="taskStore.viewMode() === mode.value"
-              (click)="taskStore.setViewMode(mode.value)"
-              class="view-btn"
-              [title]="mode.label"
-            >
-              {{ mode.icon }} {{ mode.label }}
-            </button>
+            @for (mode of viewModes; track mode.value) {
+              <button
+                [class.active]="taskStore.viewMode() === mode.value"
+                (click)="taskStore.setViewMode(mode.value)"
+                class="view-btn"
+                [title]="mode.label"
+              >
+                {{ mode.icon }} {{ mode.label }}
+              </button>
+            }
           </div>
 
           <button class="btn-primary" (click)="createNewTask()">
