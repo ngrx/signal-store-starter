@@ -1,10 +1,21 @@
-// Workspace modules barrel
-export * from './overview';
-export * from './documents';
-export * from './tasks';
-export * from './members';
-export * from './permissions';
-export * from './audit';
-export * from './settings';
-export * from './journal';
-
+export { CreateTaskModuleComponent } from './create-task-module/create-task-module.component';
+export { EditTaskModuleComponent } from './edit-task-module/edit-task-module.component';
+export { DeleteTaskModuleComponent } from './delete-task-module/delete-task-module.component';
+export { CreateDocumentsModuleComponent } from './create-documents-module/create-documents-module.component';
+export { EditDocumentsModuleComponent } from './edit-documents-module/edit-documents-module.component';
+export { DeleteDocumentsModuleComponent } from './delete-documents-module/delete-documents-module.component';
+export { CreateMembersModuleComponent } from './create-members-module/create-members-module.component';
+export { EditMembersModuleComponent } from './edit-members-module/edit-members-module.component';
+export { DeleteMembersModuleComponent } from './delete-members-module/delete-members-module.component';
+export { CreatePermissionsModuleComponent } from './create-permissions-module/create-permissions-module.component';
+export { EditPermissionsModuleComponent } from './edit-permissions-module/edit-permissions-module.component';
+export { DeletePermissionsModuleComponent } from './delete-permissions-module/delete-permissions-module.component';
+export { CreateAuditModuleComponent } from './create-audit-module/create-audit-module.component';
+export { EditAuditModuleComponent } from './edit-audit-module/edit-audit-module.component';
+export { DeleteAuditModuleComponent } from './delete-audit-module/delete-audit-module.component';
+export { CreateSettingsModuleComponent } from './create-settings-module/create-settings-module.component';
+export { EditSettingsModuleComponent } from './edit-settings-module/edit-settings-module.component';
+export { DeleteSettingsModuleComponent } from './delete-settings-module/delete-settings-module.component';
+export { CreateJournalModuleComponent } from './create-journal-module/create-journal-module.component';
+export { EditJournalModuleComponent } from './edit-journal-module/edit-journal-module.component';
+export { DeleteJournalModuleComponent } from './delete-journal-module/delete-journal-module.component';

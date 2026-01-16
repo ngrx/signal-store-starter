@@ -1,0 +1,36 @@
+<div class="crud-container">
+  <div class="crud-card">
+    <h1>Delete AuditModule</h1>
+    
+    <form [formGroup]="deleteForm" (ngSubmit)="onSubmit()">
+      <!-- TODO: Add form fields for AuditModule -->
+      
+      @if (store.error && store.error()) {
+        <div class="alert alert-error">
+          {{ store.error() }}
+        </div>
+      }
+
+      <div class="form-actions">
+        <button 
+          type="button" 
+          (click)="onCancel()" 
+          class="btn btn-secondary"
+        >
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          [disabled]="deleteForm.invalid || (store.isLoading && store.isLoading())"
+          class="btn btn-primary"
+        >
+          @if (store.isLoading && store.isLoading()) {
+            <span>Processing...</span>
+          } @else {
+            <span>Delete</span>
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
