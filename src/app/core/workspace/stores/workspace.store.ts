@@ -118,6 +118,27 @@ const workspaceStore = signalStore(
           store.clearAll();
         }
       });
+      
+      // Listen for context.switched events to update workspace
+      effect(() => {
+        const lastEvent = eventBus.lastEvent();
+        if (lastEvent && lastEvent.type === 'context.switched') {
+          const payload = lastEvent.payload as { context: AppContext };
+          if (payload && payload.context) {
+            const workspaceShape = workspaceFromContext(payload.context);
+            store.upsertWorkspace(workspaceShape);
+            store.setCurrentWorkspace(workspaceShape);
+          }
+        }
+      });
+      
+      // Listen for context.cleared events to clear workspace
+      effect(() => {
+        const lastEvent = eventBus.lastEvent();
+        if (lastEvent && lastEvent.type === 'context.cleared') {
+          store.clearAll();
+        }
+      });
     },
   })
 );

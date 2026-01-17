@@ -1,8 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthStore, AuthStoreInstance } from '../../../core/auth/stores/auth.store';
 import { AccountService } from '../../../core/account/services/account.service';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { pipe, switchMap, tap } from 'rxjs';
+import { tapResponse } from '@ngrx/operators';
 
 @Component({
   selector: 'app-account-settings',
@@ -53,41 +56,52 @@ export class SettingsComponent {
     email: [{ value: '', disabled: true }],
   });
 
+  // Reactive save method using rxMethod
+  private saveEffect = rxMethod<{ uid: string; displayName: string }>(
+    pipe(
+      tap(() => {
+        this.saving.set(true);
+        this.message.set('');
+      }),
+      switchMap(({ uid, displayName }) =>
+        this.accountService.updateAccount(uid, {
+          displayName,
+          updatedAt: new Date(),
+        })
+      ),
+      tapResponse({
+        next: () => {
+          this.message.set('Settings saved');
+          this.saving.set(false);
+        },
+        error: (err) => {
+          console.error(err);
+          this.message.set('Failed to save settings');
+          this.saving.set(false);
+        },
+      })
+    )
+  );
+
   constructor() {
-    const user = this.authStore.user();
-    if (user) {
-      this.form.patchValue({
-        displayName: user.displayName ?? '',
-        email: user.email ?? '',
-      });
-    }
+    // Initialize form with user data
+    effect(() => {
+      const user = this.authStore.user();
+      if (user) {
+        this.form.patchValue({
+          displayName: user.displayName ?? '',
+          email: user.email ?? '',
+        });
+      }
+    });
   }
 
-  async save(): Promise<void> {
+  save(): void {
     if (this.form.invalid) return;
     const user = this.authStore.user();
     if (!user) return;
 
-    this.saving.set(true);
-    this.message.set('');
-    
-    try {
-      // Convert Observable to Promise
-      await new Promise<void>((resolve, reject) => {
-        this.accountService.updateAccount(user.uid, {
-          displayName: this.form.getRawValue().displayName,
-          updatedAt: new Date(),
-        }).subscribe({
-          next: () => resolve(),
-          error: (err) => reject(err),
-        });
-      });
-      
-      this.message.set('Settings saved');
-      this.saving.set(false);
-    } catch (err) {
-      console.error(err);
-      this.saving.set(false);
-    }
+    const displayName = this.form.getRawValue().displayName;
+    this.saveEffect({ uid: user.uid, displayName });
   }
 }

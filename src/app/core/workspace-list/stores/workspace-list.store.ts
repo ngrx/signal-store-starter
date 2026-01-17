@@ -4,14 +4,14 @@
  * Per prd-sup.md section on WorkspaceListStore
  */
 
-import { computed, inject } from '@angular/core';
+import { computed, inject, effect } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState, withHooks } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap, catchError, of } from 'rxjs';
 import { initialWorkspaceListState } from '../state/workspace-list.state';
 import { WorkspaceListItem, RecentWorkspace, FavoriteWorkspace } from '../models/workspace-list.model';
 import { WorkspaceListService } from '../services/workspace-list.service';
-import { AuthStore } from '../../auth/stores/auth.store';
+import { EventBusStore } from '../../event-bus/stores/event-bus.store';
 
 export const WorkspaceListStore = signalStore(
   { providedIn: 'root' },
@@ -103,24 +103,19 @@ export const WorkspaceListStore = signalStore(
     isLoading: computed(() => store.loading()),
   })),
   withMethods((store, workspaceListService = inject(WorkspaceListService)) => {
-    // We'll inject AuthStore in the methods that need it to avoid circular dependency
-    const getAuthStore = () => inject(AuthStore);
-    
     /**
      * Load workspaces for current user
      */
-    const loadWorkspaces = rxMethod<void>(
+    const loadWorkspaces = rxMethod<{ userId: string }>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap(() => {
-          const authStore = getAuthStore();
-          const user = authStore.user();
-          if (!user) {
+        switchMap(({ userId }) => {
+          if (!userId) {
             patchState(store, { loading: false, error: 'No authenticated user' });
             return of([]);
           }
 
-          return workspaceListService.getWorkspaces(user.uid).pipe(
+          return workspaceListService.getWorkspaces(userId).pipe(
             tap((workspaces: WorkspaceListItem[]) => {
               const workspaceMap = workspaces.reduce<Record<string, WorkspaceListItem>>((acc, ws) => {
                 acc[ws.id] = ws;
@@ -198,22 +193,20 @@ export const WorkspaceListStore = signalStore(
     /**
      * Leave workspace
      */
-    const leaveWorkspace = rxMethod<string>(
+    const leaveWorkspace = rxMethod<{ workspaceId: string; userId: string }>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap((workspaceId: string) => {
-          const authStore = getAuthStore();
-          const user = authStore.user();
-          if (!user) {
+        switchMap(({ workspaceId, userId }) => {
+          if (!userId) {
             patchState(store, { loading: false, error: 'No authenticated user' });
             return of(null);
           }
 
-          return workspaceListService.leaveWorkspace(workspaceId, user.uid).pipe(
+          return workspaceListService.leaveWorkspace(workspaceId, userId).pipe(
             tap(() => {
               patchState(store, { loading: false, currentWorkspaceId: null });
               // Reload workspaces
-              loadWorkspaces();
+              loadWorkspaces({ userId });
             }),
             catchError((err: Error) => {
               patchState(store, {
@@ -230,14 +223,12 @@ export const WorkspaceListStore = signalStore(
     /**
      * Toggle favorite workspace
      */
-    const toggleFavorite = rxMethod<{ workspaceId: string; isFavorite: boolean }>(
+    const toggleFavorite = rxMethod<{ workspaceId: string; userId: string; isFavorite: boolean }>(
       pipe(
-        switchMap(({ workspaceId, isFavorite }: { workspaceId: string; isFavorite: boolean }) => {
-          const authStore = getAuthStore();
-          const user = authStore.user();
-          if (!user) return of(null);
+        switchMap(({ workspaceId, userId, isFavorite }) => {
+          if (!userId) return of(null);
 
-          return workspaceListService.toggleFavorite(workspaceId, user.uid, isFavorite).pipe(
+          return workspaceListService.toggleFavorite(workspaceId, userId, isFavorite).pipe(
             tap(() => {
               // Update local state
               const workspace = store.workspaceById()[workspaceId];
@@ -267,11 +258,11 @@ export const WorkspaceListStore = signalStore(
       toggleFavorite,
 
       // Synchronous state updates
-      selectWorkspace(workspaceId: string | null) {
+      selectWorkspace(workspaceId: string | null, userId?: string) {
         patchState(store, { currentWorkspaceId: workspaceId });
         
         // Update last accessed time using rxMethod
-        if (workspaceId) {
+        if (workspaceId && userId) {
           const updateLastAccessedEffect = rxMethod<{ workspaceId: string; userId: string }>(
             pipe(
               switchMap(({ workspaceId, userId }) => 
@@ -281,11 +272,7 @@ export const WorkspaceListStore = signalStore(
             )
           );
           
-          const authStore = getAuthStore();
-          const user = authStore.user();
-          if (user) {
-            updateLastAccessedEffect({ workspaceId, userId: user.uid });
-          }
+          updateLastAccessedEffect({ workspaceId, userId });
         }
       },
 
@@ -351,8 +338,26 @@ export const WorkspaceListStore = signalStore(
   }),
   withHooks({
     onInit(store) {
-      // Auto-load workspaces when user is authenticated
-      // We check in the AppComponent with an effect instead to avoid circular dependency
+      const eventBus = inject(EventBusStore);
+      
+      // Listen for auth.login events to auto-load workspaces
+      effect(() => {
+        const lastEvent = eventBus.lastEvent();
+        if (lastEvent && lastEvent.type === 'auth.login') {
+          const userInfo = lastEvent.payload as { userId: string };
+          if (userInfo && userInfo.userId) {
+            store.loadWorkspaces({ userId: userInfo.userId });
+          }
+        }
+      });
+      
+      // Listen for auth.logout events to clear workspace list
+      effect(() => {
+        const lastEvent = eventBus.lastEvent();
+        if (lastEvent && lastEvent.type === 'auth.logout') {
+          store.clearAll();
+        }
+      });
     },
   })
 );

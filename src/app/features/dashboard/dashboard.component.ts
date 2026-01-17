@@ -259,7 +259,13 @@ export class DashboardComponent implements OnDestroy {
 
   createOrganization(): void {
     if (this.orgForm.invalid) return;
-    this.contextStore.createOrganization(this.orgForm.getRawValue());
+    const user = this.authStore.user();
+    if (!user) return;
+    
+    this.contextStore.createOrganization({
+      ...this.orgForm.getRawValue(),
+      userId: user.uid,
+    });
     this.orgForm.reset();
     this.showToast(this.toastMessages.orgCreated);
     
@@ -271,7 +277,13 @@ export class DashboardComponent implements OnDestroy {
 
   createTeam(): void {
     if (this.teamForm.invalid) return;
-    this.contextStore.createTeam(this.teamForm.getRawValue());
+    const user = this.authStore.user();
+    if (!user) return;
+    
+    this.contextStore.createTeam({
+      ...this.teamForm.getRawValue(),
+      userId: user.uid,
+    });
     this.teamForm.reset();
     this.showToast(this.toastMessages.teamCreated);
     
@@ -283,7 +295,13 @@ export class DashboardComponent implements OnDestroy {
 
   createPartner(): void {
     if (this.partnerForm.invalid) return;
-    this.contextStore.createPartner(this.partnerForm.getRawValue());
+    const user = this.authStore.user();
+    if (!user) return;
+    
+    this.contextStore.createPartner({
+      ...this.partnerForm.getRawValue(),
+      userId: user.uid,
+    });
     this.partnerForm.reset();
     this.showToast(this.toastMessages.partnerCreated);
     

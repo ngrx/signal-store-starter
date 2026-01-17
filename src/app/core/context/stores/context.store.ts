@@ -18,7 +18,6 @@ import {
   TeamContext,
   PartnerContext,
 } from '../models/context.model';
-import { AuthStore, AuthStoreInstance } from '../../auth/stores/auth.store';
 import { OrganizationService } from '../../organization/services/organization.service';
 import { TeamService } from '../../team/services/team.service';
 import { PartnerService } from '../../partner/services/partner.service';
@@ -26,11 +25,6 @@ import { EventBusStore } from '../../event-bus/stores/event-bus.store';
 import { Organization, OrganizationSettings } from '../../organization/models/organization.model';
 import { Team } from '../../team/models/team.model';
 import { Partner } from '../../partner/models/partner.model';
-import {
-  WorkspaceStore,
-  WorkspaceStoreInstance,
-  workspaceFromContext,
-} from '../../workspace/stores/workspace.store';
 
 export interface ContextStoreInstance {
   current: () => AppContext | null;
@@ -54,10 +48,10 @@ export interface ContextStoreInstance {
   setAvailablePartners: (partners: PartnerContext[]) => void;
   resetContext: () => void;
   clearContext: () => void;
-  refreshAvailableContexts: () => void;
-  createOrganization: (payload: { name: string; description?: string }) => void;
-  createTeam: (payload: { name: string; description?: string; organizationId?: string }) => void;
-  createPartner: (payload: { name: string; description?: string; organizationId?: string }) => void;
+  refreshAvailableContexts: (userInfo?: { userId: string; email: string; displayName?: string | null }) => void;
+  createOrganization: (payload: { name: string; description?: string; userId: string }) => void;
+  createTeam: (payload: { name: string; description?: string; organizationId?: string; userId: string }) => void;
+  createPartner: (payload: { name: string; description?: string; organizationId?: string; userId: string }) => void;
 }
 
 const defaultOrganizationSettings: OrganizationSettings = {
@@ -157,16 +151,21 @@ export const ContextStore = signalStore(
   withMethods(
     (
       store,
-      authStore = inject<AuthStoreInstance>(AuthStore),
       orgService = inject(OrganizationService),
       teamService = inject(TeamService),
       partnerService = inject(PartnerService),
-      eventBus = inject(EventBusStore),
-      workspaceStore = inject<WorkspaceStoreInstance>(WorkspaceStore)
+      eventBus = inject(EventBusStore)
     ) => {
       const clearContextState = () => {
         patchState(store, initialContextState);
-        workspaceStore.clearAll();
+        // Emit event instead of directly calling WorkspaceStore
+        eventBus.emit({
+          type: 'context.cleared',
+          payload: { timestamp: Date.now() },
+          scope: 'global',
+          timestamp: Date.now(),
+          producer: 'ContextStore',
+        });
       };
 
       const applySwitchContext = (context: AppContext): void => {
@@ -187,13 +186,13 @@ export const ContextStore = signalStore(
           current: context,
           history: [...store.history(), event],
         });
-        // Keep workspace store in sync so modules resolve current workspace
-        const workspaceShape = workspaceFromContext(context);
-        workspaceStore.upsertWorkspace(workspaceShape);
-        workspaceStore.setCurrentWorkspace(workspaceShape);
+        // Emit event with full context data for WorkspaceStore to consume
         eventBus.emit({
           type: 'context.switched',
-          payload: event,
+          payload: { 
+            event,
+            context, // Include full context so WorkspaceStore can create workspace shape
+          },
           scope: 'workspace',
           timestamp: Date.now(),
           producer: 'ContextStore',
@@ -224,32 +223,26 @@ export const ContextStore = signalStore(
           },
         }));
 
-      const loadAvailableContexts = rxMethod<void>(
+      const loadAvailableContexts = rxMethod<{ userId: string; email: string; displayName?: string | null }>(
         pipe(
-          switchMap(() => {
-            const user = authStore.user();
-            // Critical: Don't clear context during initialization
-            // Only clear if we're initialized and confirmed unauthenticated
-            if (!user) {
-              if (authStore.initialized()) {
-                // Actually logged out - clear context
-                clearContextState();
-              }
-              // Not authenticated - skip context loading
+          switchMap((userInfo) => {
+            if (!userInfo) {
+              // User logged out - clear context
+              clearContextState();
               return of(null);
             }
 
             applySwitchContext({
               type: 'user',
-              userId: user.uid,
-              email: user.email || '',
-              displayName: user.displayName ?? null,
+              userId: userInfo.userId,
+              email: userInfo.email,
+              displayName: userInfo.displayName ?? null,
             });
 
             return combineLatest([
-              orgService.list({ createdBy: user.uid }),
-              teamService.list({ createdBy: user.uid }),
-              partnerService.list({ createdBy: user.uid }),
+              orgService.list({ createdBy: userInfo.userId }),
+              teamService.list({ createdBy: userInfo.userId }),
+              partnerService.list({ createdBy: userInfo.userId }),
             ]);
           }),
           tap((result) => {
@@ -291,11 +284,10 @@ export const ContextStore = signalStore(
         )
       );
 
-      const createOrganizationEffect = rxMethod<{ name: string; description?: string }>(
+      const createOrganizationEffect = rxMethod<{ name: string; description?: string; userId: string }>(
         pipe(
           switchMap((payload) => {
-            const user = authStore.user();
-            if (!user) {
+            if (!payload.userId) {
               console.warn('[ContextStore] Cannot create organization without user');
               return of(null);
             }
@@ -307,8 +299,8 @@ export const ContextStore = signalStore(
               description: payload.description ?? '',
               createdAt: now,
               updatedAt: now,
-              createdBy: user.uid,
-              ownerId: user.uid,
+              createdBy: payload.userId,
+              ownerId: payload.userId,
               status: 'active',
               settings: defaultOrganizationSettings,
             };
@@ -350,11 +342,10 @@ export const ContextStore = signalStore(
         )
       );
 
-      const createTeamEffect = rxMethod<{ name: string; description?: string; organizationId?: string }>(
+      const createTeamEffect = rxMethod<{ name: string; description?: string; organizationId?: string; userId: string }>(
         pipe(
           switchMap((payload) => {
-            const user = authStore.user();
-            if (!user) {
+            if (!payload.userId) {
               console.warn('[ContextStore] Cannot create team without user');
               return of(null);
             }
@@ -379,7 +370,7 @@ export const ContextStore = signalStore(
               visibility: 'private',
               createdAt: now,
               updatedAt: now,
-              createdBy: user.uid,
+              createdBy: payload.userId,
               status: 'active',
             };
 
@@ -421,11 +412,10 @@ export const ContextStore = signalStore(
         )
       );
 
-      const createPartnerEffect = rxMethod<{ name: string; description?: string; organizationId?: string }>(
+      const createPartnerEffect = rxMethod<{ name: string; description?: string; organizationId?: string; userId: string }>(
         pipe(
           switchMap((payload) => {
-            const user = authStore.user();
-            if (!user) {
+            if (!payload.userId) {
               console.warn('[ContextStore] Cannot create partner without user');
               return of(null);
             }
@@ -449,7 +439,7 @@ export const ContextStore = signalStore(
               accessLevel: 'read',
               createdAt: now,
               updatedAt: now,
-              createdBy: user.uid,
+              createdBy: payload.userId,
               status: 'active',
             };
 
@@ -506,30 +496,26 @@ export const ContextStore = signalStore(
               if (org) {
                 applySwitchContext(org);
               } else {
-                // Fallback to user context if org not found - inline reset
-                const user = authStore.user();
-                if (user) {
-                  applySwitchContext({
-                    type: 'user',
-                    userId: user.uid,
-                    email: user.email || '',
-                    displayName: user.displayName ?? null,
-                  });
-                }
+                // Fallback to user context if org not found - emit event to get user
+                eventBus.emit({
+                  type: 'context.request-user-info',
+                  payload: {},
+                  scope: 'global',
+                  timestamp: Date.now(),
+                  producer: 'ContextStore',
+                });
               }
               break;
             }
             case 'organization': {
-              // Navigate to user context - inline reset
-              const user = authStore.user();
-              if (user) {
-                applySwitchContext({
-                  type: 'user',
-                  userId: user.uid,
-                  email: user.email || '',
-                  displayName: user.displayName ?? null,
-                });
-              }
+              // Navigate to user context - emit event to get user
+              eventBus.emit({
+                type: 'context.request-user-info',
+                payload: {},
+                scope: 'global',
+                timestamp: Date.now(),
+                producer: 'ContextStore',
+              });
               break;
             }
             case 'user':
@@ -541,55 +527,81 @@ export const ContextStore = signalStore(
         setAvailableTeams,
         setAvailablePartners,
         resetContext(): void {
-          const user = authStore.user();
-          if (user) {
-            patchState(store, {
-              current: {
-                type: 'user',
-                userId: user.uid,
-                email: user.email || '',
-                displayName: user.displayName ?? null,
-              },
-            });
-          } else {
-            patchState(store, initialContextState);
-          }
+          // Emit event to request user info instead of accessing AuthStore
+          eventBus.emit({
+            type: 'context.request-user-info',
+            payload: {},
+            scope: 'global',
+            timestamp: Date.now(),
+            producer: 'ContextStore',
+          });
         },
         clearContext: clearContextState,
-        refreshAvailableContexts(): void {
-          loadAvailableContexts();
+        refreshAvailableContexts(userInfo?: { userId: string; email: string; displayName?: string | null }): void {
+          if (userInfo) {
+            loadAvailableContexts(userInfo);
+          } else {
+            // Request user info via event
+            eventBus.emit({
+              type: 'context.request-user-info',
+              payload: {},
+              scope: 'global',
+              timestamp: Date.now(),
+              producer: 'ContextStore',
+            });
+          }
         },
-        createOrganization(payload: { name: string; description?: string }): void {
+        createOrganization(payload: { name: string; description?: string; userId: string }): void {
           createOrganizationEffect(payload);
         },
-        createTeam(payload: { name: string; description?: string; organizationId?: string }): void {
+        createTeam(payload: { name: string; description?: string; organizationId?: string; userId: string }): void {
           createTeamEffect(payload);
         },
-        createPartner(payload: { name: string; description?: string; organizationId?: string }): void {
+        createPartner(payload: { name: string; description?: string; organizationId?: string; userId: string }): void {
           createPartnerEffect(payload);
         },
       };
     }
   ),
   withHooks({
-    onInit(store, authStore = inject<AuthStoreInstance>(AuthStore)) {
+    onInit(store) {
       const eventBus = inject(EventBusStore);
       
-      // Trigger loading on auth changes (handles login/logout after app init)
+      // Listen for auth.login events to trigger context loading
       effect(() => {
-        const initialized = authStore.initialized();
-        authStore.user();
-        if (!initialized) {
-          return;
+        const lastEvent = eventBus.lastEvent();
+        if (lastEvent && lastEvent.type === 'auth.login') {
+          const userInfo = lastEvent.payload as { userId: string; email: string; displayName?: string | null };
+          if (userInfo && userInfo.userId) {
+            store.refreshAvailableContexts(userInfo);
+          }
         }
-        store.refreshAvailableContexts();
       });
       
-      // Listen for logout events to clear context using effect
+      // Listen for logout events to clear context
       effect(() => {
         const lastEvent = eventBus.lastEvent();
         if (lastEvent && lastEvent.type === 'auth.logout') {
           patchState(store, initialContextState);
+        }
+      });
+      
+      // Listen for user info requests and respond with context.switched to user context
+      effect(() => {
+        const lastEvent = eventBus.lastEvent();
+        if (lastEvent && lastEvent.type === 'auth.user-info') {
+          const userInfo = lastEvent.payload as { userId: string; email: string; displayName?: string | null };
+          if (userInfo && userInfo.userId) {
+            // Navigate to user context
+            patchState(store, {
+              current: {
+                type: 'user',
+                userId: userInfo.userId,
+                email: userInfo.email,
+                displayName: userInfo.displayName ?? null,
+              },
+            });
+          }
         }
       });
     },

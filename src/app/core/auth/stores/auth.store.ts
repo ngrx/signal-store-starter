@@ -7,7 +7,7 @@ import {
   withHooks,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { computed, inject, Type, DestroyRef } from '@angular/core';
+import { computed, inject, Type, DestroyRef, effect } from '@angular/core';
 import { pipe, switchMap, tap, catchError, of, takeUntil } from 'rxjs';
 import { initialAuthState } from '../state/auth.state';
 import { AuthService } from '../services/auth.service';
@@ -100,6 +100,20 @@ export const AuthStore = signalStore(
                 error: null,
                 initialized: true, // Mark as initialized after successful login
               });
+              // Emit login event for ContextStore to react
+              if (user) {
+                eventBus.emit({
+                  type: 'auth.login',
+                  payload: {
+                    userId: user.uid,
+                    email: user.email || '',
+                    displayName: user.displayName ?? null,
+                  },
+                  scope: 'global',
+                  timestamp: Date.now(),
+                  producer: 'AuthStore',
+                });
+              }
             }),
             catchError((error: any) => {
               patchState(store, {
@@ -128,6 +142,20 @@ export const AuthStore = signalStore(
                 error: null,
                 initialized: true,
               });
+              // Emit login event for ContextStore to react
+              if (user) {
+                eventBus.emit({
+                  type: 'auth.login',
+                  payload: {
+                    userId: user.uid,
+                    email: user.email || '',
+                    displayName: user.displayName ?? null,
+                  },
+                  scope: 'global',
+                  timestamp: Date.now(),
+                  producer: 'AuthStore',
+                });
+              }
             }),
             catchError((error: any) => {
               patchState(store, {
@@ -252,6 +280,7 @@ export const AuthStore = signalStore(
   withHooks({
     onInit(store, authService = inject(AuthService), accountService = inject(AccountService)) {
       const destroyRef = inject(DestroyRef);
+      const eventBus = inject(EventBusStore);
       
       // Track subscription manually for cleanup
       let authSubscription: any;
@@ -286,6 +315,27 @@ export const AuthStore = signalStore(
       // Start syncing auth state
       // Store the subscription for cleanup
       authSubscription = syncAuthState();
+      
+      // Listen for user info requests and respond
+      const userInfoSubscription = effect(() => {
+        const lastEvent = eventBus.lastEvent();
+        if (lastEvent && lastEvent.type === 'context.request-user-info') {
+          const user = store.user();
+          if (user) {
+            eventBus.emit({
+              type: 'auth.user-info',
+              payload: {
+                userId: user.uid,
+                email: user.email || '',
+                displayName: user.displayName ?? null,
+              },
+              scope: 'global',
+              timestamp: Date.now(),
+              producer: 'AuthStore',
+            });
+          }
+        }
+      });
       
       // Cleanup subscription on destroy to prevent memory leaks
       destroyRef.onDestroy(() => {
