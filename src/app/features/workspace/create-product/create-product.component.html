@@ -1,0 +1,36 @@
+<div class="crud-container">
+  <div class="crud-card">
+    <h1>Create Product</h1>
+    
+    <form [formGroup]="createForm" (ngSubmit)="onSubmit()">
+      <!-- TODO: Add form fields for Product -->
+      
+      @if (store.error?.()) {
+        <div class="alert alert-error">
+          {{ store.error() }}
+        </div>
+      }
+
+      <div class="form-actions">
+        <button 
+          type="button" 
+          (click)="onCancel()" 
+          class="btn btn-secondary"
+        >
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          [disabled]="createForm.invalid || (store.isLoading())"
+          class="btn btn-primary"
+        >
+          @if (store.isLoading()) {
+            <span>Processing...</span>
+          } @else {
+            <span>Create</span>
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

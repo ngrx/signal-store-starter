@@ -24,7 +24,7 @@ import {
   Timestamp,
 } from '@angular/fire/firestore';
 import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import { Task, Workflow, TaskFilter } from '../models/task.model';
 
 @Injectable({ providedIn: 'root' })
@@ -177,52 +177,50 @@ export class TaskService {
    * Delete task (with cascade for subtasks using batch)
    */
   deleteTask(taskId: string, cascadeChildren = true): Observable<void> {
-    return new Observable<void>((observer) => {
-      if (!cascadeChildren) {
-        const taskDoc = doc(this.tasksCollection, taskId);
+    if (!cascadeChildren) {
+      const taskDoc = doc(this.tasksCollection, taskId);
+      return new Observable<void>((observer) => {
         deleteDoc(taskDoc)
           .then(() => {
             observer.next();
             observer.complete();
           })
           .catch((error) => observer.error(error));
-        return;
-      }
+      });
+    }
 
-      // Get all child tasks and delete in batch
-      const childQuery = query(
-        this.tasksCollection,
-        where('parentId', '==', taskId)
-      );
+    // Get all child tasks and delete in batch
+    const childQuery = query(
+      this.tasksCollection,
+      where('parentId', '==', taskId)
+    );
 
-      collectionData(childQuery, { idField: 'id' })
-        .pipe(
-          map((children) => {
-            const batch = writeBatch(this.firestore);
-            const taskDoc = doc(this.tasksCollection, taskId);
-            batch.delete(taskDoc);
+    return collectionData(childQuery, { idField: 'id' }).pipe(
+      switchMap((children: any[]) => {
+        const batch = writeBatch(this.firestore);
+        const taskDoc = doc(this.tasksCollection, taskId);
+        batch.delete(taskDoc);
 
-            children.forEach((child: any) => {
-              const childDoc = doc(this.tasksCollection, child.id);
-              batch.delete(childDoc);
-            });
-
-            return batch;
-          })
-        )
-        .subscribe({
-          next: (batch) => {
-            batch
-              .commit()
-              .then(() => {
-                observer.next();
-                observer.complete();
-              })
-              .catch((error) => observer.error(error));
-          },
-          error: (error) => observer.error(error),
+        children.forEach((child: any) => {
+          const childDoc = doc(this.tasksCollection, child.id);
+          batch.delete(childDoc);
         });
-    });
+
+        return new Observable<void>((observer) => {
+          batch
+            .commit()
+            .then(() => {
+              observer.next();
+              observer.complete();
+            })
+            .catch((error) => observer.error(error));
+        });
+      }),
+      catchError((error) => {
+        console.error('Error deleting task with children:', error);
+        throw error;
+      })
+    );
   }
 
   /**

@@ -6,7 +6,7 @@ import { LayoutStore } from './core/global-shell/stores/layout.store';
 import { RouterStore } from './core/global-shell/stores/router.store';
 import { WorkspaceListStore } from './core/workspace-list/stores/workspace-list.store';
 import { CommonModule } from '@angular/common';
-import { HeaderComponent } from './shared/layouts/header/header.component';
+import { HeaderComponent } from './shared/components/layouts/header/header.component';
 
 @Component({
   selector: 'app-root',

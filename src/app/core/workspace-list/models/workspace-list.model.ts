@@ -15,6 +15,7 @@ export interface WorkspaceMembership {
   role: WorkspaceRole;
   status: WorkspaceStatus;
   permissions: string[];
+  isFavorite?: boolean;
   invitedBy?: string;
   joinedAt: Date;
   lastAccessedAt?: Date;

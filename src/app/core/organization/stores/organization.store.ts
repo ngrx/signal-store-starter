@@ -6,7 +6,7 @@ import {
   withState,
 } from '@ngrx/signals';
 import { computed } from '@angular/core';
-import { initialOrganizationState } from './organization.state';
+import { initialOrganizationState } from '../state/organization.state';
 
 export const OrganizationStore = signalStore(
   { providedIn: 'root' },

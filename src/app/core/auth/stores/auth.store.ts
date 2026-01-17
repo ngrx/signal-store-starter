@@ -7,11 +7,11 @@ import {
   withHooks,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { computed, inject, Type } from '@angular/core';
-import { pipe, switchMap, tap, catchError, of } from 'rxjs';
+import { computed, inject, Type, DestroyRef } from '@angular/core';
+import { pipe, switchMap, tap, catchError, of, takeUntil } from 'rxjs';
 import { initialAuthState } from '../state/auth.state';
 import { AuthService } from '../services/auth.service';
-import { WorkspaceStore, WorkspaceStoreInstance } from '../../workspace/stores/workspace.store';
+import { EventBusStore } from '../../event-bus/stores/event-bus.store';
 import { AccountService } from '../../account/services/account.service';
 
 type AuthState = typeof initialAuthState;
@@ -83,7 +83,7 @@ export const AuthStore = signalStore(
     (
       store,
       authService = inject(AuthService),
-      workspaceStore = inject<WorkspaceStoreInstance>(WorkspaceStore),
+      eventBus = inject(EventBusStore),
       accountService = inject(AccountService)
     ) => {
     // Reactive login method using rxMethod
@@ -180,7 +180,14 @@ export const AuthStore = signalStore(
                 error: null,
                 initialized: true, // Keep initialized = true (we know the state)
               });
-              workspaceStore.clearAll();
+              // Emit logout event instead of directly calling workspaceStore
+              eventBus.emit({
+                type: 'auth.logout',
+                payload: { timestamp: Date.now() },
+                scope: 'global',
+                timestamp: Date.now(),
+                producer: 'AuthStore',
+              });
             }),
             catchError((error: any) => {
               patchState(store, {
@@ -244,6 +251,11 @@ export const AuthStore = signalStore(
   }),
   withHooks({
     onInit(store, authService = inject(AuthService), accountService = inject(AccountService)) {
+      const destroyRef = inject(DestroyRef);
+      
+      // Track subscription manually for cleanup
+      let authSubscription: any;
+      
       // Reactive method to sync auth state changes
       // Zone-less: This runs continuously, updating signals when Firebase auth state changes
       const syncAuthState = rxMethod<void>(
@@ -272,9 +284,15 @@ export const AuthStore = signalStore(
       );
 
       // Start syncing auth state
-      // This creates a reactive subscription that updates signals
-      // Signal updates trigger change detection in zone-less mode
-      syncAuthState();
+      // Store the subscription for cleanup
+      authSubscription = syncAuthState();
+      
+      // Cleanup subscription on destroy to prevent memory leaks
+      destroyRef.onDestroy(() => {
+        if (authSubscription && typeof authSubscription.unsubscribe === 'function') {
+          authSubscription.unsubscribe();
+        }
+      });
     },
   })
 ) as unknown as Type<AuthStoreInstance>;
