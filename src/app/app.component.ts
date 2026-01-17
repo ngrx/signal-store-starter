@@ -80,7 +80,10 @@ export class AppComponent {
     effect(() => {
       // Wait for initialization to complete before loading workspaces
       if (!this.authStore.isInitializing() && this.authStore.isAuthenticated()) {
-        this.workspaceListStore.loadWorkspaces();
+        const user = this.authStore.user();
+        if (user) {
+          this.workspaceListStore.loadWorkspaces({ userId: user.uid });
+        }
       }
     });
 

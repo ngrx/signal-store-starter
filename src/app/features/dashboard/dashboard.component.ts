@@ -313,6 +313,9 @@ export class DashboardComponent implements OnDestroy {
 
   createProject(): void {
     if (this.projectForm.invalid) return;
+    const user = this.authStore.user();
+    if (!user) return;
+    
     const base = this.projectForm.getRawValue();
     const ctx = this.contextStore.current();
     
@@ -341,7 +344,7 @@ export class DashboardComponent implements OnDestroy {
         journal: true,
       },
     };
-    this.workspaceListStore.createWorkspace(payload);
+    this.workspaceListStore.createWorkspace({ workspace: payload, userId: user.uid });
     this.projectForm.reset();
     this.showToast(this.toastMessages.projectCreated);
     

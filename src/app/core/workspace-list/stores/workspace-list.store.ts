@@ -143,15 +143,15 @@ export const WorkspaceListStore = signalStore(
     /**
      * Create new workspace
      */
-    const createWorkspace = rxMethod<Omit<WorkspaceListItem, 'id'>>(
+    const createWorkspace = rxMethod<{ workspace: Omit<WorkspaceListItem, 'id'>; userId: string }>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap((workspace: Omit<WorkspaceListItem, 'id'>) =>
+        switchMap(({ workspace, userId }) =>
           workspaceListService.createWorkspace(workspace).pipe(
             tap((workspaceId: string) => {
               patchState(store, { loading: false });
               // Reload workspaces to get the updated list
-              loadWorkspaces();
+              loadWorkspaces({ userId });
             }),
             catchError((err: Error) => {
               patchState(store, {
@@ -168,15 +168,15 @@ export const WorkspaceListStore = signalStore(
     /**
      * Archive workspace
      */
-    const archiveWorkspace = rxMethod<string>(
+    const archiveWorkspace = rxMethod<{ workspaceId: string; userId: string }>(
       pipe(
         tap(() => patchState(store, { loading: true, error: null })),
-        switchMap((workspaceId: string) =>
+        switchMap(({ workspaceId, userId }) =>
           workspaceListService.archiveWorkspace(workspaceId).pipe(
             tap(() => {
               patchState(store, { loading: false });
               // Reload workspaces
-              loadWorkspaces();
+              loadWorkspaces({ userId });
             }),
             catchError((err: Error) => {
               patchState(store, {

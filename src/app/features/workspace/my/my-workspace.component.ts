@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { WorkspaceListStore, WorkspaceListStoreInstance } from '../../../core/workspace-list/stores/workspace-list.store';
 import { WorkspaceListItem } from '../../../core/workspace-list/models/workspace-list.model';
 import { ContextStore, ContextStoreInstance } from '../../../core/context/stores/context.store';
+import { AuthStore, AuthStoreInstance } from '../../../core/auth/stores/auth.store';
 
 type WorkspaceTypeFilter = 'all' | 'project' | 'department' | 'client' | 'campaign' | 'product' | 'internal';
 
@@ -331,6 +332,7 @@ interface TypeFilterTab {
 export class MyWorkspaceComponent {
   private workspaceListStore = inject<WorkspaceListStoreInstance>(WorkspaceListStore);
   protected contextStore = inject<ContextStoreInstance>(ContextStore);
+  private authStore = inject<AuthStoreInstance>(AuthStore);
   
   protected selectedTypeFilter = signal<WorkspaceTypeFilter>('all');
 
@@ -475,9 +477,11 @@ export class MyWorkspaceComponent {
 
   protected toggleFavorite(workspaceId: string): void {
     const workspace = this.workspaceListStore.workspaceById()[workspaceId];
-    if (workspace) {
+    const user = this.authStore.user();
+    if (workspace && user) {
       this.workspaceListStore.toggleFavorite({ 
         workspaceId, 
+        userId: user.uid,
         isFavorite: !workspace.isFavorite 
       });
     }
