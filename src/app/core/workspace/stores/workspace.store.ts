@@ -4,11 +4,13 @@ import {
   withComputed,
   withMethods,
   withState,
+  withHooks,
 } from '@ngrx/signals';
-import { computed } from '@angular/core';
+import { computed, inject, effect } from '@angular/core';
 import { initialWorkspaceState } from '../state/workspace.state';
 import { Workspace } from '../models/workspace.model';
 import { AppContext } from '../../context/models/context.model';
+import { EventBusStore } from '../../event-bus/stores/event-bus.store';
 
 export const workspaceIdFromContext = (context: AppContext): string => {
   switch (context.type) {
@@ -104,7 +106,20 @@ const workspaceStore = signalStore(
     clearAll() {
       patchState(store, initialWorkspaceState);
     },
-  }))
+  })),
+  withHooks({
+    onInit(store) {
+      const eventBus = inject(EventBusStore);
+      
+      // Listen for auth.logout events to clear workspace state using effect
+      effect(() => {
+        const lastEvent = eventBus.lastEvent();
+        if (lastEvent && lastEvent.type === 'auth.logout') {
+          store.clearAll();
+        }
+      });
+    },
+  })
 );
 
 export type WorkspaceStoreInstance = InstanceType<typeof workspaceStore>;

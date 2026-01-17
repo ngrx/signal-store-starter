@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthStore, AuthStoreInstance } from '../../../core/auth/stores/auth.store';
@@ -20,11 +20,11 @@ import { AccountService } from '../../../core/account/services/account.service';
           Email
           <input type="email" formControlName="email" [disabled]="true" />
         </label>
-        <button type="submit" [disabled]="form.invalid || saving">
-          @if (saving) { Saving... } @else { Save changes }
+        <button type="submit" [disabled]="form.invalid || saving()">
+          @if (saving()) { Saving... } @else { Save changes }
         </button>
-        @if (message) {
-          <p class="success">{{ message }}</p>
+        @if (message()) {
+          <p class="success">{{ message() }}</p>
         }
       </form>
     </div>
@@ -45,8 +45,8 @@ export class SettingsComponent {
   private accountService = inject(AccountService);
   private fb = inject(FormBuilder);
 
-  protected saving = false;
-  protected message = '';
+  protected saving = signal(false);
+  protected message = signal('');
 
   form = this.fb.nonNullable.group({
     displayName: ['', Validators.required],
@@ -68,20 +68,26 @@ export class SettingsComponent {
     const user = this.authStore.user();
     if (!user) return;
 
-    this.saving = true;
-    this.message = '';
-    this.accountService.updateAccount(user.uid, {
-      displayName: this.form.getRawValue().displayName,
-      updatedAt: new Date(),
-    }).subscribe({
-      next: () => {
-        this.message = 'Settings saved';
-        this.saving = false;
-      },
-      error: (err) => {
-        console.error(err);
-        this.saving = false;
-      },
-    });
+    this.saving.set(true);
+    this.message.set('');
+    
+    try {
+      // Convert Observable to Promise
+      await new Promise<void>((resolve, reject) => {
+        this.accountService.updateAccount(user.uid, {
+          displayName: this.form.getRawValue().displayName,
+          updatedAt: new Date(),
+        }).subscribe({
+          next: () => resolve(),
+          error: (err) => reject(err),
+        });
+      });
+      
+      this.message.set('Settings saved');
+      this.saving.set(false);
+    } catch (err) {
+      console.error(err);
+      this.saving.set(false);
+    }
   }
 }
